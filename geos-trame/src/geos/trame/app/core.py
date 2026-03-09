@@ -28,6 +28,7 @@ from geos.trame.app.components.alertHandler import AlertHandler
 from geos.trame.app.io.simulation import Simulation
 from geos.trame.app.ui.simulation_view import define_simulation_view
 
+from pathlib import Path
 import sys
 
 
@@ -44,6 +45,12 @@ class GeosTrame:
         self.deckInspector: DeckInspector | None = None
         self.simulationLauncher: Simulation | None = None
         self.server = server
+        self.server.enable_module({
+        "serve":
+            { "gallery" : str( Path( Path( __file__ ).parent.parent / f"gallery").absolute() )
+            }
+        })
+
         server.enable_module( module )
 
         self.state.input_file = file_name
@@ -78,15 +85,17 @@ class GeosTrame:
 
         # Data loader
         self.data_loader = DataLoader( self.tree, self.region_viewer, self.well_viewer, trame_server=server )
+        self.state.selected_case = 1
+        self.state.change("selected_case" )(self.on_case_selected)
 
         # Properties checker
         self.properties_checker = PropertiesChecker( self.tree, self.region_viewer, trame_server=server )
 
         # TODO put as a modal window
-        self.set_input_file( file_name=self.state.input_file )
+        # self.set_input_file( file_name=self.state.input_file )
 
         # Load components
-        self.build_ui()
+        # self.build_ui()
 
     @property
     def state( self ) -> State:
@@ -102,23 +111,42 @@ class GeosTrame:
         """Sets the input file of the InputTree object and populates simput/ui."""
         self.tree.set_input_file( file_name )
 
-    def logHW(self):
-        print("hello world")
+    def on_case_selected(self, **kw):
+        case_id = kw.get("selected_case")
+        # case_id is passed directly, no *args needed
+        path = (
+            Path(__file__).parent.parent /
+            f"gallery/case{case_id:03d}/input.xml"
+        ).absolute()
+
+        self.state.input_file = str(path)
+        self.set_input_file(str(path))
+        self.build_ui()
+        self.state.tab_idx = 1
+
+        print("Case clicked:", case_id)
+        print("Path:", self.state.input_file)
 
     def gallery(self, path : str) -> None:
         
-        for i in range(5):
+        __text = [ "this is co2 3d flux", "this is spe11", "this is pebi case"]
+        __image = [f"/gallery/case{i:03d}/icon{i:03d}.png" for i in range(1,4)]
+        for i in range(1,4):
             with vuetify.VRow( classes="mb-6" ):
                 with vuetify.VCol(
                     cols=12,
                     order=1,
             ):
-                    with vuetify.VCard(title=f"case #{i:003}", 
-                                        text="This is a test of linear depletion",
+                    with vuetify.VCard(title=f"case #{i:03d}", 
+                                       text=__text[i-1],
                                        classes="ma-12",
-                                       click=(self.logHW,)):
-                            vuetify.VImg(height="100px", width="100px",
-      src="https://cdn.vuetifyjs.com/images/cards/sunshine.jpg")
+                                       image=__image[i-1],
+                                    #    image="https://geosx-geosx.readthedocs-hosted.com/en/latest/_images/classp3_anim2.gif",
+                                        click=(lambda case=i: self.state.update({"selected_case": case})) ):
+                            
+                            # vuetify.VImg(height="200px", width="200px",
+    #   src="https://geosx-geosx.readthedocs-hosted.com/en/latest/_images/classp3_anim2.gif")
+    #   src=str( Path( Path( __file__ ).parent.parent / f"gallery/case{i:03d}/icon.png").absolute() ) )
                             pass
 
 
@@ -180,7 +208,7 @@ class GeosTrame:
 
             with html.Div( style="position: relative; display: flex; border-bottom: 1px solid gray", ):
                 with vuetify.VTabs(
-                        v_model=( "tab_idx", 1 ),
+                        v_model=( "tab_idx", 0 ),
                         style="z-index: 1;",
                         color="grey",
                 ):

@@ -1,0 +1,920 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <!-- SPHINX_FLOW_SOL -->
+  <Solvers>
+    <CompositionalMultiphaseFVM
+      name="compositionalMultiphaseFlow"
+      targetRegions="{ reservoir1, reservoir2, reservoir3, reservoir4, reservoir5, reservoir6, reservoir7 }"
+      discretization="fluidTPFA"
+      temperature="333.15"
+      isThermal="1"
+      initialDt="1e2"
+      targetPhaseVolFractionChangeInTimeStep="0.2"      
+      maxCompFractionChange="0.2"
+      logLevel="1"
+      useMass="1">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-4"
+        maxTimeStepCuts="100"
+        maxSubSteps="1000"
+        lineSearchAction="Attempt"
+        lineSearchStartingIteration="5"
+        timeStepIncreaseIterLimit="0.3"
+        timeStepDecreaseIterLimit="0.6"
+        newtonMaxIter="15" />
+      <LinearSolverParameters
+        solverType="fgmres"
+        preconditionerType="mgr"
+        krylovTol="1e-5"
+        krylovMaxIter="100"
+        logLevel="1" />        
+    </CompositionalMultiphaseFVM>
+  </Solvers>
+<!-- SPHINX_FLOW_SOL_END -->
+
+
+  <ElementRegions>
+    <CellElementRegion
+      name="reservoir1"
+      cellBlocks="{ 1_hexahedra }"
+      materialList="{ fluid, rock, relperm1, cappres1, thermalCond, diffusion }" />
+    <CellElementRegion
+      name="reservoir2"
+      cellBlocks="{ 2_hexahedra, 12_hexahedra }"
+      materialList="{ fluid, rock, relperm2, cappres2, thermalCond, diffusion }" />
+    <CellElementRegion
+      name="reservoir3"
+      cellBlocks="{ 3_hexahedra, 13_hexahedra }"
+      materialList="{ fluid, rock, relperm3, cappres3, thermalCond, diffusion }" />
+    <CellElementRegion
+      name="reservoir4"
+      cellBlocks="{ 4_hexahedra, 14_hexahedra }"
+      materialList="{ fluid, rock, relperm4, cappres4, thermalCond, diffusion }" />
+    <CellElementRegion
+      name="reservoir5"
+      cellBlocks="{ 5_hexahedra, 15_hexahedra }"
+      materialList="{ fluid, rock, relperm5, cappres5, thermalCond, diffusion }" />
+    <CellElementRegion
+      name="reservoir6"
+      cellBlocks="{ 6_hexahedra }"
+      materialList="{ fluid, rock, relperm6, cappres6, thermalCond, diffusion }" />
+    <CellElementRegion
+      name="reservoir7"
+      cellBlocks="{ 7_hexahedra }"
+      materialList="{ fluid, rock, relperm7, cappres7, thermalCond, noDiffusion }" />
+  </ElementRegions>
+
+  <!-- SPHINX_TPFA -->
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="fluidTPFA" />
+    </FiniteVolume>
+  </NumericalMethods>
+  <!-- SPHINX_TPFA_END -->
+
+  <Constitutive>
+    <!-- SPHINX_EOS_CONST -->
+    <CO2BrinePhillipsThermalFluid
+      name="fluid"
+      phaseNames="{ gas, water }"
+      logLevel="0"
+      componentNames="{ co2, water }"
+      componentMolarWeight="{ 44e-3, 18e-3 }"
+      phasePVTParaFiles="{ tables/pvtgas_thermal.txt, tables/pvtliquid_thermal.txt }"
+      flashModelParaFile="tables/co2flash_thermal.txt" />
+    <!-- SPHINX_EOS_CONST_END -->
+    <SolidInternalEnergy
+      name="rockInternalEnergy"
+      referenceVolumetricHeatCapacity="2.125e6"
+      referenceTemperature="313"
+      referenceInternalEnergy="2.125e7" />
+    <CompressibleSolidConstantPermeability
+      name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"
+      solidInternalEnergyModelName="rockInternalEnergy" />
+    <NullModel
+      name="nullSolid" />
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.1"
+      referencePressure="3e7"
+      compressibility="1e-12" />
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 1.0e-12, 1.0e-12, 1.0e-12 }" />
+
+    <ConstantDiffusion
+      name="diffusion"
+      phaseNames="{ gas, water }"
+      defaultPhaseDiffusivityMultipliers="{ 20, 1 }"
+      diffusivityComponents="{ 1e-9, 1e-9, 1e-9 }" />
+    <ConstantDiffusion
+      name="noDiffusion"
+      phaseNames="{ gas, water }"
+      defaultPhaseDiffusivityMultipliers="{ 0, 0 }"
+      diffusivityComponents="{ 0, 0, 0 }" />
+
+   <!-- SPHINX_THC_CONST -->
+    <MultiPhaseVolumeWeightedThermalConductivity
+      name="thermalCond"
+      phaseNames="{ gas, water }"
+      phaseThermalConductivity="{ 0.09, 0.65 }"
+      rockThermalConductivityComponents="{ 1.25, 1.25, 1.25 }" />
+   <!-- SPHINX_THC_CONST_END -->
+
+    <!-- kr per facies -->
+    <!-- SPHINX_KR_CONST -->
+    <TableRelativePermeability
+      name="relperm1"
+      phaseNames="{ gas, water }"
+      wettingNonWettingRelPermTableNames="{ waterRelativePermeabilityTable1, gasRelativePermeabilityTable1 }" />
+    <!-- SPHINX_KR_CONST_END -->
+    <TableRelativePermeability
+      name="relperm2"
+      phaseNames="{ gas, water }"
+      wettingNonWettingRelPermTableNames="{ waterRelativePermeabilityTable2, gasRelativePermeabilityTable2 }" />
+    <TableRelativePermeability
+      name="relperm3"
+      phaseNames="{ gas, water }"
+      wettingNonWettingRelPermTableNames="{ waterRelativePermeabilityTable3, gasRelativePermeabilityTable3 }" />
+    <TableRelativePermeability
+      name="relperm4"
+      phaseNames="{ gas, water }"
+      wettingNonWettingRelPermTableNames="{ waterRelativePermeabilityTable4, gasRelativePermeabilityTable4 }" />
+    <TableRelativePermeability
+      name="relperm5"
+      phaseNames="{ gas, water }"
+      wettingNonWettingRelPermTableNames="{ waterRelativePermeabilityTable5, gasRelativePermeabilityTable5 }" />
+    <TableRelativePermeability
+      name="relperm6"
+      phaseNames="{ gas, water }"
+      wettingNonWettingRelPermTableNames="{ waterRelativePermeabilityTable6, gasRelativePermeabilityTable6 }" />
+    <TableRelativePermeability
+      name="relperm7"
+      phaseNames="{ gas, water }"
+      wettingNonWettingRelPermTableNames="{ waterRelativePermeabilityTable7, gasRelativePermeabilityTable7 }" />
+
+    <!-- cap per facies -->
+    <TableCapillaryPressure
+      name="cappres1"
+      phaseNames="{ gas, water }"
+      wettingNonWettingCapPressureTableName="cappresTable1" />
+    <TableCapillaryPressure
+      name="cappres2"
+      phaseNames="{ gas, water }"
+      wettingNonWettingCapPressureTableName="cappresTable2" />
+    <TableCapillaryPressure
+      name="cappres3"
+      phaseNames="{ gas, water }"
+      wettingNonWettingCapPressureTableName="cappresTable3" />
+    <TableCapillaryPressure
+      name="cappres4"
+      phaseNames="{ gas, water }"
+      wettingNonWettingCapPressureTableName="cappresTable4" />
+    <TableCapillaryPressure
+      name="cappres5"
+      phaseNames="{ gas, water }"
+      wettingNonWettingCapPressureTableName="cappresTable5" />
+    <TableCapillaryPressure
+      name="cappres6"
+      phaseNames="{ gas, water }"
+      wettingNonWettingCapPressureTableName="cappresTable6" />
+    <TableCapillaryPressure
+      name="cappres7"
+      phaseNames="{ gas, water }"
+      wettingNonWettingCapPressureTableName="cappresTable7" />
+  </Constitutive>
+
+ <!-- SPHINX_EQUIL -->
+  <FieldSpecifications>
+    <HydrostaticEquilibrium
+      name="equil"
+      objectPath="ElementRegions"
+      datumElevation="300"
+      datumPressure="3e7"
+      initialPhaseName="water"
+      componentNames="{ co2, water }"
+      componentFractionVsElevationTableNames="{ initCO2CompFracTable, initWaterCompFracTable }"
+      temperatureVsElevationTableName="initTempTable" />
+    <!-- SPHINX_EQUIL_END -->
+
+    <!-- SPHINX_SOURCES -->
+    <FieldSpecification
+      beginTime="0.01"
+      endTime="1.5768e9"
+      name="sourceTemperature1"
+      setNames="{ thermalSource1 }"
+      objectPath="ElementRegions"
+      fieldName="temperature"
+      scale="283.15" />
+    <SourceFlux
+      name="sourceTerm1"
+      objectPath="ElementRegions"
+      component="0"
+      functionName="totalRateTable1"
+      scale="1"
+      setNames="{ thermalSource1 }" />
+
+    <FieldSpecification
+      beginTime="7.8840000001e8"
+      endTime="1.5768e9"
+      name="sourceTemperature2"
+      setNames="{ thermalSource2 }"
+      objectPath="ElementRegions"
+      fieldName="temperature"
+      scale="283.15" />
+    <SourceFlux
+      name="sourceTerm2"
+      objectPath="ElementRegions"
+      component="0"
+      functionName="totalRateTable2"
+      scale="1"
+      setNames="{ thermalSource2 }" />
+  </FieldSpecifications>
+  <!-- SPHINX_SOURCES_END -->
+
+  <!-- SPHINX_FUNCTIONS -->
+  <Functions>
+    <TableFunction
+      name="initCO2CompFracTable"
+      coordinates="{ 0, 1200 }"
+      values="{ 0.0, 0.0 }" />
+    <TableFunction
+      name="initWaterCompFracTable"
+      coordinates="{ 0, 1200 }"
+      values="{ 1.0, 1.0 }" />
+    <TableFunction
+      name="initTempTable"
+      coordinates="{ 0, 1200 }"
+      values="{ 343.15, 313.15 }" />
+   
+    <TableFunction
+      name="totalRateTable1"
+      inputVarNames="{ time }"
+      coordinates="{ -1e11, 0, 7.884e8, 1.5768e9, 1.576800001e9, 3.153600e10 }"
+      values="{ 0, -0.035, -0.035, -0.035, 0, 0}"
+      interpolation="lower" />
+    <TableFunction
+      name="totalRateTable2"
+      inputVarNames="{ time }"
+      coordinates="{ -1e11, 0, 7.8839999e8, 7.884e8, 1.5768e9, 1.576800001e9, 3.153600e10 }"
+      values="{ 0., 0., 0., -0.035, -0.035, 0, 0}"
+      interpolation="lower" />
+  </Functions>
+ <!-- SPHINX_FUNCTIONS_END -->
+
+  <Tasks>
+    <CompositionalMultiphaseStatistics
+      name="compflowStatistics"
+      flowSolverName="compositionalMultiphaseFlow"
+      logLevel="1"
+      computeCFLNumbers="1"
+      computeRegionStatistics="1" />
+  </Tasks>
+
+  <Outputs>
+    <VTK
+      outputRegionType="cell"	  
+      name="vtkOutput" />
+    <Restart
+      name="restartOutput" />
+  </Outputs>
+
+<!-- SPHINX_TOP_BOTTOM -->
+  <FieldSpecifications>
+    <FieldSpecification
+      name="topTemperature"
+      objectPath="ElementRegions"
+      fieldName="temperature"
+      scale="313.15"
+      setNames="{ top }" />
+    <FieldSpecification
+      name="bottomTemperature"
+      objectPath="ElementRegions"
+      fieldName="temperature"
+      scale="343.15"
+      setNames="{ bottom }" />
+</FieldSpecifications>
+<!-- SPHINX_TOP_BOTTOM_END -->
+  <FieldSpecifications>
+    <FieldSpecification
+      name="permx1"
+      initialCondition="1"
+      component="0"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir1"
+      fieldName="rockPerm_permeability"
+      scale="1e-16" />
+    <FieldSpecification
+      name="permy1"
+      initialCondition="1"
+      component="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir1"
+      fieldName="rockPerm_permeability"
+      scale="1e-16" />
+    <FieldSpecification
+      name="permz1"
+      initialCondition="1"
+      component="2"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir1"
+      fieldName="rockPerm_permeability"
+      scale="1e-17" />
+
+    <FieldSpecification
+      name="permx2"
+      initialCondition="1"
+      component="0"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir2"
+      fieldName="rockPerm_permeability"
+      scale="1e-13" />
+    <FieldSpecification
+      name="permy2"
+      initialCondition="1"
+      component="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir2"
+      fieldName="rockPerm_permeability"
+      scale="1e-13" />
+    <FieldSpecification
+      name="permz2"
+      initialCondition="1"
+      component="2"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir2"
+      fieldName="rockPerm_permeability"
+      scale="1e-14" />
+    
+    <FieldSpecification
+      name="permx3"
+      initialCondition="1"
+      component="0"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir3"
+      fieldName="rockPerm_permeability"
+      scale="2e-13" />
+    <FieldSpecification
+      name="permy3"
+      initialCondition="1"
+      component="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir3"
+      fieldName="rockPerm_permeability"
+      scale="2e-13" />
+    <FieldSpecification
+      name="permz3"
+      initialCondition="1"
+      component="2"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir3"
+      fieldName="rockPerm_permeability"
+      scale="2e-14" />
+    
+    <FieldSpecification
+      name="permx4"
+      initialCondition="1"
+      component="0"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir4"
+      fieldName="rockPerm_permeability"
+      scale="5e-13" />
+    <FieldSpecification
+      name="permy4"
+      initialCondition="1"
+      component="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir4"
+      fieldName="rockPerm_permeability"
+      scale="5e-13" />
+    <FieldSpecification
+      name="permz4"
+      initialCondition="1"
+      component="2"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir4"
+      fieldName="rockPerm_permeability"
+      scale="5e-14" />
+
+    <FieldSpecification
+      name="permx5"
+      initialCondition="1"
+      component="0"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir5"
+      fieldName="rockPerm_permeability"
+      scale="1e-12" />
+    <FieldSpecification
+      name="permy5"
+      initialCondition="1"
+      component="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir5"
+      fieldName="rockPerm_permeability"
+      scale="1e-12" />
+    <FieldSpecification
+      name="permz5"
+      initialCondition="1"
+      component="2"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir5"
+      fieldName="rockPerm_permeability"
+      scale="1e-13" />
+
+    <FieldSpecification
+      name="permx6"
+      initialCondition="1"
+      component="0"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir6"
+      fieldName="rockPerm_permeability"
+      scale="2e-12" />
+    <FieldSpecification
+      name="permy6"
+      initialCondition="1"
+      component="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir6"
+      fieldName="rockPerm_permeability"
+      scale="2e-12" />
+    <FieldSpecification
+      name="permz6"
+      initialCondition="1"
+      component="2"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir6"
+      fieldName="rockPerm_permeability"
+      scale="2e-13" />
+
+    <FieldSpecification
+      name="permx7"
+      initialCondition="1"
+      component="0"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir7"
+      fieldName="rockPerm_permeability"
+      scale="1e-22" />
+    <FieldSpecification
+      name="permy7"
+      initialCondition="1"
+      component="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir7"
+      fieldName="rockPerm_permeability"
+      scale="1e-22" />
+    <FieldSpecification
+      name="permz7"
+      initialCondition="1"
+      component="2"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir7"
+      fieldName="rockPerm_permeability"
+      scale="1e-22" />
+
+    <FieldSpecification
+      name="poro1"
+      initialCondition="1"
+      component="0"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir1"
+      fieldName="rockPorosity_referencePorosity"
+      scale=".1" />
+    <FieldSpecification
+      name="poro2"
+      initialCondition="1"
+      component="0"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir2"
+      fieldName="rockPorosity_referencePorosity"
+      scale=".2" />
+    <FieldSpecification
+      name="poro3"
+      initialCondition="1"
+      component="0"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir3"
+      fieldName="rockPorosity_referencePorosity"
+      scale=".2" />
+    <FieldSpecification
+      name="poro4"
+      initialCondition="1"
+      component="0"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir4"
+      fieldName="rockPorosity_referencePorosity"
+      scale=".2" />
+    <FieldSpecification
+      name="poro5"
+      initialCondition="1"
+      component="0"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir5"
+      fieldName="rockPorosity_referencePorosity"
+      scale=".25" />
+    <FieldSpecification
+      name="poro6"
+      initialCondition="1"
+      component="0"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir6"
+      fieldName="rockPorosity_referencePorosity"
+      scale=".35" />
+    <FieldSpecification
+      name="poro7"
+      initialCondition="1"
+      component="0"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir7"
+      fieldName="rockPorosity_referencePorosity"
+      scale=".05" />
+
+    <!-- SPHINX_THC_FIELD -->
+    <FieldSpecification
+      name="condx1"
+      initialCondition="1"
+      component="0"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir1"
+      fieldName="thermalCond_rockThermalConductivity"
+      scale="1.9" />
+    <FieldSpecification
+      name="condy1"
+      initialCondition="1"
+      component="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir1"
+      fieldName="thermalCond_rockThermalConductivity"
+      scale="1.9" />
+   <!-- SPHINX_THC_FIELD_END -->
+
+    <FieldSpecification
+      name="condz1"
+      initialCondition="1"
+      component="2"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir1"
+      fieldName="thermalCond_rockThermalConductivity"
+      scale="1.9" />
+    <FieldSpecification
+      name="condx2"
+      initialCondition="1"
+      component="0"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir2"
+      fieldName="thermalCond_rockThermalConductivity"
+      scale="1.25" />
+    <FieldSpecification
+      name="condy2"
+      initialCondition="1"
+      component="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir2"
+      fieldName="thermalCond_rockThermalConductivity"
+      scale="1.25" />
+    <FieldSpecification
+      name="condz2"
+      initialCondition="1"
+      component="2"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir2"
+      fieldName="thermalCond_rockThermalConductivity"
+      scale="1.25" />
+    <FieldSpecification
+      name="condx3"
+      initialCondition="1"
+      component="0"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir3"
+      fieldName="thermalCond_rockThermalConductivity"
+      scale="1.25" />
+    <FieldSpecification
+      name="condy3"
+      initialCondition="1"
+      component="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir3"
+      fieldName="thermalCond_rockThermalConductivity"
+      scale="1.25" />
+    <FieldSpecification
+      name="condz3"
+      initialCondition="1"
+      component="2"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir3"
+      fieldName="thermalCond_rockThermalConductivity"
+      scale="1.25" />
+    <FieldSpecification
+      name="condx4"
+      initialCondition="1"
+      component="0"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir4"
+      fieldName="thermalCond_rockThermalConductivity"
+      scale="1.25" />
+    <FieldSpecification
+      name="condy4"
+      initialCondition="1"
+      component="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir4"
+      fieldName="thermalCond_rockThermalConductivity"
+      scale="1.25" />
+    <FieldSpecification
+      name="condz4"
+      initialCondition="1"
+      component="2"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir4"
+      fieldName="thermalCond_rockThermalConductivity"
+      scale="1.25" />
+    <FieldSpecification
+      name="condx5"
+      initialCondition="1"
+      component="0"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir5"
+      fieldName="thermalCond_rockThermalConductivity"
+      scale="0.92" />
+    <FieldSpecification
+      name="condy5"
+      initialCondition="1"
+      component="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir5"
+      fieldName="thermalCond_rockThermalConductivity"
+      scale="0.92" />
+    <FieldSpecification
+      name="condz5"
+      initialCondition="1"
+      component="2"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir5"
+      fieldName="thermalCond_rockThermalConductivity"
+      scale="0.92" />
+    <FieldSpecification
+      name="condx6"
+      initialCondition="1"
+      component="0"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir6"
+      fieldName="thermalCond_rockThermalConductivity"
+      scale="0.26" />
+    <FieldSpecification
+      name="condy6"
+      initialCondition="1"
+      component="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir6"
+      fieldName="thermalCond_rockThermalConductivity"
+      scale="0.26" />
+    <FieldSpecification
+      name="condz6"
+      initialCondition="1"
+      component="2"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir6"
+      fieldName="thermalCond_rockThermalConductivity"
+      scale="0.26" />
+    <FieldSpecification
+      name="condx7"
+      initialCondition="1"
+      component="0"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir7"
+      fieldName="thermalCond_rockThermalConductivity"
+      scale="2" />
+    <FieldSpecification
+      name="condy7"
+      initialCondition="1"
+      component="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir7"
+      fieldName="thermalCond_rockThermalConductivity"
+      scale="2" />
+    <FieldSpecification
+      name="condz7"
+      initialCondition="1"
+      component="2"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir7"
+      fieldName="thermalCond_rockThermalConductivity"
+      scale="2" />
+
+ <!-- SPHINX_BUFFER_FIELDS -->
+    <FieldSpecification
+      name="vol12"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir2/12_hexahedra"
+      fieldName="elementVolume"
+      functionName="bufferVolume"
+      scale="1.0" />
+    <FieldSpecification
+      name="vol13"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir3/13_hexahedra"
+      fieldName="elementVolume"
+      functionName="bufferVolume"
+      scale="1.0" />
+    <FieldSpecification
+      name="vol14"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir4/14_hexahedra"
+      fieldName="elementVolume"
+      functionName="bufferVolume"
+      scale="1.0" />
+    <FieldSpecification
+      name="vol15"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir5/15_hexahedra"
+      fieldName="elementVolume"
+      functionName="bufferVolume"
+      scale="1.0" />
+ <!-- SPHINX_BUFFER_FIELDS_END -->
+  </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+      name="waterRelativePermeabilityTable1"
+      coordinateFiles="{ ../tables/waterSaturation_spe11b_1.txt }"
+      voxelFile="../tables/waterRelperm_spe11b_1.txt"/>
+    <TableFunction
+      name="gasRelativePermeabilityTable1"
+      coordinateFiles="{ ../tables/gasSaturation_spe11b_1.txt }"
+      voxelFile="../tables/gasRelperm_spe11b_1.txt"/>
+    <TableFunction
+      name="waterRelativePermeabilityTable2"
+      coordinateFiles="{ ../tables/waterSaturation_spe11b_2.txt }"
+      voxelFile="../tables/waterRelperm_spe11b_2.txt"/>
+    <TableFunction
+      name="gasRelativePermeabilityTable2"
+      coordinateFiles="{ ../tables/gasSaturation_spe11b_2.txt }"
+      voxelFile="../tables/gasRelperm_spe11b_2.txt"/>
+    <TableFunction
+      name="waterRelativePermeabilityTable3"
+      coordinateFiles="{ ../tables/waterSaturation_spe11b_3.txt }"
+      voxelFile="../tables/waterRelperm_spe11b_3.txt"/>
+    <TableFunction
+      name="gasRelativePermeabilityTable3"
+      coordinateFiles="{ ../tables/gasSaturation_spe11b_3.txt }"
+      voxelFile="../tables/gasRelperm_spe11b_3.txt"/>
+    <TableFunction
+      name="waterRelativePermeabilityTable4"
+      coordinateFiles="{ ../tables/waterSaturation_spe11b_4.txt }"
+      voxelFile="../tables/waterRelperm_spe11b_4.txt"/>
+    <TableFunction
+      name="gasRelativePermeabilityTable4"
+      coordinateFiles="{ ../tables/gasSaturation_spe11b_4.txt }"
+      voxelFile="../tables/gasRelperm_spe11b_4.txt"/>
+    <!-- SPHINX_KR_TABLE_FACIES_5_START -->
+    <TableFunction
+      name="waterRelativePermeabilityTable5"
+      coordinateFiles="{ ../tables/waterSaturation_spe11b_5.txt }"
+      voxelFile="../tables/waterRelperm_spe11b_5.txt"/>
+    <TableFunction
+      name="gasRelativePermeabilityTable5"
+      coordinateFiles="{ ../tables/gasSaturation_spe11b_5.txt }"
+      voxelFile="../tables/gasRelperm_spe11b_5.txt"/>
+    <!-- SPHINX_KR_TABLE_FACIES_5_END -->
+    <TableFunction
+      name="waterRelativePermeabilityTable6"
+      coordinateFiles="{ ../tables/waterSaturation_spe11b_6.txt }"
+      voxelFile="../tables/waterRelperm_spe11b_6.txt"/>
+    <TableFunction
+      name="gasRelativePermeabilityTable6"
+      coordinateFiles="{ ../tables/gasSaturation_spe11b_6.txt }"
+      voxelFile="../tables/gasRelperm_spe11b_6.txt"/>
+    <TableFunction
+      name="waterRelativePermeabilityTable7"
+      coordinateFiles="{ ../tables/waterSaturation_spe11b_7.txt }"
+      voxelFile="../tables/waterRelperm_spe11b_7.txt"/>
+    <TableFunction
+      name="gasRelativePermeabilityTable7"
+      coordinateFiles="{ ../tables/gasSaturation_spe11b_7.txt }"
+      voxelFile="../tables/gasRelperm_spe11b_7.txt"/>
+    
+    <TableFunction
+      name="cappresTable1"
+      coordinateFiles="{ ../tables/waterPCSaturation_spe11b_1.txt}"
+      voxelFile="../tables/waterCapPres_spe11b_1.txt"/>
+    <TableFunction
+      name="cappresTable2"
+      coordinateFiles="{ ../tables/waterPCSaturation_spe11b_2.txt}"
+      voxelFile="../tables/waterCapPres_spe11b_2.txt"/>
+    <TableFunction
+      name="cappresTable3"
+      coordinateFiles="{ ../tables/waterPCSaturation_spe11b_3.txt}"
+      voxelFile="../tables/waterCapPres_spe11b_3.txt"/>
+    <TableFunction
+      name="cappresTable4"
+      coordinateFiles="{ ../tables/waterPCSaturation_spe11b_4.txt}"
+      voxelFile="../tables/waterCapPres_spe11b_4.txt"/>
+    <!-- SPHINX_PC_TABLE_FACIES_5_START -->
+    <TableFunction
+      name="cappresTable5"
+      coordinateFiles="{ ../tables/waterPCSaturation_spe11b_5.txt}"
+      voxelFile="../tables/waterCapPres_spe11b_5.txt"/>
+    <!-- SPHINX_PC_TABLE_FACIES_5_END -->
+    <TableFunction
+      name="cappresTable6"
+      coordinateFiles="{ ../tables/waterPCSaturation_spe11b_6.txt}"
+      voxelFile="../tables/waterCapPres_spe11b_6.txt"/>
+    <TableFunction
+      name="cappresTable7"
+      coordinateFiles="{ ../tables/waterPCSaturation_spe11b_7.txt}"
+      voxelFile="../tables/waterCapPres_spe11b_7.txt"/>    
+  </Functions>
+
+
+  <Mesh>
+    <VTKMesh
+      name="mesh"
+      file="mesh/spe11b_00840x00120.vti"
+      regionAttribute="faciesIndex"
+      partitionRefinement="5"
+      logLevel="5">
+    </VTKMesh>
+  </Mesh>
+
+<!-- SPHINX_GEOM -->
+  <Geometry>
+    <Box
+      name="top"
+      xMin="{   -0.01, -0.01, 1189.99 }"
+      xMax="{ 8400.01,  1.01, 1200.01 }" />
+    <Box
+      name="bottom"
+      xMin="{   -0.01, -0.01, -0.01 }"
+      xMax="{ 8400.01,  1.01, 10.01 }" />
+      <Box
+       name="thermalSource1"
+       xMin="{ 2699.99, -0.01, 299.99 }"
+       xMax="{ 2710.01,  1.01, 310.01 }" />
+      <Box
+       name="thermalSource2"
+       xMin="{ 5099.99, -0.01, 699.99 }"
+       xMax="{ 5110.01,  1.01, 710.01 }" />
+  </Geometry>
+  <!-- SPHINX_GEOM_END -->
+
+  <!-- SPHINX_BUFFER_FN -->
+  <Functions>
+    <TableFunction
+      name="bufferVolume"
+      inputVarNames="{ time }"
+      coordinates="{ -1e11 }"
+      values="{ 500100 }"
+      interpolation="lower" />
+  </Functions>
+  <!-- SPHINX_BUFFER_FN_END -->
+
+
+   <!-- SPHINX_EVENTS -->
+  <Events
+    minTime="-31536000000"
+    maxTime="31536000000">
+
+    <PeriodicEvent
+      name="solverApplications0"
+      beginTime="-31536000000"
+      maxEventDt="157680000"
+      endTime="0"
+      target="/Solvers/compositionalMultiphaseFlow" />
+    <PeriodicEvent
+      name="solverApplications1"
+      beginTime="0"
+      maxEventDt="2.6e5"
+      endTime="7.884e5"
+      target="/Solvers/compositionalMultiphaseFlow" />
+    <PeriodicEvent
+      name="solverApplications2"
+      beginTime="7.884e5"
+      maxEventDt="1.3e6"
+      target="/Solvers/compositionalMultiphaseFlow" />
+   <!-- SPHINX_EVENTS_END -->
+
+    <PeriodicEvent
+          name="outputs1"
+          beginTime="0"
+          endTime="3153600000"
+          timeFrequency="315360000"
+          targetExactTimestep="1"
+          target="/Outputs/vtkOutput" />
+    <PeriodicEvent
+            name="outputs2"
+            beginTime="3153600000"
+            timeFrequency="3153600000"
+            targetExactTimestep="1"
+            target="/Outputs/vtkOutput" />
+  </Events>
+  
+</Problem>
