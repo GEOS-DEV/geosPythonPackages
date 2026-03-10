@@ -12,8 +12,8 @@ AttributeMapping
    :undoc-members:
    :show-inheritance:
 
-geos.processing.generic_processing_tools.AttributesDiff filter
-----------------------------------------------------------------
+AttributesDiff
+--------------------------------
 
 .. automodule:: geos.processing.generic_processing_tools.AttributesDiff
    :members:

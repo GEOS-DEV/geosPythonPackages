@@ -28,7 +28,7 @@ from geos.pv.utils.details import FilterCategory
 from geos.utils.Logger import isHandlerInLogger
 
 __doc__ = f"""
-Tetrahedra QC is a ParaView plugin filter that analyze and compare the tetrahedras of two given vtkUnstructured grid datasets.
+Tetrahedra QC is a ParaView plugin filter that analyzes and compares the tetrahedras of two given vtkUnstructured grid datasets.
 
 A figure with relevant quality metrics is saved at the end of the process for a visual comparison.
 
