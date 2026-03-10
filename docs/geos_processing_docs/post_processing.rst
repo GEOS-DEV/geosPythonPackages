@@ -20,14 +20,6 @@ GEOS computes many outputs including flow and geomechanic properties if coupled 
     - friction angle: 10°
 
 
-SurfaceGeomechanics
------------------------------
-
-.. automodule:: geos.processing.post_processing.SurfaceGeomechanics
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 
 GeomechanicsCalculator
 --------------------------------
@@ -54,3 +46,12 @@ GeosBlockMerge
    :members:
    :undoc-members:
    :show-inheritance:
+
+
+SurfaceGeomechanics
+-----------------------------
+
+.. automodule:: geos.processing.post_processing.SurfaceGeomechanics
+    :members:
+    :undoc-members:
+    :show-inheritance:

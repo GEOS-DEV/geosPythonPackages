@@ -20,6 +20,16 @@ AttributesDiff
    :undoc-members:
    :show-inheritance:
 
+
+ClipToMainFrame
+------------------------------
+
+.. automodule:: geos.processing.generic_processing_tools.ClipToMainFrame
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
 CreateConstantAttributePerRegion
 --------------------------------------
 
@@ -38,15 +48,6 @@ FillPartialArrays
     :show-inheritance:
 
 
-SplitMesh
--------------------------
-
-.. automodule:: geos.processing.generic_processing_tools.SplitMesh
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-
 MergeBlockEnhanced
 ----------------------------------
 
@@ -56,10 +57,10 @@ MergeBlockEnhanced
     :show-inheritance:
 
 
-ClipToMainFrame
-------------------------------
+SplitMesh
+-------------------------
 
-.. automodule:: geos.processing.generic_processing_tools.ClipToMainFrame
+.. automodule:: geos.processing.generic_processing_tools.SplitMesh
     :members:
     :undoc-members:
     :show-inheritance:
