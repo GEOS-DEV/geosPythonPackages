@@ -20,6 +20,14 @@ GEOS computes many outputs including flow and geomechanic properties if coupled 
     - friction angle: 10°
 
 
+FaultStabilityAnalysis
+-----------------------------
+
+.. automodule:: geos.processing.post_processing.FaultStabilityAnalysis
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 
 GeomechanicsCalculator
 --------------------------------

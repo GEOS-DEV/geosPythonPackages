@@ -35,6 +35,7 @@ dependencies = [
     "vtk >= 9.3, < 9.6",
     "numpy >= 2.2",
     "typing_extensions >= 4.12",
+    "scipy",
 ]
 
 

@@ -31,6 +31,7 @@ ArrayModifiers contains utilities to process VTK Arrays objects.
 These methods include:
     - filling partial VTK arrays with values (useful for block merge)
     - creation of new VTK array, empty or with a given data array
+    - modification of the value of a VTK array
     - copy VTK array from a source mesh to a final mesh
     - transfer VTK array from a source mesh to a final mesh with a element map
     - transfer from VTK point data to VTK cell data
@@ -742,6 +743,40 @@ def renameAttribute(
     return
 
 
+def updateAttribute( mesh: vtkDataSet,
+                     newValue: npt.NDArray[ Any ],
+                     attributeName: str,
+                     piece: Piece = Piece.CELLS,
+                     logger: Union[ Logger, None ] = None ) -> None:
+    """Update the value of an attribute. Creates the attribute if it is not already in the dataset.
+
+    Args:
+        mesh (vtkDataSet): Input mesh.
+        newValue (npt.NDArray[Any]): New value for the attribute.
+        attributeName (str): Name of the attribute.
+        piece (Piece): The piece of the attribute.
+        logger (Union[Logger, None], optional): A logger to manage the output messages.
+            Defaults to None, an internal logger is used.
+    """
+    # Check if an external logger is given.
+    if logger is None:
+        logger = getLogger( "updateAttribute", True )
+
+    if isAttributeInObject( mesh, attributeName, piece ):
+        data: Union[ vtkPointData, vtkCellData ]
+        if piece == Piece.CELLS:
+            data = mesh.GetCellData()
+        elif piece == Piece.POINTS:
+            data = mesh.GetPointData()
+        else:
+            raise ValueError( "Only point and cell data handled." )
+        data.RemoveArray( attributeName )
+
+    createAttribute( mesh, newValue, attributeName, piece=piece, logger=logger )
+
+    return
+
+
 def createCellCenterAttribute(
     mesh: Union[ vtkMultiBlockDataSet, vtkDataSet ],
     cellCenterAttributeName: str,
@@ -828,7 +863,6 @@ def transferPointDataToCellData(
 
     Returns:
         vtkPointSet: Output mesh where point data were transferred to cells.
-
     """
     if logger is None:
         logger = getLogger( "transferPointDataToCellData", True )
