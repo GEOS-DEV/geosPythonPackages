@@ -13,9 +13,10 @@ GEOS computes many outputs including flow and geomechanic properties if coupled 
     Several processing filters require the definition of physical parameters. The following list is non-exhaustive. See :ref:`output-constant`.
 
     Default values:
+
     - grainBulkModulus = 38e9 Pa ( quartz value )
     - specificDensity = 1000.0 kg/m³ ( water value )
-    - rock cohesion: 0.0 Pa $( fractured case )
+    - rock cohesion: 0.0 Pa ( fractured case )
     - friction angle: 10°
 
 
@@ -26,15 +27,6 @@ FaultStabilityAnalysis
    :members:
    :undoc-members:
    :show-inheritance:
-
-
-SurfaceGeomechanics
------------------------------
-
-.. automodule:: geos.processing.post_processing.SurfaceGeomechanics
-    :members:
-    :undoc-members:
-    :show-inheritance:
 
 
 GeomechanicsCalculator
@@ -62,3 +54,12 @@ GeosBlockMerge
    :members:
    :undoc-members:
    :show-inheritance:
+
+
+SurfaceGeomechanics
+-----------------------------
+
+.. automodule:: geos.processing.post_processing.SurfaceGeomechanics
+    :members:
+    :undoc-members:
+    :show-inheritance:

@@ -27,6 +27,7 @@ Filter input should be vtkUnstructuredGrid.
 To use the filter:
 
 .. code-block:: python
+
     from geos.processing.pre_processing.TetQualityAnalysis import TetQualityAnalysis
 
     # Filter inputs
