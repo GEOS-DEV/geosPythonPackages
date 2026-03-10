@@ -91,7 +91,7 @@ class FaultStabilityAnalysis:
         self.outputDir: Path = Path( "FaultStabilityAnalysis/" )
 
         # Mechanical parameters
-        self.frictionAngle: float = 12  # [degrees]
+        self.frictionAngle: float = 10  # [degrees]
         self.cohesion: float = 0  # [bar]
 
         # Normal orientation: Rotate normals and tangents from 180°

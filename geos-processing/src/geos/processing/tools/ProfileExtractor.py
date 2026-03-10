@@ -228,7 +228,7 @@ class ProfileExtractor:
         if nSlices <= 0:
             raise ValueError( f"         Invalid nSlices: {nSlices}" )
 
-        self.logger.info( f"        Median Z spacing: {medianZSpacing:.1f}m"
+        self.logger.info( f"        Median Z spacing: {medianZSpacing:.1f}m\n"
                           f"        Creating {nSlices} slices" )
 
         zSlices = np.linspace( zMax, zMin, nSlices + 1 )

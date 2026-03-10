@@ -106,7 +106,6 @@ class Visualizer:
             years = time / ( 365.25 * 24 * 3600 )
             filename = f'mohr_coulomb_phi{phi}_c{cohesion}_{years:.0f}y.png'
             plt.savefig( path / filename, dpi=300, bbox_inches='tight' )
-            plt.savefig( str( path / filename ), dpi=300, bbox_inches='tight' )
 
     def plotDepthProfiles(
         self: Self,
@@ -301,7 +300,6 @@ class Visualizer:
         axes[ 0 ].tick_params( labelsize=fsize - 2 )
 
         # Plot 2: Shear Stress
-        # axes[ 1 ].set_xlabel( 'Shear Stress τ [bar]', fontsize=fsize, weight="bold" )
         axes[ 1 ].set_xlabel( 'Shear Stress $\\tau$ [bar]', fontsize=fsize, weight="bold" )
         axes[ 1 ].set_ylabel( 'Depth [m]', fontsize=fsize, weight="bold" )
         axes[ 1 ].set_title( 'Shear Stress Profile', fontsize=fsize + 2, weight="bold" )
@@ -806,9 +804,14 @@ class Visualizer:
         customLines = [
             Line2D( [ 0 ], [ 0 ], color='red', linewidth=2.5, marker=None, label='Plus side', alpha=0.5 ),
             Line2D( [ 0 ], [ 0 ], color='blue', linewidth=2.5, marker=None, label='Minus side', alpha=0.5 ),
-            Line2D( [ 0 ], [ 0 ], color='gray', linewidth=2.5, linestyle='-', marker='o', label='sigma₁ (max)' ),
-            Line2D( [ 0 ], [ 0 ], color='gray', linewidth=2.0, linestyle='-', marker='s', label='sigma₂ (inter)' ),
-            Line2D( [ 0 ], [ 0 ], color='gray', linewidth=2.5, linestyle='-', marker='v', label='sigma₃ (min)' )
+            Line2D( [ 0 ], [ 0 ], color='gray', linewidth=2.5, linestyle='-', marker='o', label=r'$\\sigma_1$ (max)' ),
+            Line2D( [ 0 ], [ 0 ],
+                    color='gray',
+                    linewidth=2.0,
+                    linestyle='-',
+                    marker='s',
+                    label=r'$\\sigma_2$  (inter)' ),
+            Line2D( [ 0 ], [ 0 ], color='gray', linewidth=2.5, linestyle='-', marker='v', label=r'$\\sigma_3$  (min)' )
         ]
         axes[ 4 ].legend( handles=customLines, loc='best', fontsize=fsize - 3, ncol=1 )
 
