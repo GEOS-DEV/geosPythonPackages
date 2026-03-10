@@ -683,8 +683,8 @@ class StressProjector:
 
         pvdPath = self.vtuOutputDir / filename
 
-        self.logger.info( f" Creating PVD collection: {pvdPath}"
-                          f"   Timesteps: {len(self.timestepInfo)}" )
+        self.logger.info( f" Creating PVD collection: {pvdPath}" )
+        self.logger.info( f"   Timesteps: {len(self.timestepInfo)}" )
 
         # Create XML structure
         root = Element( 'VTKFile' )
