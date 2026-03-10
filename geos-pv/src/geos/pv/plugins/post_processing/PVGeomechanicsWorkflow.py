@@ -48,7 +48,7 @@ PVGeosBlockExtractAndMerge is a Paraview plugin processing the input mesh at the
         * Convert volume meshes to surface if needed
         * Copy "geomechanics" attributes from the initial timestep to the current one if they exist
 
-PVGeomechanicsCalculator is a paraview plugin that allows to compute basic and advanced geomechanics properties from existing ones in the mesh. This is donne on each block of the volume mesh.
+PVGeomechanicsCalculator is a paraview plugin that allows to compute basic and advanced geomechanics properties from existing ones in the mesh. This is done on each block of the volume mesh.
 
 The basic geomechanics properties computed on the mesh are:
     - The elastic moduli not present on the mesh
@@ -64,7 +64,7 @@ The advanced geomechanics properties computed on the mesh are:
     - Fracture index and threshold
     - Critical pore pressure and pressure index
 
-PVSurfaceGeomechanics is a Paraview plugin that allows to compute additional geomechanical attributes from the input surfaces, such as shear capacity utilization (SCU). This is donne on each block of the fault mesh.
+PVSurfaceGeomechanics is a Paraview plugin that allows to compute additional geomechanical attributes from the input surfaces, such as shear capacity utilization (SCU). This is done on each block of the fault mesh.
 
 This filter results in 3 output pipelines with the vtkMultiBlockDataSet:
     - "Volume" contains the volume domain
