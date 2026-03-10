@@ -49,6 +49,7 @@ class ProfileExtractor:
 
         The algorithm adaptively follows a vertical sampling strategy guided by
         detected fault membership inside the provided cell data. It performs:
+
             1. Finding the closest starting point to the provided (xStart, yStart, zStart).
             2. Automatically detecting the target fault using the provided ``cellData``
                 (e.g., fields like ``FaultMask`` or any other fault-identifying attribute).
