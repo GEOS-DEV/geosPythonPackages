@@ -18,6 +18,7 @@ SELF_INTERSECTING_ELEMENTS = "selfIntersectingElements"
 SUPPORTED_ELEMENTS = "supportedElements"
 ORPHAN_2D = "orphan2d"
 CHECK_INTERNAL_TAGS = "checkInternalTags"
+EULER = "euler"
 
 
 @dataclass( frozen=True )
