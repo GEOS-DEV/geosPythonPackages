@@ -7,11 +7,12 @@ import numpy.typing as npt
 import logging
 from typing_extensions import Self, Union, Any
 from vtkmodules.util.numpy_support import vtk_to_numpy, numpy_to_vtk
-from vtkmodules.vtkCommonDataModel import vtkDataSet, vtkKdTree, vtkBoundingBox
+from vtkmodules.vtkCommonDataModel import vtkDataSet, vtkKdTree, vtkBoundingBox, vtkSelectionNode, vtkSelection
+from vtkmodules.vtkFiltersExtraction import vtkExtractSelection
 from vtkmodules.vtkFiltersCore import vtkCellCenters
-from vtkmodules.vtkCommonCore import reference
+from vtkmodules.vtkCommonCore import reference, vtkIdTypeArray
 from geos.mesh.utils.arrayHelpers import ( getAttributeSet)
-from geos.utils.Logger import ( getLogger, Logger, CountWarningHandler, isHandlerInLogger, getLoggerHandlerType )
+from geos.utils.Logger import ( getLogger, Logger, CountVerbosityHandler, getLoggerHandlerType )
 from geos.utils.pieceEnum import Piece
 
 
@@ -45,9 +46,14 @@ class MeshToMeshInterpolator:
         if not MeshToMeshInterpolator._is_subset(meshFrom, meshTo):
             raise NotImplementedError(f"meshFrom should be a subset or whole meshTo")
 
-        self.meshFrom: Union[ vtkDataSet, ] = meshFrom
-        self.meshTo: Union[ vtkDataSet, ] = meshTo
-            
+        self.meshFrom: Union[ vtkDataSet, ] = MeshToMeshInterpolator._filter_volume_cells(meshFrom)
+        self.meshTo: Union[ vtkDataSet, ] = MeshToMeshInterpolator._filter_volume_cells(meshTo)
+        
+        if self.meshFrom.GetNumberOfCells() == 0:
+            raise NotImplementedError("MeshFrom : Not implemented for pure surface mesh")
+        if self.meshTo.GetNumberOfCells() == 0:
+            raise NotImplementedError("MeshTo : Not implemented for pure surface mesh")
+
         self.attributes: dict[Piece, set[str] ] = {}
         self.isApplied : bool = False
         self.fill_in_value : float = 0.0
@@ -65,8 +71,8 @@ class MeshToMeshInterpolator:
             self.logger.setLevel( logging.INFO )
             self.logger.propagate = False
 
-        counter: CountWarningHandler = CountWarningHandler()
-        self.counter: CountWarningHandler
+        counter: CountVerbosityHandler = CountVerbosityHandler()
+        self.counter: CountVerbosityHandler
         self.nbWarnings: int = 0
         try:
             self.counter = getLoggerHandlerType( type( counter ), self.logger )
@@ -181,7 +187,7 @@ class MeshToMeshInterpolator:
         return fp
 
     @staticmethod
-    def _filter_volume_cells(mesh, save_surfaces=True, output_prefix=""):
+    def _filter_volume_cells( mesh: vtkDataSet) -> Any:
         """Keep only 3D volume cells; optionally save 2D cells to VTU."""
 
         volume_ids  = vtkIdTypeArray()
@@ -190,42 +196,36 @@ class MeshToMeshInterpolator:
 
         for i in range(mesh.GetNumberOfCells()):
             dim = mesh.GetCell(i).GetCellDimension()
-            if   dim == 3: volume_ids.InsertNextValue(i);  n_volume  += 1
-            elif dim == 2: surface_ids.InsertNextValue(i); n_surface += 1
-            else:                                          n_other   += 1
+            if   dim == 3: 
+                volume_ids.InsertNextValue(i)
+                n_volume  += 1
+            elif dim == 2: 
+                surface_ids.InsertNextValue(i)
+                n_surface += 1
+            else:                                          
+                n_other   += 1
 
-        print(f"  Cell types: {n_volume} volume (3D) | "
+        getLogger(loggerTitle, True).info(f"  Cell types: {n_volume} volume (3D) | "
               f"{n_surface} surface (2D) | {n_other} other")
-
-        if n_surface > 0 and save_surfaces:
-            sn = vtk.vtkSelectionNode()
-            sn.SetFieldType(vtk.vtkSelectionNode.CELL)
-            sn.SetContentType(vtk.vtkSelectionNode.INDICES)
-            sn.SetSelectionList(surface_ids)
-            sel = vtk.vtkSelection(); sel.AddNode(sn)
-            ext = vtk.vtkExtractSelection()
-            ext.SetInputData(0, mesh); ext.SetInputData(1, sel); ext.Update()
-            surf = vtk.vtkUnstructuredGrid(); surf.ShallowCopy(ext.GetOutput())
-            fname = f"{output_prefix}_surfaces_only.vtu" if output_prefix else "surfaces_only.vtu"
-            w = vtk.vtkXMLUnstructuredGridWriter()
-            w.SetFileName(fname); w.SetInputData(surf); w.Write()
-            print(f"Saved surface cells → {fname}")
 
         if n_surface == 0 and n_other == 0:
             print("No filtering needed (all cells are 3D)")
             return mesh
 
-        sn = vtk.vtkSelectionNode()
-        sn.SetFieldType(vtk.vtkSelectionNode.CELL)
-        sn.SetContentType(vtk.vtkSelectionNode.INDICES)
+        sn = vtkSelectionNode()
+        sn.SetFieldType(vtkSelectionNode.CELL)
+        sn.SetContentType(vtkSelectionNode.INDICES)
         sn.SetSelectionList(volume_ids)
-        sel = vtk.vtkSelection(); sel.AddNode(sn)
-        ext = vtk.vtkExtractSelection()
+        sel = vtkSelection(); sel.AddNode(sn)
+        ext = vtkExtractSelection()
         ext.SetInputData(0, mesh); ext.SetInputData(1, sel); ext.Update()
-        out = vtk.vtkUnstructuredGrid(); out.ShallowCopy(ext.GetOutput())
-        print(f"Filtered → {out.GetNumberOfCells()} cells "
+        getLogger(loggerTitle,True).info(f"Filtered → {n_volume} cells "
               f"(removed {n_surface + n_other})")
-        return out
+        
+        if n_volume > 0:
+            return ext.GetOutput()
+        
+        return mesh.NewInstance()
 
     # def _extract_region(self, mesh, attr_name, region_ids):
     #     """
@@ -389,7 +389,7 @@ class MeshToMeshInterpolator:
             return self.meshTo
         
         # return empty is VTK behaviour on non-updated filter
-        return vtkDataSet()
+        return self.meshTo.NewInstance()
 
 
         # end = time.perf_counter()
