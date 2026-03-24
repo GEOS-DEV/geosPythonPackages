@@ -3,6 +3,8 @@ The XML-files used to launch the simulation came from the integrated tests of GE
 
 The mesh 'geosOutput2Ranks.vtm' has been saved as vtm from the GEOS simulation on 2 ranks pvd result with ParaView 6 with the data of the second time step.
 
+The ParaView plugin "PVGeosBlockExtractAndMerge" has been used to get the vtm with the block "CellElementRegion" from the GEOS simulation on 4 ranks pvd result. The integrated ParaView plugin "Merge Blocks" has been used to get a vtu with the data of the second time step and saved as 'extractAndMergeVolume4Ranks.vtu' on ParaView 6.
+
 The ParaView plugin "PVGeosBlockExtractAndMerge" has been used to get the vtm with the block "CellElementRegion" from the GEOS simulation on 2 ranks pvd result. The integrated ParaView plugin "Merge Blocks" has been used to get a vtu with the data of the second time step and saved as 'extractAndMergeVolume.vtu' on ParaView 6.
 
 The ParaView plugin "PVGeosBlockExtractAndMerge" has been used to get the vtm with the block "SurfaceElementRegion" from the GEOS simulation on 2 ranks pvd result. The integrated ParaView plugin "Merge Blocks" has been used to get a vtu with the data of the second time step and saved as 'extractAndMergeSurface.vtu' on ParaView 6.

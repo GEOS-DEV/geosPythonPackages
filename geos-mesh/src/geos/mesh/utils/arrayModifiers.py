@@ -4,47 +4,26 @@
 import logging
 import numpy as np
 import numpy.typing as npt
-import vtkmodules.util.numpy_support as vnp
+
 from typing import Union, Any
-from geos.utils.Logger import ( getLogger, Logger, VTKCaptureLog, RegexExceptionFilter )
+from random import randint
 
-from vtk import (  # type: ignore[import-untyped]
-    VTK_BIT, VTK_UNSIGNED_CHAR, VTK_UNSIGNED_SHORT, VTK_UNSIGNED_LONG, VTK_UNSIGNED_INT, VTK_UNSIGNED_LONG_LONG,
-    VTK_CHAR, VTK_SIGNED_CHAR, VTK_SHORT, VTK_LONG, VTK_INT, VTK_LONG_LONG, VTK_ID_TYPE, VTK_FLOAT, VTK_DOUBLE,
-)
-from vtkmodules.vtkCommonDataModel import (
-    vtkMultiBlockDataSet,
-    vtkDataSet,
-    vtkPointSet,
-    vtkCompositeDataSet,
-    vtkDataObject,
-    vtkPointData,
-    vtkCellData,
-    vtkCell,
-)
-from vtkmodules.vtkFiltersCore import (
-    vtkArrayRename,
-    vtkCellCenters,
-    vtkPointDataToCellData,
-)
-from vtkmodules.vtkCommonCore import (
-    vtkDataArray,
-    vtkPoints,
-    vtkLogger,
-)
-from geos.mesh.utils.arrayHelpers import (
-    getComponentNames,
-    getAttributesWithNumberOfComponents,
-    getArrayInObject,
-    isAttributeInObject,
-    isAttributeGlobal,
-    getVtkArrayTypeInObject,
-    getNumberOfComponents,
-)
+from vtkmodules.vtkFiltersCore import vtkArrayRename, vtkCellCenters, vtkPointDataToCellData
+from vtkmodules.util.numpy_support import vtk_to_numpy, numpy_to_vtk, get_vtk_to_numpy_typemap
+from vtkmodules.vtkCommonCore import ( vtkDataArray, vtkPoints, vtkLogger, VTK_BIT, VTK_UNSIGNED_CHAR,
+                                       VTK_UNSIGNED_SHORT, VTK_UNSIGNED_LONG, VTK_UNSIGNED_INT, VTK_UNSIGNED_LONG_LONG,
+                                       VTK_CHAR, VTK_SIGNED_CHAR, VTK_SHORT, VTK_LONG, VTK_INT, VTK_LONG_LONG,
+                                       VTK_ID_TYPE, VTK_FLOAT, VTK_DOUBLE )
+from vtkmodules.vtkCommonDataModel import ( vtkMultiBlockDataSet, vtkDataSet, vtkPointSet, vtkCompositeDataSet,
+                                            vtkDataObject, vtkPointData, vtkCellData, vtkCell )
+
 from geos.mesh.utils.multiblockHelpers import getBlockElementIndexesFlatten
-from geos.utils.Errors import VTKError
-
+from geos.mesh.utils.arrayHelpers import ( getComponentNames, getAttributesWithNumberOfComponents, getArrayInObject,
+                                           isAttributeInObject, isAttributeGlobal, getVtkArrayTypeInObject,
+                                           getNumberOfComponents )
 from geos.utils.pieceEnum import Piece
+from geos.utils.Errors import VTKError
+from geos.utils.Logger import ( getLogger, Logger, VTKCaptureLog, RegexExceptionFilter )
 
 __doc__ = """
 ArrayModifiers contains utilities to process VTK Arrays objects.
@@ -52,6 +31,7 @@ ArrayModifiers contains utilities to process VTK Arrays objects.
 These methods include:
     - filling partial VTK arrays with values (useful for block merge)
     - creation of new VTK array, empty or with a given data array
+    - modification of the value of a VTK array
     - copy VTK array from a source mesh to a final mesh
     - transfer VTK array from a source mesh to a final mesh with a element map
     - transfer from VTK point data to VTK cell data
@@ -111,7 +91,7 @@ def fillPartialAttributes(
     if nbComponents > 1:
         componentNames = getComponentNames( multiBlockDataSet, attributeName, piece )
 
-    typeMapping: dict[ int, type ] = vnp.get_vtk_to_numpy_typemap()
+    typeMapping: dict[ int, type ] = get_vtk_to_numpy_typemap()
     valueType: type = typeMapping[ vtkDataType ]
     # Set the default value depending of the type of the attribute to fill
     if listValues is None:
@@ -220,7 +200,7 @@ def createEmptyAttribute(
         vtkDataArray: The empty attribute.
     """
     # Check if the vtk data type is correct.
-    vtkNumpyTypeMap: dict[ int, type ] = vnp.get_vtk_to_numpy_typemap()
+    vtkNumpyTypeMap: dict[ int, type ] = get_vtk_to_numpy_typemap()
     if vtkDataType not in vtkNumpyTypeMap:
         raise ValueError( f"Attribute type { vtkDataType } is unknown." )
 
@@ -312,7 +292,7 @@ def createConstantAttribute(
         # Check the consistency between the given value type and the vtk array type if it exists.
         valueType = valueType().dtype
         if vtkDataType is not None:
-            vtkNumpyTypeMap: dict[ int, type ] = vnp.get_vtk_to_numpy_typemap()
+            vtkNumpyTypeMap: dict[ int, type ] = get_vtk_to_numpy_typemap()
             if vtkDataType not in vtkNumpyTypeMap:
                 raise ValueError( f"The vtk data type { vtkDataType } is unknown." )
 
@@ -394,7 +374,7 @@ def createAttribute(
 
     # Check the coherency between the given array type and the vtk array type if it exist.
     if vtkDataType is not None:
-        vtkNumpyTypeMap: dict[ int, type ] = vnp.get_vtk_to_numpy_typemap()
+        vtkNumpyTypeMap: dict[ int, type ] = get_vtk_to_numpy_typemap()
         if vtkDataType not in vtkNumpyTypeMap:
             raise ValueError( f"The vtk data type { vtkDataType } is unknown." )
 
@@ -417,7 +397,7 @@ def createAttribute(
         raise ValueError( f"The npArray must have { nbElements } elements, not { len( npArray ) }." )
 
     # Convert the numpy array int a vtkDataArray.
-    createdAttribute: vtkDataArray = vnp.numpy_to_vtk( npArray, deep=True, array_type=vtkDataType )
+    createdAttribute: vtkDataArray = numpy_to_vtk( npArray, deep=True, array_type=vtkDataType )
     createdAttribute.SetName( attributeName )
 
     nbComponents: int = createdAttribute.GetNumberOfComponents()
@@ -459,7 +439,7 @@ def copyAttribute(
     The similarity of two meshes means that the two mesh have the same number of elements (cells and points) located in the same coordinates and with the same indexation. Testing this similarity is time consuming therefore, only few metric are compared:
         - the block indexation for multiblock dataset
         - the number of the element where the attribute is located, for multiblock dataset it is done for each block
-        - the coordinates of the first element, for multiblock dataset it is done for each block
+        - the coordinates of a random element, for multiblock dataset it is done for each block
 
     Args:
         meshFrom (vtkMultiBlockDataSet | vtkDataSet): mesh from which to copy the attribute.
@@ -484,12 +464,27 @@ def copyAttribute(
         # Small check to check if the two meshes are similar.
         coordElementTo: set[ tuple[ float, ...] ] = set()
         coordElementFrom: set[ tuple[ float, ...] ] = set()
+        nbElementTo: int
+        nbElementFrom: int
+        idElemToCompare: int
         if piece == Piece.POINTS:
-            coordElementTo.add( meshTo.GetPoint( 0 ) )
-            coordElementFrom.add( meshFrom.GetPoint( 0 ) )
+            nbElementTo = meshTo.GetNumberOfPoints()
+            nbElementFrom = meshFrom.GetNumberOfPoints()
+            if nbElementFrom != nbElementTo:
+                raise ValueError( "The two meshes have not the same number of points." )
+
+            idElemToCompare = randint( 0, nbElementTo )
+            coordElementTo.add( meshTo.GetPoint( idElemToCompare ) )
+            coordElementFrom.add( meshFrom.GetPoint( idElemToCompare ) )
         elif piece == Piece.CELLS:
-            cellTo: vtkCell = meshTo.GetCell( 0 )
-            cellFrom: vtkCell = meshFrom.GetCell( 0 )
+            nbElementTo = meshTo.GetNumberOfCells()
+            nbElementFrom = meshFrom.GetNumberOfCells()
+            if nbElementFrom != nbElementTo:
+                raise ValueError( "The two meshes don't have the same number of cells." )
+
+            idElemToCompare = randint( 0, nbElementTo )
+            cellTo: vtkCell = meshTo.GetCell( idElemToCompare )
+            cellFrom: vtkCell = meshFrom.GetCell( idElemToCompare )
             # Get the coordinates of each points of the cell.
             nbPointsTo: int = cellTo.GetNumberOfPoints()
             nbPointsFrom: int = cellTo.GetNumberOfPoints()
@@ -503,8 +498,9 @@ def copyAttribute(
                 coordElementFrom.add( cellPointsFrom.GetPoint( idPoint ) )
         else:
             raise ValueError( "The piece of the attribute to copy must be cells or points." )
+
         if coordElementTo != coordElementFrom:
-            raise ValueError( "The two meshes have not the same element indexation." )
+            raise ValueError( "The two meshes don't have the same element indexation." )
 
         npArray: npt.NDArray[ Any ] = getArrayInObject( meshFrom, attributeNameFrom, piece )
         componentNames: tuple[ str, ...] = getComponentNames( meshFrom, attributeNameFrom, piece )
@@ -596,6 +592,9 @@ def transferAttributeWithElementMap(
     ## it is global
     if isinstance( meshFrom, vtkMultiBlockDataSet ) and not isAttributeGlobal( meshFrom, attributeName, piece ):
         raise AttributeError( f"The attribute { attributeName } must be global in the source mesh." )
+    ## it is not in the meshTo
+    if isAttributeInObject( meshTo, attributeName, piece ):
+        raise AttributeError( f"The attribute { attributeName } is already in the final mesh." )
 
     # Transfer the attribute
     if isinstance( meshTo, vtkDataSet ):
@@ -624,7 +623,7 @@ def transferAttributeWithElementMap(
         else:
             raise AttributeError( f"The attribute { attributeName } has an unknown type." )
 
-        typeMapping: dict[ int, type ] = vnp.get_vtk_to_numpy_typemap()
+        typeMapping: dict[ int, type ] = get_vtk_to_numpy_typemap()
         valueType: type = typeMapping[ vtkDataType ]
 
         arrayTo: npt.NDArray[ Any ]
@@ -648,7 +647,7 @@ def transferAttributeWithElementMap(
                 else:
                     raise TypeError( "The source mesh has to be inherited from vtkDataSet or vtkMultiBlockDataSet." )
 
-                arrayFrom: npt.NDArray[ Any ] = vnp.vtk_to_numpy( dataFrom.GetArray( attributeName ) )
+                arrayFrom: npt.NDArray[ Any ] = vtk_to_numpy( dataFrom.GetArray( attributeName ) )
                 valueToTransfer = arrayFrom[ idElementFrom ]
 
             arrayTo[ idElementTo ] = valueToTransfer
@@ -661,9 +660,6 @@ def transferAttributeWithElementMap(
                          vtkDataType=vtkDataType,
                          logger=logger )
     elif isinstance( meshTo, vtkMultiBlockDataSet ):
-        if isAttributeInObject( meshTo, attributeName, piece ):
-            raise AttributeError( f"The attribute { attributeName } is already in the final mesh." )
-
         listFlatIdDataSetTo: list[ int ] = getBlockElementIndexesFlatten( meshTo )
         for flatIdDataSetTo in listFlatIdDataSetTo:
             dataSetTo: vtkDataSet = vtkDataSet.SafeDownCast( meshTo.GetDataSet( flatIdDataSetTo ) )
@@ -743,6 +739,40 @@ def renameAttribute(
     object.ShallowCopy( renameArrayFilter.GetOutput() )
     if object is None:
         raise VTKError( "Something went wrong with VTK renaming of the attribute." )
+
+    return
+
+
+def updateAttribute( mesh: vtkDataSet,
+                     newValue: npt.NDArray[ Any ],
+                     attributeName: str,
+                     piece: Piece = Piece.CELLS,
+                     logger: Union[ Logger, None ] = None ) -> None:
+    """Update the value of an attribute. Creates the attribute if it is not already in the dataset.
+
+    Args:
+        mesh (vtkDataSet): Input mesh.
+        newValue (npt.NDArray[Any]): New value for the attribute.
+        attributeName (str): Name of the attribute.
+        piece (Piece): The piece of the attribute.
+        logger (Union[Logger, None], optional): A logger to manage the output messages.
+            Defaults to None, an internal logger is used.
+    """
+    # Check if an external logger is given.
+    if logger is None:
+        logger = getLogger( "updateAttribute", True )
+
+    if isAttributeInObject( mesh, attributeName, piece ):
+        data: Union[ vtkPointData, vtkCellData ]
+        if piece == Piece.CELLS:
+            data = mesh.GetCellData()
+        elif piece == Piece.POINTS:
+            data = mesh.GetPointData()
+        else:
+            raise ValueError( "Only point and cell data handled." )
+        data.RemoveArray( attributeName )
+
+    createAttribute( mesh, newValue, attributeName, piece=piece, logger=logger )
 
     return
 
@@ -833,7 +863,6 @@ def transferPointDataToCellData(
 
     Returns:
         vtkPointSet: Output mesh where point data were transferred to cells.
-
     """
     if logger is None:
         logger = getLogger( "transferPointDataToCellData", True )

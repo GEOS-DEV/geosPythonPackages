@@ -15,8 +15,7 @@ from geos.pv.utils.config import update_paths
 
 update_paths()
 
-from geos.utils.Errors import VTKError
-from geos.utils.Logger import ( CountWarningHandler, getLoggerHandlerType )
+from geos.utils.Logger import ( CountVerbosityHandler, getLoggerHandlerType )
 from geos.utils.PhysicalConstants import ( DEFAULT_FRICTION_ANGLE_DEG, DEFAULT_GRAIN_BULK_MODULUS,
                                            DEFAULT_ROCK_COHESION, WATER_DENSITY )
 
@@ -49,7 +48,7 @@ PVGeosBlockExtractAndMerge is a Paraview plugin processing the input mesh at the
         * Convert volume meshes to surface if needed
         * Copy "geomechanics" attributes from the initial timestep to the current one if they exist
 
-PVGeomechanicsCalculator is a paraview plugin that allows to compute basic and advanced geomechanics properties from existing ones in the mesh. This is donne on each block of the volume mesh.
+PVGeomechanicsCalculator is a paraview plugin that allows to compute basic and advanced geomechanics properties from existing ones in the mesh. This is done on each block of the volume mesh.
 
 The basic geomechanics properties computed on the mesh are:
     - The elastic moduli not present on the mesh
@@ -65,7 +64,7 @@ The advanced geomechanics properties computed on the mesh are:
     - Fracture index and threshold
     - Critical pore pressure and pressure index
 
-PVSurfaceGeomechanics is a Paraview plugin that allows to compute additional geomechanical attributes from the input surfaces, such as shear capacity utilization (SCU). This is donne on each block of the fault mesh.
+PVSurfaceGeomechanics is a Paraview plugin that allows to compute additional geomechanical attributes from the input surfaces, such as shear capacity utilization (SCU). This is done on each block of the fault mesh.
 
 This filter results in 3 output pipelines with the vtkMultiBlockDataSet:
     - "Volume" contains the volume domain
@@ -145,12 +144,14 @@ class PVGeomechanicsWorkflow( VTKPythonAlgorithmBase ):
         self.logger.addHandler( HANDLER )
         self.logger.propagate = False
 
-        counter: CountWarningHandler = CountWarningHandler()
-        self.counter: CountWarningHandler
+        counter: CountVerbosityHandler = CountVerbosityHandler()
+        self.counter: CountVerbosityHandler
         self.nbWarnings: int = 0
+        self.nbErrors: int = 0
         try:
             self.counter = getLoggerHandlerType( type( counter ), self.logger )
             self.counter.resetWarningCount()
+            self.counter.resetErrorCount()
         except ValueError:
             self.counter = counter
             self.counter.setLevel( logging.INFO )
@@ -355,14 +356,19 @@ class PVGeomechanicsWorkflow( VTKPythonAlgorithmBase ):
             else:
                 self.logger.info( f"{ result }." )
 
-        except ( ValueError, VTKError, AttributeError, AssertionError ) as e:
+        except ChildProcessError as e:
             self.logger.error( f"The plugin { self.logger.name } failed due to:\n{ e }" )
         except Exception as e:
             mess: str = f"The plugin { self.logger.name } failed due to:\n{ e }"
             self.logger.critical( mess, exc_info=True )
 
+        # Keep number of verbosity logged during the plugin application
         self.nbWarnings = self.counter.warningCount
+        self.nbErrors = self.counter.errorCount
+
+        # Reset the CountVerbosityHandler in case the plugin is applied again
         self.counter.resetWarningCount()
+        self.counter.resetErrorCount()
 
         return 1
 
@@ -373,6 +379,10 @@ class PVGeomechanicsWorkflow( VTKPythonAlgorithmBase ):
         extractAndMergeFilter.Update()
         # Add to the warning counter the number of warning logged with the call of GeosBlockExtractAndMerge plugin
         self.counter.addExternalWarningCount( extractAndMergeFilter.nbWarnings )
+        # Add to the error counter the number of error logged with the call of GeosBlockExtractAndMerge plugin
+        self.counter.addExternalErrorCount( extractAndMergeFilter.nbErrors )
+        if self.counter.errorCount != 0:
+            raise ChildProcessError( "Error during the processing of the plugin PVGeosBlockExtractAndMerge." )
 
         self.volumeMesh.ShallowCopy( extractAndMergeFilter.GetOutputDataObject( 0 ) )
         self.volumeMesh.Modified()
@@ -402,6 +412,10 @@ class PVGeomechanicsWorkflow( VTKPythonAlgorithmBase ):
         geomechanicsCalculatorPlugin.Update()
         # Add to the warning counter the number of warning logged with the call of GeomechanicsCalculator plugin
         self.counter.addExternalWarningCount( geomechanicsCalculatorPlugin.nbWarnings )
+        # Add to the error counter the number of error logged with the call of GeomechanicsCalculator plugin
+        self.counter.addExternalErrorCount( geomechanicsCalculatorPlugin.nbErrors )
+        if self.counter.errorCount != 0:
+            raise ChildProcessError( "Error during the processing of the plugin PVGeomechanicsCalculators." )
 
         self.volumeMesh.ShallowCopy( geomechanicsCalculatorPlugin.GetOutputDataObject( 0 ) )
         self.volumeMesh.Modified()
@@ -418,6 +432,10 @@ class PVGeomechanicsWorkflow( VTKPythonAlgorithmBase ):
         surfaceGeomechanicsPlugin.Update()
         # Add to the warning counter the number of warning logged with the call of SurfaceGeomechanics plugin
         self.counter.addExternalWarningCount( surfaceGeomechanicsPlugin.nbWarnings )
+        # Add to the error counter the number of error logged with the call of SurfaceGeomechanics plugin
+        self.counter.addExternalErrorCount( surfaceGeomechanicsPlugin.nbErrors )
+        if self.counter.errorCount != 0:
+            raise ChildProcessError( "Error during the processing of the plugin PVSurfaceGeomechanics." )
 
         self.faultMesh.ShallowCopy( surfaceGeomechanicsPlugin.GetOutputDataObject( 0 ) )
         self.faultMesh.Modified()

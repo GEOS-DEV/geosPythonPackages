@@ -12,7 +12,7 @@ from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkCellArray, v
                                             VTK_POLYHEDRON, VTK_POLYGON )
 from vtkmodules.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 
-from geos.utils.Logger import ( getLogger, Logger, CountWarningHandler, isHandlerInLogger, getLoggerHandlerType )
+from geos.utils.Logger import ( getLogger, Logger, CountVerbosityHandler, isHandlerInLogger, getLoggerHandlerType )
 from geos.processing.pre_processing.CellTypeCounterEnhanced import CellTypeCounterEnhanced
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
 
@@ -86,13 +86,13 @@ class SplitMesh():
             handlers: list[ logging.Handler ] = self.logger.handlers
             # Get the handler to specify if the logger already exist and has it
             for handler in handlers:
-                # The CountWarningHandler can't be the handler to specify
-                if type( handler ) is not type( CountWarningHandler() ):
+                # The CountVerbosityHandler can't be the handler to specify
+                if type( handler ) is not type( CountVerbosityHandler() ):
                     self.handler = handler
                     break
 
-        counter: CountWarningHandler = CountWarningHandler()
-        self.counter: CountWarningHandler
+        counter: CountVerbosityHandler = CountVerbosityHandler()
+        self.counter: CountVerbosityHandler
         self.nbWarnings: int = 0
         try:
             self.counter = getLoggerHandlerType( type( counter ), self.logger )
@@ -196,6 +196,7 @@ class SplitMesh():
         else:
             self.logger.info( f"{ result }." )
 
+        # Keep number of warnings logged during the filter application and reset the warnings count in case the filter is applied again.
         self.nbWarnings = self.counter.warningCount
         self.counter.resetWarningCount()
 
