@@ -9,8 +9,8 @@ from typing_extensions import Self, Union, Any
 from vtkmodules.util.numpy_support import vtk_to_numpy, numpy_to_vtk
 from vtkmodules.vtkCommonDataModel import vtkDataSet, vtkKdTree, vtkBoundingBox, vtkSelectionNode, vtkSelection, vtkUnstructuredGrid
 from vtkmodules.vtkFiltersExtraction import vtkExtractSelection
-from vtkmodules.vtkFiltersCore import vtkCellCenters
-from vtkmodules.vtkCommonCore import vtkIdTypeArray, vtkPoints
+from vtkmodules.vtkFiltersCore import vtkCellCenters, vtkAppendFilter
+from vtkmodules.vtkCommonCore import reference, vtkIdTypeArray, vtkPoints
 from geos.mesh.utils.arrayHelpers import ( getAttributeSet )
 from geos.utils.Logger import ( getLogger, Logger, CountVerbosityHandler, isHandlerInLogger, getLoggerHandlerType )
 from geos.utils.pieceEnum import Piece
@@ -87,12 +87,8 @@ class MeshToMeshInterpolator:
         if not MeshToMeshInterpolator._isSubset( meshFrom, meshTo ):
             raise NotImplementedError( "meshFrom should be a subset or whole meshTo" )
 
-        self.meshFrom: Union[
-            vtkDataSet,
-        ] = MeshToMeshInterpolator._filterVolumeCells( meshFrom )
-        self.meshTo: Union[
-            vtkDataSet,
-        ] = MeshToMeshInterpolator._filterVolumeCells( meshTo )
+        self.meshFrom, _ = MeshToMeshInterpolator._filterVolumeCells( meshFrom )
+        self.meshTo, self.nonVolumicPart = MeshToMeshInterpolator._filterVolumeCells( meshTo )
 
         if self.meshFrom.GetNumberOfCells() == 0:
             raise NotImplementedError( "MeshFrom : Not implemented for pure surface mesh" )
@@ -219,10 +215,10 @@ class MeshToMeshInterpolator:
 
         tgPts = _getPoints( meshTarget )
         source2target: list = [ [] for i in range( tgPts.GetNumberOfPoints() ) ]  # map index from source to target
-        box = vtkBoundingBox( meshSource.GetBounds() )  #.Inflate()
+        box = vtkBoundingBox( meshSource.GetBounds() )  #.Inflate() ?
         for i in range( tgPts.GetNumberOfPoints() ):
             if box.ContainsPoint( tgPts.GetPoint( i ) ):
-                dist = 0.
+                dist = reference( 0. )  # type: ignore[call-overload]
                 idSource = kd.FindClosestPoint( tgPts.GetPoint( i ), dist )
                 source2target[ i ].append( ( dist, idSource ) )
             else:
@@ -322,7 +318,7 @@ class MeshToMeshInterpolator:
         return fp
 
     @staticmethod
-    def _filterVolumeCells( mesh: vtkDataSet ) -> Any:
+    def _filterVolumeCells( mesh: vtkDataSet ) -> tuple:
         """Keep only 3D volume cells; optionally save 2D cells to VTU.
 
         Args:
@@ -348,25 +344,38 @@ class MeshToMeshInterpolator:
 
         if nSurface == 0 and nOther == 0:
             print( "No filtering needed (all cells are 3D)" )
-            return mesh
+            return mesh, mesh.NewInstance()
 
         sn = vtkSelectionNode()
         sn.SetFieldType( vtkSelectionNode.CELL )
         sn.SetContentType( vtkSelectionNode.INDICES )
         sn.SetSelectionList( volumeIds )
+        Esn = vtkSelectionNode()
+        Esn.SetFieldType( vtkSelectionNode.CELL )
+        Esn.SetContentType( vtkSelectionNode.INDICES )
+        Esn.SetSelectionList( volumeIds )
         sel = vtkSelection()
         sel.AddNode( sn )
+        Esel = vtkSelection()
+        Esel.AddNode( Esn )
         ext = vtkExtractSelection()
         ext.SetInputData( 0, mesh )
         ext.SetInputData( 1, sel )
         ext.Update()
+        Eext = vtkExtractSelection()
+        Eext.SetInputData( 0, mesh )
+        Eext.SetInputData( 1, Esel )
+        Eext.Update()
         getLogger( loggerTitle, True ).info( f"Filtered → {nVolume} cells "
                                              f"(removed {nSurface + nOther})" )
 
         if nVolume > 0:
-            return ext.GetOutput()
+            if nSurface > 0:
+                return ext.GetOutput(), Eext.GetOutput()
+            else:
+                return ext.GetOutput(), mesh.NewInstance()
 
-        return mesh.NewInstance()
+        return mesh.NewInstance(), mesh.NewInstance()
 
     def _extractRegion( self: Self, meshFrom: Union[
         vtkDataSet,
@@ -441,6 +450,12 @@ class MeshToMeshInterpolator:
     def getOutput( self: Self ) -> vtkDataSet:
         """Get the output mesh after applying the filter."""
         if self.isApplied:
-            return self.meshTo
+            f = vtkAppendFilter()
+            f.SetInputData( self.meshTo )
+            if self.nonVolumicPart.GetNumberOfCells() > 0:
+                f.AddInputData( self.nonVolumicPart )
+            f.Update()
+
+            return f.GetOutput()
         # return empty is VTK behaviour on non-updated filter
         return self.meshTo.NewInstance()
