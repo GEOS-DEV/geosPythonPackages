@@ -5,16 +5,15 @@
 import numpy as np
 import numpy.typing as npt
 import logging
-from typing_extensions import Self, Union, Any, Tuple
+from typing_extensions import Self, Union, Any
 from vtkmodules.util.numpy_support import vtk_to_numpy, numpy_to_vtk
 from vtkmodules.vtkCommonDataModel import vtkDataSet, vtkKdTree, vtkBoundingBox, vtkSelectionNode, vtkSelection, vtkUnstructuredGrid
 from vtkmodules.vtkFiltersExtraction import vtkExtractSelection
 from vtkmodules.vtkFiltersCore import vtkCellCenters
-from vtkmodules.vtkCommonCore import reference, vtkIdTypeArray
-from geos.mesh.utils.arrayHelpers import ( getAttributeSet)
+from vtkmodules.vtkCommonCore import vtkIdTypeArray, vtkPoints
+from geos.mesh.utils.arrayHelpers import ( getAttributeSet )
 from geos.utils.Logger import ( getLogger, Logger, CountVerbosityHandler, isHandlerInLogger, getLoggerHandlerType )
 from geos.utils.pieceEnum import Piece
-
 
 __doc__ = """
 MeshToMeshInterpolator is a vtk filter that map data from a source mesh to a target mesh using by default nearest
@@ -37,7 +36,7 @@ To use the filter:
 
     # opt. for external points' values (default to 0.)
     meshToMeshInterpolator.setFillInValue(42.0)
-    # opt. for region-restricted mappings 
+    # opt. for region-restricted mappings
     meshToMeshInterpolator.setCellRegionsIds("attribures",set({2,3}))
 
     try:
@@ -56,18 +55,22 @@ loggerTitle: str = "Mesh to mesh Mapping"
 #TODO for efficient/robust vtm->vtm need s->t block adjacency and selective merge blocks
 #TODO makes a perf log tooling
 
-class MeshToMeshInterpolator:
 
+class MeshToMeshInterpolator:
 
     def __init__(
         self: Self,
-        meshFrom: Union[ vtkDataSet,  ],
-        meshTo: Union[ vtkDataSet,  ],
+        meshFrom: Union[
+            vtkDataSet,
+        ],
+        meshTo: Union[
+            vtkDataSet,
+        ],
         attributeNames: set[ str ],
         speHandler: bool = False,
-    ):
+    ) -> None:
         """Paint attribute from a source mesh to a target mesh.
-        
+
         It allows painting of cell or point data, with configurable fill-in value for point in the target mesh which
         lies outside the source mesh.
 
@@ -81,25 +84,29 @@ class MeshToMeshInterpolator:
                 Defaults to False.
         """
         # making sure that meshFrom is subset or whole of meshTo
-        if not MeshToMeshInterpolator._isSubset(meshFrom, meshTo):
-            raise NotImplementedError(f"meshFrom should be a subset or whole meshTo")
+        if not MeshToMeshInterpolator._isSubset( meshFrom, meshTo ):
+            raise NotImplementedError( "meshFrom should be a subset or whole meshTo" )
 
-        self.meshFrom: Union[ vtkDataSet, ] = MeshToMeshInterpolator._filterVolumeCells(meshFrom)
-        self.meshTo: Union[ vtkDataSet, ] = MeshToMeshInterpolator._filterVolumeCells(meshTo)
-        
+        self.meshFrom: Union[
+            vtkDataSet,
+        ] = MeshToMeshInterpolator._filterVolumeCells( meshFrom )
+        self.meshTo: Union[
+            vtkDataSet,
+        ] = MeshToMeshInterpolator._filterVolumeCells( meshTo )
+
         if self.meshFrom.GetNumberOfCells() == 0:
-            raise NotImplementedError("MeshFrom : Not implemented for pure surface mesh")
+            raise NotImplementedError( "MeshFrom : Not implemented for pure surface mesh" )
         if self.meshTo.GetNumberOfCells() == 0:
-            raise NotImplementedError("MeshTo : Not implemented for pure surface mesh")
+            raise NotImplementedError( "MeshTo : Not implemented for pure surface mesh" )
 
-        self.attributes: dict[Piece, set[str] ] = {}
-        self.isApplied : bool = False
-        self.fillInValue : float = 0.0
-        
+        self.attributes: dict[ Piece, set[ str ] ] = {}
+        self.isApplied: bool = False
+        self.fillInValue: float = 0.0
+
         # sorting attribute to map by support
-        for piece in [Piece.POINTS,Piece.CELLS]:
-            self.attributes[piece] = attributeNames.intersection(getAttributeSet(self.meshFrom,piece))
-        
+        for piece in [ Piece.POINTS, Piece.CELLS ]:
+            self.attributes[ piece ] = attributeNames.intersection( getAttributeSet( self.meshFrom, piece ) )
+
         # Logger
         self.logger: Logger
         if not speHandler:
@@ -135,248 +142,305 @@ class MeshToMeshInterpolator:
         else:
             self.logger.warning( "The logger already has this handler, it has not been added." )
 
-    def setFillInValue(self: Self, val : float = 0.):
-        """Set a specific fill-in value for points in target mesh that lies outside the source mesh
+    def setFillInValue( self: Self, val: float = 0. ) -> None:
+        """Set a specific fill-in value for points in target mesh that lies outside the source mesh.
 
         Args:
             val (float): the float value
         """
         self.fillInValue = val
 
-    def setCellRegionsIds(self: Self, attrName: str, regionIds:list[int]):
+    def setCellRegionsIds( self: Self, attrName: str, regionIds: list[ int ] ) -> None:
         """Set a conditional integer flag for painting in the source mesh, with true equality check values.
-        
+
         Args:
-            attrName (str) : attribute's name to look up in the source mesh 
+            attrName (str) : attribute's name to look up in the source mesh
             regionIds (list[int]) : list of ints to be true
 
         """
+        if not self.meshFrom.GetCellData().HasArray( attrName ):
+            available = [
+                self.meshFrom.GetCellData().GetArrayName( i )
+                for i in range( self.meshFrom.GetCellData().GetNumberOfArrays() )
+            ]
+            raise KeyError( f"Attribute '{attrName}' not found.\n"
+                            f"  Available arrays: {available}" )
 
-        if not self.meshFrom.GetCellData().HasArray(attrName):
-            available = [self.meshFrom.GetCellData().GetArrayName(i)
-                         for i in range(self.meshFrom.GetCellData().GetNumberOfArrays())]
-            raise KeyError(
-                f"Attribute '{attrName}' not found.\n"
-                f"  Available arrays: {available}")
-
-        mask   = np.zeros(self.meshFrom.GetNumberOfCells(), dtype=bool)
-        attr   = vtk_to_numpy(self.meshFrom.GetCellData().GetArray(attrName)).astype(np.int64)
+        mask = np.zeros( self.meshFrom.GetNumberOfCells(), dtype=bool )
+        attr = vtk_to_numpy( self.meshFrom.GetCellData().GetArray( attrName ) ).astype( np.int64 )
         for rid in regionIds:
-            mask |= (attr == rid)
-        
-        self.meshFrom = self._extractRegion(self.meshFrom, mask)
+            mask |= ( attr == rid )
+
+        self.meshFrom = self._extractRegion( self.meshFrom, mask )
 
     @staticmethod
-    def _isSubset(meshSource: Union[vtkDataSet,],
-                   meshTarget: Union[vtkDataSet,]):
-        """Check if meshSource is fully contained in meshTarget
+    def _isSubset( meshSource: Union[
+        vtkDataSet,
+    ], meshTarget: Union[
+        vtkDataSet,
+    ] ) -> bool:
+        """Check if meshSource is fully contained in meshTarget.
 
         Args:
             meshSource (Union[vtkDataSet,]): mesh source
             meshTarget (Union[vtkDataSet,]): mesh target
         """
-        
         boundSource = np.asarray( meshSource.GetBounds() )
         boundTarget = np.asarray( meshTarget.GetBounds() )
 
         #find the lowest point and translate up
-        minPoint = np.min(np.vstack([boundTarget[[0,0,2,2,4,4]],boundSource[[0,0,2,2,4,4]]]),axis=0)
+        minPoint = np.min( np.vstack( [ boundTarget[ [ 0, 0, 2, 2, 4, 4 ] ], boundSource[ [ 0, 0, 2, 2, 4, 4 ] ] ] ),
+                           axis=0 )
         boundSource -= minPoint
         boundTarget -= minPoint
 
-        return vtkBoundingBox(tuple(boundTarget)).Contains(vtkBoundingBox(tuple(boundSource)))
+        return vtkBoundingBox( tuple( boundTarget ) ).Contains( vtkBoundingBox( tuple( boundSource ) ) )
 
     @staticmethod
-    def _clampInterpolate(meshSource: Union[ vtkDataSet, ],
-                           meshTarget: Union[ vtkDataSet, ],
-                           _getPoints : Any,
-                           ):
+    def _clampInterpolate(
+        meshSource: Union[
+            vtkDataSet,
+        ],
+        meshTarget: Union[
+            vtkDataSet,
+        ],
+        _getPoints: Any,
+    ) -> list:
+        """Clamp interpolation of points from meshSource to meshTarget, return list of list of tuple (distance,id_closer) for each point in target mesh.
 
+        Args:
+            meshSource (Union[vtkDataSet, ]): source mesh
+            meshTarget (Union[vtkDataSet, ]): target mesh
+            _getPoints (Any): function to get points from mesh (e.g. cell centers or points)
+        """
         #because of distributed vtm format we use distributed datastruct (e.g. list are list of list then reduced)
         kd = vtkKdTree()
-        kd.BuildLocatorFromPoints( _getPoints(meshSource))
+        kd.BuildLocatorFromPoints( _getPoints( meshSource ) )
 
-        tgPts = _getPoints( meshTarget)
-        source2target = [[] for i in range(tgPts.GetNumberOfPoints())] # map index from source to target
-        box = vtkBoundingBox(meshSource.GetBounds())#.Inflate()
-        for i in range(tgPts.GetNumberOfPoints()):
-            if box.ContainsPoint(tgPts.GetPoint(i)):
-                dist = reference(0.)
-                idSource = kd.FindClosestPoint(tgPts.GetPoint(i),dist)
-                source2target[i].append( (dist,idSource) )
+        tgPts = _getPoints( meshTarget )
+        source2target: list = [ [] for i in range( tgPts.GetNumberOfPoints() ) ]  # map index from source to target
+        box = vtkBoundingBox( meshSource.GetBounds() )  #.Inflate()
+        for i in range( tgPts.GetNumberOfPoints() ):
+            if box.ContainsPoint( tgPts.GetPoint( i ) ):
+                dist = 0.
+                idSource = kd.FindClosestPoint( tgPts.GetPoint( i ), dist )
+                source2target[ i ].append( ( dist, idSource ) )
             else:
-                source2target[i].append( (np.inf,-1) )
-        
+                source2target[ i ].append( ( np.inf, -1 ) )
+
         return source2target
 
     @staticmethod
-    def _reduce(listOfList : list) -> list:
-        """ Reduction of list of list of tuple (float,int) to list of index based on the first values.
-        
+    def _reduce( listOfList: list ) -> list:
+        """Reduction of list of list of tuple (float,int) to list of index based on the first values.
+
         Args:
             listOfList(list) : list of list of tuples of (distance,id_closer)
 
         """
-        return [ min(llist)[1] for llist in listOfList ]
-
+        return [ min( llist )[ 1 ] for llist in listOfList ]
 
     @staticmethod
-    def _getCellCenters(mesh : Union[vtkDataSet,]):
-        """Wrapping the cell centers derivation from vtk and return the pointset
-        
+    def _getCellCenters( mesh: Union[
+        vtkDataSet,
+    ] ) -> vtkPoints:
+        """Wrapping the cell centers derivation from vtk and return the pointset.
+
         Args:
             mesh(Union[vtkDataSet]): for here but works for broader input type
 
         """
         centers = vtkCellCenters()
-        centers.SetInputData(mesh)
+        centers.SetInputData( mesh )
         centers.Update()
 
         return centers.GetOutput().GetPoints()
 
-    def _vectorizeFieldsOut(self: Self, fieldnames: set[str], mesh : Union[vtkDataSet,], piece: Piece):
-        """Return a vector of fields in numpy format to speed up things
-        
+    def _vectorizeFieldsOut( self: Self, fieldnames: set[ str ],
+                             mesh: Union[
+                                 vtkDataSet,
+                             ], piece: Piece ) -> tuple[ npt.NDArray, list[ int ] ]:
+        """Return a vector of fields in numpy format to speed up things.
+
+        Args:
+            fieldnames (set[str]): set of field names to vectorize
+            mesh (Union[vtkDataSet,]): mesh to vectorize from
+            piece (Piece): support of the field (point or cell)
+
         """
-        
         #use numpy for some speedup
         #assuming any vector fields will not have more than 9 components
         fieldnc = []
-        if piece == Piece.POINTS: 
-            fp = np.zeros(shape=(mesh.GetNumberOfPoints() + 1, len(fieldnames),9), dtype=float)
+        if piece == Piece.POINTS:
+            fp = np.zeros( shape=( mesh.GetNumberOfPoints() + 1, len( fieldnames ), 9 ), dtype=float )
         elif piece == Piece.CELLS:
-            fp = np.zeros(shape=(mesh.GetNumberOfCells() + 1, len(fieldnames),9), dtype=float)
+            fp = np.zeros( shape=( mesh.GetNumberOfCells() + 1, len( fieldnames ), 9 ), dtype=float )
 
-        for j,field in enumerate(fieldnames):
+        for j, field in enumerate( fieldnames ):
             if piece == Piece.POINTS:
-                if not mesh.GetPointData().HasArray(field):
-                    self.logger.warning(f"{field} is not an array of  point data's source mesh")
+                if not mesh.GetPointData().HasArray( field ):
+                    self.logger.warning( f"{field} is not an array of  point data's source mesh" )
                 else:
-                    data = mesh.GetPointData().GetArray(field)
-                    fieldnc.append(data.GetNumberOfComponents())
+                    data = mesh.GetPointData().GetArray( field )
+                    fieldnc.append( data.GetNumberOfComponents() )
             elif piece == Piece.CELLS:
-                if not mesh.GetCellData().HasArray(field):
-                    self.logger.warning(f"{field} is not an array of cell data's source mesh")
+                if not mesh.GetCellData().HasArray( field ):
+                    self.logger.warning( f"{field} is not an array of cell data's source mesh" )
                 else:
-                    data = mesh.GetCellData().GetArray(field)
-                    fieldnc.append(data.GetNumberOfComponents())
+                    data = mesh.GetCellData().GetArray( field )
+                    fieldnc.append( data.GetNumberOfComponents() )
 
-            fp[:-1,j,:fieldnc[-1]] = vtk_to_numpy(data).reshape(-1,fieldnc[-1])
-        
-        fp[-1,:,:] = self.fillInValue
+            fp[ :-1, j, :fieldnc[ -1 ] ] = vtk_to_numpy( data ).reshape( -1, fieldnc[ -1 ] )
 
-        return fp, fieldnc 
+        fp[ -1, :, : ] = self.fillInValue
+
+        return fp, fieldnc
 
     @staticmethod
-    def _vectorizeFieldsIn(fieldnames: set[str], fieldnc: list[int],  mesh: Union[vtkDataSet,], fp:npt.NDArray,  piece:Piece):
+    def _vectorizeFieldsIn( fieldnames: set[ str ], fieldnc: list[ int ], mesh: Union[
+        vtkDataSet,
+    ], fp: npt.NDArray, piece: Piece ) -> npt.NDArray:
+        """Vectorize fields from numpy format back to vtk format.
+
+        Args:
+            fieldnames (set[str]): set of field names to vectorize
+            fieldnc (list[int]): list of number of components for each field
+            mesh (Union[vtkDataSet,]): mesh to vectorize to
+            fp (npt.NDArray): numpy array of fields
+            piece (Piece): support of the field (point or cell)
+        """
         #use numpy for some speedup
 
-        for j,field in enumerate(fieldnames):
-            arr = numpy_to_vtk(fp[:,j,:fieldnc[j]])
-            arr.SetName(f'mapped{field.capitalize()}')
+        for j, field in enumerate( fieldnames ):
+            arr = numpy_to_vtk( fp[ :, j, :fieldnc[ j ] ] )
+            arr.SetName( f'mapped{field.capitalize()}' )
             if piece == Piece.POINTS:
-                mesh.GetPointData().AddArray(arr)
+                mesh.GetPointData().AddArray( arr )
             elif piece == Piece.CELLS:
-                mesh.GetCellData().AddArray(arr)
+                mesh.GetCellData().AddArray( arr )
 
         return fp
 
     @staticmethod
     def _filterVolumeCells( mesh: vtkDataSet ) -> Any:
-        """Keep only 3D volume cells; optionally save 2D cells to VTU."""
+        """Keep only 3D volume cells; optionally save 2D cells to VTU.
 
-        volumeIds  = vtkIdTypeArray()
+        Args:
+            mesh (vtkDataSet): input mesh to filter
+        """
+        volumeIds = vtkIdTypeArray()
         surfaceIds = vtkIdTypeArray()
         nVolume = nSurface = nOther = 0
 
-        for i in range(mesh.GetNumberOfCells()):
-            dim = mesh.GetCell(i).GetCellDimension()
-            if   dim == 3: 
-                volumeIds.InsertNextValue(i)
-                nVolume  += 1
-            elif dim == 2: 
-                surfaceIds.InsertNextValue(i)
+        for i in range( mesh.GetNumberOfCells() ):
+            dim = mesh.GetCell( i ).GetCellDimension()
+            if dim == 3:
+                volumeIds.InsertNextValue( i )
+                nVolume += 1
+            elif dim == 2:
+                surfaceIds.InsertNextValue( i )
                 nSurface += 1
-            else:                                          
-                nOther   += 1
+            else:
+                nOther += 1
 
-        getLogger(loggerTitle, True).info(f"  Cell types: {nVolume} volume (3D) | "
-              f"{nSurface} surface (2D) | {nOther} other")
+        getLogger( loggerTitle, True ).info( f"  Cell types: {nVolume} volume (3D) | "
+                                             f"{nSurface} surface (2D) | {nOther} other" )
 
         if nSurface == 0 and nOther == 0:
-            print("No filtering needed (all cells are 3D)")
+            print( "No filtering needed (all cells are 3D)" )
             return mesh
 
         sn = vtkSelectionNode()
-        sn.SetFieldType(vtkSelectionNode.CELL)
-        sn.SetContentType(vtkSelectionNode.INDICES)
-        sn.SetSelectionList(volumeIds)
-        sel = vtkSelection(); sel.AddNode(sn)
+        sn.SetFieldType( vtkSelectionNode.CELL )
+        sn.SetContentType( vtkSelectionNode.INDICES )
+        sn.SetSelectionList( volumeIds )
+        sel = vtkSelection()
+        sel.AddNode( sn )
         ext = vtkExtractSelection()
-        ext.SetInputData(0, mesh); ext.SetInputData(1, sel); ext.Update()
-        getLogger(loggerTitle,True).info(f"Filtered → {nVolume} cells "
-              f"(removed {nSurface + nOther})")
-        
+        ext.SetInputData( 0, mesh )
+        ext.SetInputData( 1, sel )
+        ext.Update()
+        getLogger( loggerTitle, True ).info( f"Filtered → {nVolume} cells "
+                                             f"(removed {nSurface + nOther})" )
+
         if nVolume > 0:
             return ext.GetOutput()
-        
+
         return mesh.NewInstance()
 
-    def _extractRegion(self : Self, meshFrom: Union[vtkDataSet,], mask:npt.NDArray):
-        """Wrapping extract Selection on the mask."""
+    def _extractRegion( self: Self, meshFrom: Union[
+        vtkDataSet,
+    ], mask: npt.NDArray ) -> vtkUnstructuredGrid:
+        """Wrapping extract Selection on the mask.
 
+        Args:
+            meshFrom (Union[vtkDataSet,]): mesh to extract from
+            mask (npt.NDArray): boolean array of cells to extract
+        """
         # Build vtkIdTypeArray of selected indices
         idArr = vtkIdTypeArray()
-        for idx in np.where(mask)[0]:
-            idArr.InsertNextValue(int(idx))
+        for idx in np.where( mask )[ 0 ]:
+            idArr.InsertNextValue( int( idx ) )
 
         sn = vtkSelectionNode()
-        sn.SetFieldType(vtkSelectionNode.CELL)
-        sn.SetContentType(vtkSelectionNode.INDICES)
-        sn.SetSelectionList(idArr)
-        sel = vtkSelection(); sel.AddNode(sn)
+        sn.SetFieldType( vtkSelectionNode.CELL )
+        sn.SetContentType( vtkSelectionNode.INDICES )
+        sn.SetSelectionList( idArr )
+        sel = vtkSelection()
+        sel.AddNode( sn )
 
         ext = vtkExtractSelection()
-        ext.SetInputData(0, meshFrom); ext.SetInputData(1, sel); ext.Update()
+        ext.SetInputData( 0, meshFrom )
+        ext.SetInputData( 1, sel )
+        ext.Update()
 
         sub = vtkUnstructuredGrid()
-        sub.ShallowCopy(ext.GetOutput())
+        sub.ShallowCopy( ext.GetOutput() )
 
         return sub
 
-    def applyFilter(self : Self)->None:
-
+    def applyFilter( self: Self ) -> None:
+        """"Apply the filter and map attributes from meshFrom to meshTo."""
         s2t = {}
-        s2t[Piece.POINTS]  = [ i if i!=-1 else self.meshFrom.GetNumberOfPoints() for i in  MeshToMeshInterpolator._reduce( 
-            MeshToMeshInterpolator._clampInterpolate( self.meshFrom, self.meshTo, lambda m : m.GetPoints() ) )  ]
-        s2t[Piece.CELLS] = [i if i!=-1 else self.meshFrom.GetNumberOfCells() for i in MeshToMeshInterpolator._reduce( 
-            MeshToMeshInterpolator._clampInterpolate( self.meshFrom, self.meshTo, lambda m : MeshToMeshInterpolator._getCellCenters(m))) ]
+        s2t[ Piece.POINTS ] = [
+            i if i != -1 else self.meshFrom.GetNumberOfPoints() for i in MeshToMeshInterpolator._reduce(
+                MeshToMeshInterpolator._clampInterpolate( self.meshFrom, self.meshTo, lambda m: m.GetPoints() ) )
+        ]
+        s2t[ Piece.CELLS ] = [
+            i if i != -1 else self.meshFrom.GetNumberOfCells() for i in MeshToMeshInterpolator._reduce(
+                MeshToMeshInterpolator._clampInterpolate( self.meshFrom, self.meshTo,
+                                                          lambda m: MeshToMeshInterpolator._getCellCenters( m ) ) )
+        ]
 
-        self.logger.debug(f"Checking for few index c2c and p2p mappings\n {s2t[Piece.POINTS]} \n {s2t[Piece.CELLS]}")
+        self.logger.debug( f"Checking for few index c2c and p2p mappings\n {s2t[Piece.POINTS]} \n {s2t[Piece.CELLS]}" )
 
         sourceVec = {}
         fieldnc = {}
-        if len(self.attributes[Piece.CELLS]) > 0:
-            sourceVec[Piece.CELLS], fieldnc[Piece.CELLS] = self._vectorizeFieldsOut(self.attributes[Piece.CELLS], self.meshFrom, Piece.CELLS)
-        
-        if len(self.attributes[Piece.POINTS]) > 0:
-            sourceVec[Piece.POINTS], fieldnc[Piece.POINTS] = self._vectorizeFieldsOut(self.attributes[Piece.POINTS], self.meshFrom, Piece.POINTS)
+        if len( self.attributes[ Piece.CELLS ] ) > 0:
+            sourceVec[ Piece.CELLS ], fieldnc[ Piece.CELLS ] = self._vectorizeFieldsOut(
+                self.attributes[ Piece.CELLS ], self.meshFrom, Piece.CELLS )
 
-        section = 'Field transfer'
-        if len(self.attributes[Piece.CELLS]) > 0:
-            MeshToMeshInterpolator._vectorizeFieldsIn(self.attributes[Piece.CELLS], fieldnc[Piece.CELLS], self.meshTo, sourceVec[Piece.CELLS][s2t[Piece.CELLS],:,:],  Piece.CELLS)
-        if len(self.attributes[Piece.POINTS]) > 0:
-            MeshToMeshInterpolator._vectorizeFieldsIn(self.attributes[Piece.POINTS], fieldnc[Piece.POINTS], self.meshTo, sourceVec[Piece.POINTS][s2t[Piece.POINTS],:,:],  Piece.POINTS)
+        if len( self.attributes[ Piece.POINTS ] ) > 0:
+            sourceVec[ Piece.POINTS ], fieldnc[ Piece.POINTS ] = self._vectorizeFieldsOut(
+                self.attributes[ Piece.POINTS ], self.meshFrom, Piece.POINTS )
+
+        if len( self.attributes[ Piece.CELLS ] ) > 0:
+            MeshToMeshInterpolator._vectorizeFieldsIn( self.attributes[ Piece.CELLS ], fieldnc[ Piece.CELLS ],
+                                                       self.meshTo,
+                                                       sourceVec[ Piece.CELLS ][ s2t[ Piece.CELLS ], :, : ],
+                                                       Piece.CELLS )
+        if len( self.attributes[ Piece.POINTS ] ) > 0:
+            MeshToMeshInterpolator._vectorizeFieldsIn( self.attributes[ Piece.POINTS ], fieldnc[ Piece.POINTS ],
+                                                       self.meshTo,
+                                                       sourceVec[ Piece.POINTS ][ s2t[ Piece.POINTS ], :, : ],
+                                                       Piece.POINTS )
         self.isApplied = True
 
         return
-    
 
-    def getOutput(self: Self) -> vtkDataSet:
+    def getOutput( self: Self ) -> vtkDataSet:
+        """Get the output mesh after applying the filter."""
         if self.isApplied:
             return self.meshTo
         # return empty is VTK behaviour on non-updated filter
         return self.meshTo.NewInstance()
-
-
-        
