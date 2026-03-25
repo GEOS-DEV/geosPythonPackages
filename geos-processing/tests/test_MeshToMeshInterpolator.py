@@ -31,7 +31,7 @@ def test_MeshToMeshInterpolator(
 
     for attrib in attributeNames:
         a0 = vtk_to_numpy(meshFrom.GetCellData().GetArray(attrib))
-        a1 = vtk_to_numpy(meshTo.GetCellData().GetArray(f"mapped_{attrib}"))
+        a1 = vtk_to_numpy(meshTo.GetCellData().GetArray(f"mapped{attrib.capitalize()}"))
         assert np.linalg.norm(a0) == pytest.approx(np.linalg.norm(a1), rel=1e-2, abs=0)
 
     # output = meshToMeshInterpolator.getOutput()
@@ -59,7 +59,7 @@ def test_AttributeOnly_MeshToMeshInterpolator(
 
     for attrib in attributeNames:
         a0 = vtk_to_numpy(meshFrom.GetCellData().GetArray(attrib))
-        a1 = vtk_to_numpy(meshTo.GetCellData().GetArray(f"mapped_{attrib}"))
+        a1 = vtk_to_numpy(meshTo.GetCellData().GetArray(f"mapped{attrib.capitalize()}"))
         mask   = np.zeros(meshFrom.GetNumberOfCells(), dtype=bool)
         attr   = vtk_to_numpy(meshFrom.GetCellData().GetArray(attributeRegionsName)).astype(np.int64)
         for rid in regionIds:
