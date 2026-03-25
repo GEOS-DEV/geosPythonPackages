@@ -16,7 +16,7 @@ from vtkmodules.vtkIOXML import vtkXMLUnstructuredGridWriter
 from geos.utils.pieceEnum import Piece
 
 @pytest.mark.parametrize( "meshFromName, meshToName, attributeNames", [
-    ( "rank0", "extractAndMergeVolume", { "elementVolume" } ), ]) 
+    ( "rank0", "extractAndMergeVolume", { "elementVolume" } ),]) 
 def test_MeshToMeshInterpolator(
         dataSetTest: Any,
         meshFromName: str,
@@ -37,6 +37,38 @@ def test_MeshToMeshInterpolator(
     # output = meshToMeshInterpolator.getOutput()
     # w = vtkXMLUnstructuredGridWriter()
     # w.SetFileName(f"/data/pau901/SIM_CS/04_WORKSPACE/USERS/jfranc/tmp/test_crumbs/test.vtu")
+    # w.SetInputData(output)
+    # w.Update()
+    # w.Write()
+
+@pytest.mark.parametrize( "meshFromName, meshToName, attributeNames,attributeRegionsName,regionIds", [
+    ( "rank0WithAttr", "extractAndMergeVolume", { "elementVolume" }, "attributes", {4,5} ), ] )
+def test_AttributeOnly_MeshToMeshInterpolator(
+        dataSetTest: Any,
+        meshFromName: str,
+        meshToName: str,
+        attributeNames: set[str],
+        attributeRegionsName : str,
+        regionIds : set[int] ):
+    meshFrom: Union[ vtkDataSet,] = dataSetTest( meshFromName )
+    meshTo: Union[ vtkDataSet,] = dataSetTest( meshToName )
+
+    meshToMeshInterpolator = MeshToMeshInterpolator(meshFrom, meshTo, attributeNames )
+    meshToMeshInterpolator.setCellRegionsIds(attributeRegionsName,regionIds)
+    meshToMeshInterpolator.applyFilter()
+
+    for attrib in attributeNames:
+        a0 = vtk_to_numpy(meshFrom.GetCellData().GetArray(attrib))
+        a1 = vtk_to_numpy(meshTo.GetCellData().GetArray(f"mapped_{attrib}"))
+        mask   = np.zeros(meshFrom.GetNumberOfCells(), dtype=bool)
+        attr   = vtk_to_numpy(meshFrom.GetCellData().GetArray(attributeRegionsName)).astype(np.int64)
+        for rid in regionIds:
+            mask |= (attr == rid)
+        assert np.linalg.norm(a0[mask]) == pytest.approx(np.linalg.norm(a1), rel=1e-2, abs=0)
+
+    # output = meshToMeshInterpolator.getOutput()
+    # w = vtkXMLUnstructuredGridWriter()
+    # w.SetFileName(f"/data/pau901/SIM_CS/04_WORKSPACE/USERS/jfranc/tmp/test_crumbs/testAttr.vtu")
     # w.SetInputData(output)
     # w.Update()
     # w.Write()

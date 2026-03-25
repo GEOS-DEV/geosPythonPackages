@@ -50,6 +50,8 @@ def dataSetTest() -> Any:
             vtkFilename = "geos-mesh/tests/data/singlePhasePoromechanics_FaultModel_well_seq/extractAndMergeFaultWell1.vtm"
         elif datasetType == "rank0":
             vtkFilename = "geos-mesh/tests/data/singlePhasePoromechanics_FaultModel_well_seq/geosOutput2Ranks/geosOutput2Ranks_1_0.vtu"
+        elif datasetType == "rank0WithAttr":
+            vtkFilename = "geos-mesh/tests/data/rank0WithAttr.vtu"
         # Small useful meshes
         elif datasetType == "quads2_tris4":
             vtkFilename = "geos-processing/tests/data/quads2_tris4.vtu"

@@ -7,7 +7,7 @@ import numpy.typing as npt
 import logging
 from typing_extensions import Self, Union, Any
 from vtkmodules.util.numpy_support import vtk_to_numpy, numpy_to_vtk
-from vtkmodules.vtkCommonDataModel import vtkDataSet, vtkKdTree, vtkBoundingBox, vtkSelectionNode, vtkSelection
+from vtkmodules.vtkCommonDataModel import vtkDataSet, vtkKdTree, vtkBoundingBox, vtkSelectionNode, vtkSelection, vtkUnstructuredGrid
 from vtkmodules.vtkFiltersExtraction import vtkExtractSelection
 from vtkmodules.vtkFiltersCore import vtkCellCenters
 from vtkmodules.vtkCommonCore import reference, vtkIdTypeArray
@@ -24,13 +24,25 @@ It leverage KdPointTree structure to do so efficiently and numpy array storate f
 
 To use the filter:
 
+
 .. code-block:: python
 
+    meshToMeshInterpolator = MeshToMeshInterpolator(meshFrom, meshTo, attributeNames )
+    meshToMeshInterpolator.setCellRegionsIds(attributeRegionsName,regionIds)
+
+    # opt. for external points' values 
+    meshToMeshInterpolator.setFillInValue(42.0)
+    # opt. for region-restricted mappings 
+    meshToMeshInterpolator.setCellRegionsIds("attribures",set({2,3}))
+
+    meshToMeshInterpolator.applyFilter()
 
 
 """
 
 loggerTitle: str = "Mesh to mesh Mapping"
+
+#TODO for efficient/robust vtm->vtm need s->t block adjacency and selective merge blocks
 
 
 class MeshToMeshInterpolator:
@@ -61,7 +73,7 @@ class MeshToMeshInterpolator:
         # sorting attribute to map by support
         for piece in [Piece.POINTS,Piece.CELLS]:
             self.attributes[piece] = attributeNames.intersection(getAttributeSet(self.meshFrom,piece))
-
+        
         # Logger
         self.logger: Logger
         if not speHandler:
@@ -85,6 +97,22 @@ class MeshToMeshInterpolator:
 
     def setFillInValue(self: Self, val : float = 0.):
         self.fill_in_value = val
+
+    def setCellRegionsIds(self: Self, attr_name: str, region_ids:list[int]):
+
+        if not self.meshFrom.GetCellData().HasArray(attr_name):
+            available = [self.meshFrom.GetCellData().GetArrayName(i)
+                         for i in range(self.meshFrom.GetCellData().GetNumberOfArrays())]
+            raise KeyError(
+                f"Attribute '{attr_name}' not found.\n"
+                f"  Available arrays: {available}")
+
+        mask   = np.zeros(self.meshFrom.GetNumberOfCells(), dtype=bool)
+        attr   = vtk_to_numpy(self.meshFrom.GetCellData().GetArray(attr_name)).astype(np.int64)
+        for rid in region_ids:
+            mask |= (attr == rid)
+        
+        self.meshFrom = self._extract_region(self.meshFrom, mask)
 
     @staticmethod
     def _is_subset(meshSource: Union[vtkDataSet,],
@@ -227,6 +255,26 @@ class MeshToMeshInterpolator:
         
         return mesh.NewInstance()
 
+    def _extract_region(self, meshFrom, mask):
+        # Build vtkIdTypeArray of selected indices
+        id_arr = vtkIdTypeArray()
+        for idx in np.where(mask)[0]:
+            id_arr.InsertNextValue(int(idx))
+
+        sn = vtkSelectionNode()
+        sn.SetFieldType(vtkSelectionNode.CELL)
+        sn.SetContentType(vtkSelectionNode.INDICES)
+        sn.SetSelectionList(id_arr)
+        sel = vtkSelection(); sel.AddNode(sn)
+
+        ext = vtkExtractSelection()
+        ext.SetInputData(0, meshFrom); ext.SetInputData(1, sel); ext.Update()
+
+        sub = vtkUnstructuredGrid()
+        sub.ShallowCopy(ext.GetOutput())
+
+        return sub
+
     # def _extract_region(self, mesh, attr_name, region_ids):
     #     """
     #     Return a sub-mesh containing only cells whose integer attribute
@@ -311,7 +359,6 @@ class MeshToMeshInterpolator:
         source_vec = {}
         fieldnc = {}
         # start = time.perf_counter()
-        # c_fieldnames = [('Porosity','mapped_POROSITY'), ('PERM','mapped_PERM')] # for GNL test
         # pt_fieldnames = [('','')]
         if len(self.attributes[Piece.CELLS]) > 0:
             source_vec[Piece.CELLS], fieldnc[Piece.CELLS] = self._vectorize_fields_out(self.attributes[Piece.CELLS], self.meshFrom, Piece.CELLS)
