@@ -221,8 +221,6 @@ def __classifyBoundarySurfaceByLocation( boundarySurface: vtk.vtkPolyData ) -> D
         centerZ /= nPoints
 
         # Classify based on Z-coordinate zones
-        # A face is in the bottom zone if its minimum Z is in the bottom zone
-        # A face is in the top zone if its maximum Z is in the top zone
         isBottom = minZ <= bottomThreshold
         isTop = maxZ >= topThreshold
 
@@ -673,7 +671,6 @@ def checkInternalTags( mesh: vtk.vtkUnstructuredGrid, options: Options ) -> Resu
                     __diagnose1NeighborCell( mesh, elem, volumeCells )
     else:
         setupLogger.info( "All cells have exactly 2 neighbors (excluding boundary cells)!" )
-
 
     # Write to CSV if requested
     if options.outputCsv and ( allBadElements or allBoundaryElements ):
