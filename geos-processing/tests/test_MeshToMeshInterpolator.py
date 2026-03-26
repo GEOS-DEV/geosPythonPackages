@@ -19,7 +19,7 @@ from vtkmodules.util.numpy_support import vtk_to_numpy
     ( "rank0", "extractAndMergeVolume", { "elementVolume" } ),
 ] )
 def test_MeshToMeshInterpolator( dataSetTest: Any, meshFromName: str, meshToName: str,
-                                attributeNames: set[ str ] ) -> None:
+                                 attributeNames: set[ str ] ) -> None:
     """Test MeshToMeshInterpolator basic."""
     meshFrom: Union[
         vtkDataSet,
