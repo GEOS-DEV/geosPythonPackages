@@ -18,7 +18,8 @@ from vtkmodules.util.numpy_support import vtk_to_numpy
 @pytest.mark.parametrize( "meshFromName, meshToName, attributeNames", [
     ( "rank0", "extractAndMergeVolume", { "elementVolume" } ),
 ] )
-def test_MeshToMeshInterpolator( dataSetTest: Any, meshFromName: str, meshToName: str, attributeNames: set[ str ] ) -> None:
+def test_MeshToMeshInterpolator( dataSetTest: Any, meshFromName: str, meshToName: str,
+                                attributeNames: set[ str ] ) -> None:
     """Test MeshToMeshInterpolator basic."""
     meshFrom: Union[
         vtkDataSet,
