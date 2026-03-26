@@ -189,8 +189,15 @@ class MeshToMeshInterpolator:
                            axis=0 )
         boundSource -= minPoint
         boundTarget -= minPoint
+        targetBox = vtkBoundingBox( tuple( boundTarget ) )
+        #non isotropic inflation to get the condition more robust for real world mesh
+        targetBox.Inflate( 0.01 * targetBox.GetLength( 0 ), 0.01 * targetBox.GetLength( 1 ),
+                           0.01 * targetBox.GetLength( 2 ) )
+        getLogger( loggerTitle, True ).debug( f"boundSource={boundSource}" )
+        getLogger( loggerTitle, True ).debug( f"boundTarget={boundTarget}" )
+        getLogger( loggerTitle, True ).debug( f"Inflate box target={[targetBox.GetBound(i) for i in range(6)]}" )
 
-        return vtkBoundingBox( tuple( boundTarget ) ).Contains( vtkBoundingBox( tuple( boundSource ) ) )
+        return targetBox.Contains( vtkBoundingBox( tuple( boundSource ) ) )
 
     @staticmethod
     def _clampInterpolate(

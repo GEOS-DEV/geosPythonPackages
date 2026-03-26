@@ -71,14 +71,6 @@ def test_AttributeOnly_MeshToMeshInterpolator( dataSetTest: Any, meshFromName: s
             mask |= ( attr == rid )
         assert np.linalg.norm( a0[ mask ] ) == pytest.approx( np.linalg.norm( a1 ), rel=1e-2, abs=0 )
 
-    # output = meshToMeshInterpolator.getOutput()
-    # w = vtkXMLUnstructuredGridWriter()
-    # w.SetFileName(f"/data/pau901/SIM_CS/04_WORKSPACE/USERS/jfranc/tmp/test_crumbs/testAttr.vtu")
-    # w.SetInputData(output)
-    # w.Update()
-    # w.Write()
-
-
 @pytest.mark.parametrize( "meshFromName, meshToName, attributeNames", [
     ( "extractAndMergeFault", "extractAndMergeVolume", { "Texture Coordinates" } ),
 ] )
