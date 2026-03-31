@@ -232,7 +232,7 @@ class MeshToMeshInterpolator:
                                vtkDataSet,
                            ],
                            _getPoints: Any,
-                           toMask: npt.NDArray = np.ndarray( [] ) ) -> list:
+                           toMask: Union[ npt.NDArray, None ] = None ) -> list:
         """Clamp interpolation of points from meshSource to meshTarget, return list of list of tuple (distance,id_closer) for each point in target mesh.
 
         Args:
@@ -256,7 +256,7 @@ class MeshToMeshInterpolator:
             if box.ContainsPoint( tgPts.GetPoint( i ) ):
                 dist = reference( 0. )  # type: ignore[call-overload]
                 idSource = kd.FindClosestPoint( tgPts.GetPoint( i ), dist )
-                if ( toMask.size > 0 and toMask[ i ] ) or len( toMask ) == 0:
+                if ( toMask and toMask[ i ] ) or len( toMask ) == 0:
                     # getLogger( loggerTitle, True ).info(f"{i}/{idSource} : {tgPts.GetPoint(i)}/{_getPoints( meshSource ).GetPoint(idSource)} on {dist}")
                     source2target[ i ].append( ( dist, idSource ) )
                 else:
