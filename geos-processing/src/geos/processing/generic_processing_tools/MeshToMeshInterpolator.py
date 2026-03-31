@@ -256,7 +256,7 @@ class MeshToMeshInterpolator:
             if box.ContainsPoint( tgPts.GetPoint( i ) ):
                 dist = reference( 0. )  # type: ignore[call-overload]
                 idSource = kd.FindClosestPoint( tgPts.GetPoint( i ), dist )
-                if ( len( toMask ) > 0 and toMask[ i ] ) or len( toMask ) == 0:
+                if ( toMask.size > 0 and toMask[ i ] ) or len( toMask ) == 0:
                     # getLogger( loggerTitle, True ).info(f"{i}/{idSource} : {tgPts.GetPoint(i)}/{_getPoints( meshSource ).GetPoint(idSource)} on {dist}")
                     source2target[ i ].append( ( dist, idSource ) )
                 else:
