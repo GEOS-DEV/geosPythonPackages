@@ -232,7 +232,7 @@ class MeshToMeshInterpolator:
                                vtkDataSet,
                            ],
                            _getPoints: Any,
-                           toMask: npt.NDArray = None ) -> list:
+                           toMask: npt.NDArray = np.ndarray( [] ) ) -> list:
         """Clamp interpolation of points from meshSource to meshTarget, return list of list of tuple (distance,id_closer) for each point in target mesh.
 
         Args:
@@ -242,8 +242,6 @@ class MeshToMeshInterpolator:
             toMask (npt.NDArray): optional restriction list
         """
         #because of distributed vtm format we use distributed datastruct (e.g. list are list of list then reduced)
-        if toMask is None:
-            toMask = []
         kd = vtkKdTree()
         kd.BuildLocatorFromPoints( _getPoints( meshSource ) )
 
@@ -396,7 +394,7 @@ class MeshToMeshInterpolator:
                                              f"{nSurface} surface (2D) | {nOther} other" )
 
         if nSurface == 0 and nOther == 0:
-            print( "No filtering needed (all cells are 3D)" )
+            getLogger( loggerTitle, True ).info( "No filtering needed (all cells are 3D)" )
             return mesh, mesh.NewInstance()
 
         sn = vtkSelectionNode()
