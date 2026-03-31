@@ -98,6 +98,9 @@ class MeshToMeshInterpolator:
         self.attributes: dict[ Piece, set[ str ] ] = {}
         self.isApplied: bool = False
         self.fillInValue: float = 0.0
+        
+        self.attrName = '' 
+        self.regionIds = []
 
         # sorting attribute to map by support
         for piece in [ Piece.POINTS, Piece.CELLS ]:
@@ -123,6 +126,10 @@ class MeshToMeshInterpolator:
             self.counter.setLevel( logging.INFO )
 
         self.logger.addHandler( self.counter )
+
+        # info
+        for piece in [ Piece.POINTS, Piece.CELLS ]:
+            self.logger.info( f"{self.attributes[piece]} on {piece}" )
 
     def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
         """Set a specific handler for the filter logger.
@@ -155,19 +162,36 @@ class MeshToMeshInterpolator:
 
         """
         if not self.meshFrom.GetCellData().HasArray( attrName ):
-            available = [
+            availableFrom = set([
                 self.meshFrom.GetCellData().GetArrayName( i )
                 for i in range( self.meshFrom.GetCellData().GetNumberOfArrays() )
-            ]
+            ])
+            availableTo = set([
+                self.meshTo.GetCellData().GetArrayName( i )
+                for i in range( self.meshTo.GetCellData().GetNumberOfArrays() )
+            ])
             raise KeyError( f"Attribute '{attrName}' not found.\n"
-                            f"  Available arrays: {available}" )
+                            f"  Available arrays (MeshFrom X MeshTo): {availableFrom.intersection(availableTo)}" )
+
+        self.attrName = attrName
+        self.regionIds = regionIds
+
+    def _getFromMaskFromId(self:Self, id:int) -> npt.NDArray:
 
         mask = np.zeros( self.meshFrom.GetNumberOfCells(), dtype=bool )
-        attr = vtk_to_numpy( self.meshFrom.GetCellData().GetArray( attrName ) ).astype( np.int64 )
-        for rid in regionIds:
-            mask |= ( attr == rid )
+        attr = vtk_to_numpy( self.meshFrom.GetCellData().GetArray( self.attrName ) ).astype( np.int64 )
+        mask = ( attr == id )
 
-        self.meshFrom = self._extractRegion( self.meshFrom, mask )
+        return mask
+        # return self._extractRegion( self.meshFrom, mask )
+
+    def _getToMaskFromId(self:Self, id:int) -> npt.NDArray:
+
+        mask = np.zeros( self.meshTo.GetNumberOfCells(), dtype=bool )
+        attr = vtk_to_numpy( self.meshTo.GetCellData().GetArray( self.attrName ) ).astype( np.int64 )
+        mask = ( attr == id )
+
+        return mask
 
     @staticmethod
     def _isSubset( meshSource: Union[
@@ -208,6 +232,7 @@ class MeshToMeshInterpolator:
             vtkDataSet,
         ],
         _getPoints: Any,
+        toMask = []
     ) -> list:
         """Clamp interpolation of points from meshSource to meshTarget, return list of list of tuple (distance,id_closer) for each point in target mesh.
 
@@ -223,11 +248,19 @@ class MeshToMeshInterpolator:
         tgPts = _getPoints( meshTarget )
         source2target: list = [ [] for i in range( tgPts.GetNumberOfPoints() ) ]  # map index from source to target
         box = vtkBoundingBox( meshSource.GetBounds() )  #.Inflate() ?
+        getLogger( loggerTitle, True ).info( f"[before] Inflate clamping target={[box.GetBound(i) for i in range(6)]}" )
+        box.Inflate( .05*box.GetLength(0), .05*box.GetLength(1), .05*box.GetLength(2) )
+        getLogger( loggerTitle, True ).info( f"[after] Inflate clamping target={[box.GetBound(i) for i in range(6)]}" )
+        
         for i in range( tgPts.GetNumberOfPoints() ):
             if box.ContainsPoint( tgPts.GetPoint( i ) ):
-                dist = reference( 0. )  # type: ignore[call-overload]
-                idSource = kd.FindClosestPoint( tgPts.GetPoint( i ), dist )
-                source2target[ i ].append( ( dist, idSource ) )
+                    dist = reference( 0. )  # type: ignore[call-overload]
+                    idSource = kd.FindClosestPoint( tgPts.GetPoint( i ), dist )
+                    if (len(toMask)>0 and toMask[i]) or len(toMask) == 0:
+                        getLogger( loggerTitle, True ).info(f"{i}/{idSource} : {tgPts.GetPoint(i)}/{_getPoints( meshSource ).GetPoint(idSource)} on {dist}")
+                        source2target[ i ].append( ( dist, idSource ) )
+                    else:
+                        source2target[ i ].append( ( np.inf, -1 ) )
             else:
                 source2target[ i ].append( ( np.inf, -1 ) )
 
@@ -280,6 +313,7 @@ class MeshToMeshInterpolator:
             fp = np.zeros( shape=( mesh.GetNumberOfCells() + 1, len( fieldnames ), 9 ), dtype=float )
 
         for j, field in enumerate( fieldnames ):
+            self.logger.info( f"Treating {field} on {piece}" )
             if piece == Piece.POINTS:
                 if not mesh.GetPointData().HasArray( field ):
                     self.logger.warning( f"{field} is not an array of  point data's source mesh" )
@@ -302,6 +336,8 @@ class MeshToMeshInterpolator:
     @staticmethod
     def _vectorizeFieldsIn( fieldnames: set[ str ], fieldnc: list[ int ], mesh: Union[
         vtkDataSet,
+    ], nonVolMesh: Union[
+        vtkDataSet,
     ], fp: npt.NDArray, piece: Piece ) -> npt.NDArray:
         """Vectorize fields from numpy format back to vtk format.
 
@@ -309,6 +345,7 @@ class MeshToMeshInterpolator:
             fieldnames (set[str]): set of field names to vectorize
             fieldnc (list[int]): list of number of components for each field
             mesh (Union[vtkDataSet,]): mesh to vectorize to
+            nonVolMesh (Union[vtkDataSet,]): non-volumetric mesh fill void for consistency
             fp (npt.NDArray): numpy array of fields
             piece (Piece): support of the field (point or cell)
         """
@@ -317,9 +354,16 @@ class MeshToMeshInterpolator:
         for j, field in enumerate( fieldnames ):
             arr = numpy_to_vtk( fp[ :, j, :fieldnc[ j ] ] )
             arr.SetName( f'mapped{field.capitalize()}' )
+            getLogger( loggerTitle, True ).info( f"Adding mapped{field.capitalize()} to output on {piece}" )
             if piece == Piece.POINTS:
+                void_arr = numpy_to_vtk( np.zeros( shape=( nonVolMesh.GetNumberOfPoints(), fieldnc[ j ] ) ) )
+                void_arr.SetName( f'mapped{field.capitalize()}' )
+                nonVolMesh.GetPointData().AddArray( void_arr )
                 mesh.GetPointData().AddArray( arr )
             elif piece == Piece.CELLS:
+                void_arr = numpy_to_vtk( np.zeros( shape=( nonVolMesh.GetNumberOfCells(), fieldnc[ j ] ) ) )
+                void_arr.SetName( f'mapped{field.capitalize()}' )
+                nonVolMesh.GetCellData().AddArray( void_arr )
                 mesh.GetCellData().AddArray( arr )
 
         return fp
@@ -418,38 +462,76 @@ class MeshToMeshInterpolator:
     def applyFilter( self: Self ) -> None:
         """"Apply the filter and map attributes from meshFrom to meshTo."""
         s2t = {}
-        s2t[ Piece.POINTS ] = [
-            i if i != -1 else self.meshFrom.GetNumberOfPoints() for i in MeshToMeshInterpolator._reduce(
-                MeshToMeshInterpolator._clampInterpolate( self.meshFrom, self.meshTo, lambda m: m.GetPoints() ) )
-        ]
-        s2t[ Piece.CELLS ] = [
-            i if i != -1 else self.meshFrom.GetNumberOfCells() for i in MeshToMeshInterpolator._reduce(
-                MeshToMeshInterpolator._clampInterpolate( self.meshFrom, self.meshTo,
-                                                          lambda m: MeshToMeshInterpolator._getCellCenters( m ) ) )
-        ]
-
-        self.logger.debug( f"Checking for few index c2c and p2p mappings\n {s2t[Piece.POINTS]} \n {s2t[Piece.CELLS]}" )
-
+       
+        # extract data
         sourceVec = {}
         fieldnc = {}
-        if len( self.attributes[ Piece.CELLS ] ) > 0:
-            sourceVec[ Piece.CELLS ], fieldnc[ Piece.CELLS ] = self._vectorizeFieldsOut(
+      
+            
+        # construct the appropriate mappings
+        transferCell, transferPoint = np.zeros(shape=(self.meshTo.GetNumberOfCells(),len(self.attributes[Piece.CELLS]),9)),np.zeros(shape=(self.meshTo.GetNumberOfPoints(),len(self.attributes[Piece.POINTS]),9))
+        if len(self.regionIds) > 0:
+            
+            
+            for regionId in self.regionIds:
+                extractMeshFrom = self._extractRegion(self.meshFrom, self._getFromMaskFromId(regionId))
+                s2t[ Piece.CELLS ] = [
+            i if i != -1 else extractMeshFrom.GetNumberOfCells() for i in MeshToMeshInterpolator._reduce(
+                MeshToMeshInterpolator._clampInterpolate( extractMeshFrom, self.meshTo,
+                                                          lambda m: MeshToMeshInterpolator._getCellCenters( m ),
+                                                          self._getToMaskFromId(regionId) ) )                         
+        ]
+                if len( self.attributes[ Piece.CELLS ] ) > 0:
+                    sourceVec[ Piece.CELLS ], fieldnc[ Piece.CELLS ] = self._vectorizeFieldsOut(
+                self.attributes[ Piece.CELLS ], extractMeshFrom, Piece.CELLS )
+
+                if len( self.attributes[ Piece.POINTS ] ) > 0:
+                    sourceVec[ Piece.POINTS ], fieldnc[ Piece.POINTS ] = self._vectorizeFieldsOut(
+                self.attributes[ Piece.POINTS ], extractMeshFrom, Piece.POINTS )
+
+            # transferCell += sourceVec[ Piece.CELLS ][ origCell[s2t[ Piece.CELLS ]], :, : ]
+                transferCell += sourceVec[ Piece.CELLS ][ s2t[ Piece.CELLS ], :, : ]
+                print(np.argwhere(transferCell[:,0,0]>0.))
+                print(len(np.argwhere(transferCell[:,0,0]>0.)))
+        else:
+            if len( self.attributes[ Piece.CELLS ] ) > 0:
+                sourceVec[ Piece.CELLS ], fieldnc[ Piece.CELLS ] = self._vectorizeFieldsOut(
                 self.attributes[ Piece.CELLS ], self.meshFrom, Piece.CELLS )
 
-        if len( self.attributes[ Piece.POINTS ] ) > 0:
-            sourceVec[ Piece.POINTS ], fieldnc[ Piece.POINTS ] = self._vectorizeFieldsOut(
+            if len( self.attributes[ Piece.POINTS ] ) > 0:
+                sourceVec[ Piece.POINTS ], fieldnc[ Piece.POINTS ] = self._vectorizeFieldsOut(
                 self.attributes[ Piece.POINTS ], self.meshFrom, Piece.POINTS )
 
+
+            if len( self.attributes[ Piece.POINTS ] ) > 0:
+                s2t[ Piece.POINTS ] = [
+                i if i != -1 else self.meshFrom.GetNumberOfPoints() for i in MeshToMeshInterpolator._reduce(
+                    MeshToMeshInterpolator._clampInterpolate( self.meshFrom, self.meshTo, lambda m: m.GetPoints() ) )
+            ]
+            self.logger.info( f"Checking for few index p2p mappings\n {s2t[Piece.POINTS]}" )
+            if len( self.attributes[ Piece.CELLS ] ) > 0:
+                s2t[ Piece.CELLS ] = [
+                i if i != -1 else self.meshFrom.GetNumberOfCells() for i in MeshToMeshInterpolator._reduce(
+                    MeshToMeshInterpolator._clampInterpolate( self.meshFrom, self.meshTo,
+                                                            lambda m: MeshToMeshInterpolator._getCellCenters( m ) ) )
+            ]
+            self.logger.info( f"Checking for few index c2c mappings\n {s2t[Piece.CELLS][1:10]}" )
+            # transferPoint = sourceVec[ Piece.POINTS ][ s2t[ Piece.POINTS ], :, : ]
+            transferCell = sourceVec[ Piece.CELLS ][ s2t[ Piece.CELLS ], :, : ]
+
+
+        # factorized final build
         if len( self.attributes[ Piece.CELLS ] ) > 0:
             MeshToMeshInterpolator._vectorizeFieldsIn( self.attributes[ Piece.CELLS ], fieldnc[ Piece.CELLS ],
-                                                       self.meshTo,
-                                                       sourceVec[ Piece.CELLS ][ s2t[ Piece.CELLS ], :, : ],
-                                                       Piece.CELLS )
+                                                    self.meshTo, self.nonVolumicPart,
+                                                    transferCell,
+                                                    Piece.CELLS )
+
         if len( self.attributes[ Piece.POINTS ] ) > 0:
             MeshToMeshInterpolator._vectorizeFieldsIn( self.attributes[ Piece.POINTS ], fieldnc[ Piece.POINTS ],
-                                                       self.meshTo,
-                                                       sourceVec[ Piece.POINTS ][ s2t[ Piece.POINTS ], :, : ],
-                                                       Piece.POINTS )
+                                                    self.meshTo, self.nonVolumicPart,
+                                                    transferPoint,
+                                                    Piece.POINTS )
         self.isApplied = True
 
         return
@@ -459,10 +541,19 @@ class MeshToMeshInterpolator:
         if self.isApplied:
             f = vtkAppendFilter()
             f.SetInputData( self.meshTo )
-            if self.nonVolumicPart.GetNumberOfCells() > 0:
+            self.logger.info(
+                f"Available field [Vol] {[self.meshTo.GetCellData().GetArrayName(i) for i in range(self.meshTo.GetCellData().GetNumberOfArrays())]}"
+            )
+            if self.nonVolumicPart.GetNumberOfCells() > 0 or self.nonVolumicPart.GetNumberOfPoints() > 0:
+                self.logger.info(
+                    f"Available field [nonVol] {[self.nonVolumicPart.GetCellData().GetArrayName(i) for i in range(self.meshTo.GetCellData().GetNumberOfArrays())]}"
+                )
                 f.AddInputData( self.nonVolumicPart )
             f.Update()
 
+            self.logger.info(
+                f"Available field [Appended] {[f.GetOutput().GetCellData().GetArrayName(i) for i in range(self.meshTo.GetCellData().GetNumberOfArrays())]}"
+            )
             return f.GetOutput()
         # return empty is VTK behaviour on non-updated filter
         return self.meshTo.NewInstance()

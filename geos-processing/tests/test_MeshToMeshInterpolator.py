@@ -12,6 +12,7 @@ sys.path.insert( 0, "/data/pau901/SIM_CS/users/jfranc/geosPythonPackages/geos-pr
 
 from geos.processing.generic_processing_tools.MeshToMeshInterpolator import MeshToMeshInterpolator
 from vtkmodules.vtkCommonDataModel import vtkDataSet
+from vtkmodules.vtkIOXML import vtkXMLUnstructuredGridWriter
 from vtkmodules.util.numpy_support import vtk_to_numpy
 
 
@@ -45,7 +46,7 @@ def test_MeshToMeshInterpolator( dataSetTest: Any, meshFromName: str, meshToName
 
 
 @pytest.mark.parametrize( "meshFromName, meshToName, attributeNames,attributeRegionsName,regionIds", [
-    ( "rank0WithAttr", "extractAndMergeVolume", { "elementVolume" }, "attributes", { 4, 5 } ),
+    ( "rank0WithAttr", "mergeVolumeWithAttr", { "elementVolume" }, "attributes", { 4, 5 } ),
 ] )
 def test_AttributeOnly_MeshToMeshInterpolator( dataSetTest: Any, meshFromName: str, meshToName: str,
                                                attributeNames: set[ str ], attributeRegionsName: str,
@@ -70,6 +71,13 @@ def test_AttributeOnly_MeshToMeshInterpolator( dataSetTest: Any, meshFromName: s
         for rid in regionIds:
             mask |= ( attr == rid )
         assert np.linalg.norm( a0[ mask ] ) == pytest.approx( np.linalg.norm( a1 ), rel=1e-2, abs=0 )
+
+    output = meshToMeshInterpolator.getOutput()
+    w = vtkXMLUnstructuredGridWriter()
+    w.SetFileName(f"/data/pau901/SIM_CS/04_WORKSPACE/USERS/jfranc/tmp/test_crumbs/test.vtu")
+    w.SetInputData(output)
+    w.Update()
+    w.Write()
 
 @pytest.mark.parametrize( "meshFromName, meshToName, attributeNames", [
     ( "extractAndMergeFault", "extractAndMergeVolume", { "Texture Coordinates" } ),
