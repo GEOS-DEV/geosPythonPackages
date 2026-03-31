@@ -98,9 +98,10 @@ class MeshToMeshInterpolator:
         self.attributes: dict[ Piece, set[ str ] ] = {}
         self.isApplied: bool = False
         self.fillInValue: float = 0.0
-        
-        self.attrName = '' 
-        self.regionIds = []
+
+        self.attrName: str = ''
+        self.regionIds: list = []
+        self.fieldnc: dict = {}
 
         # sorting attribute to map by support
         for piece in [ Piece.POINTS, Piece.CELLS ]:
@@ -162,21 +163,21 @@ class MeshToMeshInterpolator:
 
         """
         if not self.meshFrom.GetCellData().HasArray( attrName ):
-            availableFrom = set([
+            availableFrom = {
                 self.meshFrom.GetCellData().GetArrayName( i )
                 for i in range( self.meshFrom.GetCellData().GetNumberOfArrays() )
-            ])
-            availableTo = set([
+            }
+            availableTo = {
                 self.meshTo.GetCellData().GetArrayName( i )
                 for i in range( self.meshTo.GetCellData().GetNumberOfArrays() )
-            ])
+            }
             raise KeyError( f"Attribute '{attrName}' not found.\n"
                             f"  Available arrays (MeshFrom X MeshTo): {availableFrom.intersection(availableTo)}" )
 
         self.attrName = attrName
         self.regionIds = regionIds
 
-    def _getFromMaskFromId(self:Self, id:int) -> npt.NDArray:
+    def _getFromMaskFromId( self: Self, id: int ) -> npt.NDArray:
 
         mask = np.zeros( self.meshFrom.GetNumberOfCells(), dtype=bool )
         attr = vtk_to_numpy( self.meshFrom.GetCellData().GetArray( self.attrName ) ).astype( np.int64 )
@@ -185,7 +186,7 @@ class MeshToMeshInterpolator:
         return mask
         # return self._extractRegion( self.meshFrom, mask )
 
-    def _getToMaskFromId(self:Self, id:int) -> npt.NDArray:
+    def _getToMaskFromId( self: Self, id: int ) -> npt.NDArray:
 
         mask = np.zeros( self.meshTo.GetNumberOfCells(), dtype=bool )
         attr = vtk_to_numpy( self.meshTo.GetCellData().GetArray( self.attrName ) ).astype( np.int64 )
@@ -224,43 +225,44 @@ class MeshToMeshInterpolator:
         return targetBox.Contains( vtkBoundingBox( tuple( boundSource ) ) )
 
     @staticmethod
-    def _clampInterpolate(
-        meshSource: Union[
-            vtkDataSet,
-        ],
-        meshTarget: Union[
-            vtkDataSet,
-        ],
-        _getPoints: Any,
-        toMask = []
-    ) -> list:
+    def _clampInterpolate( meshSource: Union[
+        vtkDataSet,
+    ],
+                           meshTarget: Union[
+                               vtkDataSet,
+                           ],
+                           _getPoints: Any,
+                           toMask: npt.NDArray = None ) -> list:
         """Clamp interpolation of points from meshSource to meshTarget, return list of list of tuple (distance,id_closer) for each point in target mesh.
 
         Args:
             meshSource (Union[vtkDataSet, ]): source mesh
             meshTarget (Union[vtkDataSet, ]): target mesh
             _getPoints (Any): function to get points from mesh (e.g. cell centers or points)
+            toMask (npt.NDArray): optional restriction list
         """
         #because of distributed vtm format we use distributed datastruct (e.g. list are list of list then reduced)
+        if toMask is None:
+            toMask = []
         kd = vtkKdTree()
         kd.BuildLocatorFromPoints( _getPoints( meshSource ) )
 
         tgPts = _getPoints( meshTarget )
         source2target: list = [ [] for i in range( tgPts.GetNumberOfPoints() ) ]  # map index from source to target
-        box = vtkBoundingBox( meshSource.GetBounds() )  #.Inflate() ?
+        box = vtkBoundingBox( meshSource.GetBounds() )
         getLogger( loggerTitle, True ).info( f"[before] Inflate clamping target={[box.GetBound(i) for i in range(6)]}" )
-        box.Inflate( .05*box.GetLength(0), .05*box.GetLength(1), .05*box.GetLength(2) )
+        box.Inflate( .05 * box.GetLength( 0 ), .05 * box.GetLength( 1 ), .05 * box.GetLength( 2 ) )
         getLogger( loggerTitle, True ).info( f"[after] Inflate clamping target={[box.GetBound(i) for i in range(6)]}" )
-        
+
         for i in range( tgPts.GetNumberOfPoints() ):
             if box.ContainsPoint( tgPts.GetPoint( i ) ):
-                    dist = reference( 0. )  # type: ignore[call-overload]
-                    idSource = kd.FindClosestPoint( tgPts.GetPoint( i ), dist )
-                    if (len(toMask)>0 and toMask[i]) or len(toMask) == 0:
-                        getLogger( loggerTitle, True ).info(f"{i}/{idSource} : {tgPts.GetPoint(i)}/{_getPoints( meshSource ).GetPoint(idSource)} on {dist}")
-                        source2target[ i ].append( ( dist, idSource ) )
-                    else:
-                        source2target[ i ].append( ( np.inf, -1 ) )
+                dist = reference( 0. )  # type: ignore[call-overload]
+                idSource = kd.FindClosestPoint( tgPts.GetPoint( i ), dist )
+                if ( len( toMask ) > 0 and toMask[ i ] ) or len( toMask ) == 0:
+                    # getLogger( loggerTitle, True ).info(f"{i}/{idSource} : {tgPts.GetPoint(i)}/{_getPoints( meshSource ).GetPoint(idSource)} on {dist}")
+                    source2target[ i ].append( ( dist, idSource ) )
+                else:
+                    source2target[ i ].append( ( np.inf, -1 ) )
             else:
                 source2target[ i ].append( ( np.inf, -1 ) )
 
@@ -459,79 +461,76 @@ class MeshToMeshInterpolator:
 
         return sub
 
-    def applyFilter( self: Self ) -> None:
-        """"Apply the filter and map attributes from meshFrom to meshTo."""
+    def _apply( self: Self, regionId: int = -1 ) -> tuple[ npt.NDArray, npt.NDArray ]:
+        """Apply the filter globally."""
         s2t = {}
-       
-        # extract data
         sourceVec = {}
-        fieldnc = {}
-      
-            
-        # construct the appropriate mappings
-        transferCell, transferPoint = np.zeros(shape=(self.meshTo.GetNumberOfCells(),len(self.attributes[Piece.CELLS]),9)),np.zeros(shape=(self.meshTo.GetNumberOfPoints(),len(self.attributes[Piece.POINTS]),9))
-        if len(self.regionIds) > 0:
-            
-            
-            for regionId in self.regionIds:
-                extractMeshFrom = self._extractRegion(self.meshFrom, self._getFromMaskFromId(regionId))
-                s2t[ Piece.CELLS ] = [
-            i if i != -1 else extractMeshFrom.GetNumberOfCells() for i in MeshToMeshInterpolator._reduce(
-                MeshToMeshInterpolator._clampInterpolate( extractMeshFrom, self.meshTo,
-                                                          lambda m: MeshToMeshInterpolator._getCellCenters( m ),
-                                                          self._getToMaskFromId(regionId) ) )                         
-        ]
-                if len( self.attributes[ Piece.CELLS ] ) > 0:
-                    sourceVec[ Piece.CELLS ], fieldnc[ Piece.CELLS ] = self._vectorizeFieldsOut(
-                self.attributes[ Piece.CELLS ], extractMeshFrom, Piece.CELLS )
+        transferCell, transferPoint = np.zeros( shape=( self.meshTo.GetNumberOfCells(),
+                                                        len( self.attributes[ Piece.CELLS ] ),
+                                                        9 ) ), np.zeros( shape=( self.meshTo.GetNumberOfPoints(),
+                                                                                 len( self.attributes[ Piece.POINTS ] ),
+                                                                                 9 ) )
 
-                if len( self.attributes[ Piece.POINTS ] ) > 0:
-                    sourceVec[ Piece.POINTS ], fieldnc[ Piece.POINTS ] = self._vectorizeFieldsOut(
-                self.attributes[ Piece.POINTS ], extractMeshFrom, Piece.POINTS )
+        meshFrom = self.meshFrom
+        maskId = np.ndarray( [] )
 
-            # transferCell += sourceVec[ Piece.CELLS ][ origCell[s2t[ Piece.CELLS ]], :, : ]
-                transferCell += sourceVec[ Piece.CELLS ][ s2t[ Piece.CELLS ], :, : ]
-                print(np.argwhere(transferCell[:,0,0]>0.))
-                print(len(np.argwhere(transferCell[:,0,0]>0.)))
-        else:
-            if len( self.attributes[ Piece.CELLS ] ) > 0:
-                sourceVec[ Piece.CELLS ], fieldnc[ Piece.CELLS ] = self._vectorizeFieldsOut(
-                self.attributes[ Piece.CELLS ], self.meshFrom, Piece.CELLS )
+        if regionId >= 0:
+            meshFrom = self._extractRegion( self.meshFrom, self._getFromMaskFromId( regionId ) )
+            maskId = self._getToMaskFromId( regionId )
 
-            if len( self.attributes[ Piece.POINTS ] ) > 0:
-                sourceVec[ Piece.POINTS ], fieldnc[ Piece.POINTS ] = self._vectorizeFieldsOut(
-                self.attributes[ Piece.POINTS ], self.meshFrom, Piece.POINTS )
+        if len( self.attributes[ Piece.CELLS ] ) > 0:
+            sourceVec[ Piece.CELLS ], self.fieldnc[ Piece.CELLS ] = self._vectorizeFieldsOut(
+                self.attributes[ Piece.CELLS ], meshFrom, Piece.CELLS )
+            s2t[ Piece.CELLS ] = [
+                i if i != -1 else meshFrom.GetNumberOfCells() for i in MeshToMeshInterpolator._reduce(
+                    MeshToMeshInterpolator._clampInterpolate(
+                        meshFrom, self.meshTo, lambda m: MeshToMeshInterpolator._getCellCenters( m ), maskId ) )
+            ]
+            transferCell += sourceVec[ Piece.CELLS ][ s2t[ Piece.CELLS ], :, : ]
+            # self.logger.info(np.argwhere(transferCell[:,0,0]>0.))
+            # self.logger.info(len(np.argwhere(transferCell[:,0,0]>0.)))
 
-
-            if len( self.attributes[ Piece.POINTS ] ) > 0:
-                s2t[ Piece.POINTS ] = [
+        if len( self.attributes[ Piece.POINTS ] ) > 0:
+            sourceVec[ Piece.POINTS ], self.fieldnc[ Piece.POINTS ] = self._vectorizeFieldsOut(
+                self.attributes[ Piece.POINTS ], meshFrom, Piece.POINTS )
+            s2t[ Piece.POINTS ] = [
                 i if i != -1 else self.meshFrom.GetNumberOfPoints() for i in MeshToMeshInterpolator._reduce(
                     MeshToMeshInterpolator._clampInterpolate( self.meshFrom, self.meshTo, lambda m: m.GetPoints() ) )
             ]
-            self.logger.info( f"Checking for few index p2p mappings\n {s2t[Piece.POINTS]}" )
-            if len( self.attributes[ Piece.CELLS ] ) > 0:
-                s2t[ Piece.CELLS ] = [
-                i if i != -1 else self.meshFrom.GetNumberOfCells() for i in MeshToMeshInterpolator._reduce(
-                    MeshToMeshInterpolator._clampInterpolate( self.meshFrom, self.meshTo,
-                                                            lambda m: MeshToMeshInterpolator._getCellCenters( m ) ) )
-            ]
-            self.logger.info( f"Checking for few index c2c mappings\n {s2t[Piece.CELLS][1:10]}" )
-            # transferPoint = sourceVec[ Piece.POINTS ][ s2t[ Piece.POINTS ], :, : ]
-            transferCell = sourceVec[ Piece.CELLS ][ s2t[ Piece.CELLS ], :, : ]
+            transferPoint += sourceVec[ Piece.CELLS ][ s2t[ Piece.CELLS ], :, : ]
+            # self.logger.info(np.argwhere(transferPoint[:,0,0]>0.))
+            # self.logger.info(len(np.argwhere(transferPoint[:,0,0]>0.)))
 
+        return transferCell, transferPoint
+
+    def applyFilter( self: Self ) -> None:
+        """"Apply the filter and map attributes from meshFrom to meshTo."""
+        # construct the appropriate mappings
+        transferCell, transferPoint = np.zeros( shape=( self.meshTo.GetNumberOfCells(),
+                                                        len( self.attributes[ Piece.CELLS ] ),
+                                                        9 ) ), np.zeros( shape=( self.meshTo.GetNumberOfPoints(),
+                                                                                 len( self.attributes[ Piece.POINTS ] ),
+                                                                                 9 ) )
+
+        if len( self.regionIds ) > 0:
+
+            for regionId in self.regionIds:
+                #regionalized point-wise is not supported
+                if len( self.attributes[ Piece.POINTS ] ) > 0:
+                    raise KeyError( "Regionalized point-wise is not supported yet." )
+                tC, _ = self._apply( regionId )
+                transferCell += tC
+        else:
+            transferCell, transferPoint = self._apply()
 
         # factorized final build
         if len( self.attributes[ Piece.CELLS ] ) > 0:
-            MeshToMeshInterpolator._vectorizeFieldsIn( self.attributes[ Piece.CELLS ], fieldnc[ Piece.CELLS ],
-                                                    self.meshTo, self.nonVolumicPart,
-                                                    transferCell,
-                                                    Piece.CELLS )
+            MeshToMeshInterpolator._vectorizeFieldsIn( self.attributes[ Piece.CELLS ], self.fieldnc[ Piece.CELLS ],
+                                                       self.meshTo, self.nonVolumicPart, transferCell, Piece.CELLS )
 
         if len( self.attributes[ Piece.POINTS ] ) > 0:
-            MeshToMeshInterpolator._vectorizeFieldsIn( self.attributes[ Piece.POINTS ], fieldnc[ Piece.POINTS ],
-                                                    self.meshTo, self.nonVolumicPart,
-                                                    transferPoint,
-                                                    Piece.POINTS )
+            MeshToMeshInterpolator._vectorizeFieldsIn( self.attributes[ Piece.POINTS ], self.fieldnc[ Piece.POINTS ],
+                                                       self.meshTo, self.nonVolumicPart, transferPoint, Piece.POINTS )
         self.isApplied = True
 
         return
