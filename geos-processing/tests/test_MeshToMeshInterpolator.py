@@ -4,6 +4,8 @@
 # ruff: noqa: E402 # disable Module level import not at top of file
 import pytest
 from typing import Union, Any
+from vtkmodules.numpy_interface import dataset_adapter as dsa
+from collections import Counter
 import numpy as np
 
 import sys
@@ -37,12 +39,12 @@ def test_MeshToMeshInterpolator( dataSetTest: Any, meshFromName: str, meshToName
         a1 = vtk_to_numpy( meshTo.GetCellData().GetArray( f"mapped{attrib.capitalize()}" ) )
         assert np.linalg.norm( a0 ) == pytest.approx( np.linalg.norm( a1 ), rel=1e-2, abs=0 )
 
-    output = meshToMeshInterpolator.getOutput()
-    w = vtkXMLUnstructuredGridWriter()
-    w.SetFileName( "/data/pau901/SIM_CS/04_WORKSPACE/USERS/jfranc/tmp/test_crumbs/test0.vtu" )
-    w.SetInputData( output )
-    w.Update()
-    w.Write()
+    # output = meshToMeshInterpolator.getOutput()
+    # w = vtkXMLUnstructuredGridWriter()
+    # w.SetFileName( "/data/pau901/SIM_CS/04_WORKSPACE/USERS/jfranc/tmp/test_crumbs/test0.vtu" )
+    # w.SetInputData( output )
+    # w.Update()
+    # w.Write()
 
 
 @pytest.mark.parametrize( "meshFromName, meshToName, attributeNames,attributeRegionsName,regionIds", [
@@ -95,3 +97,29 @@ def test_ExpectedFailure_MeshToMeshInterpolator( dataSetTest: Any, meshFromName:
 
     with pytest.raises( NotImplementedError ):
         MeshToMeshInterpolator( meshFrom, meshTo, attributeNames )
+
+# TODO test surfaces extractions
+@pytest.mark.parametrize( "meshFromName, meshToName, attributeNames", [
+    ( "hasFault", "hasFault", { "elementVolume" } ),
+] )
+def test_ExtractNonVol_MeshToMeshInterpolator( dataSetTest: Any, meshFromName: str, meshToName: str,
+                                                 attributeNames: set[ str ] ) -> None:
+    """Test rejection of surfacic meshes as input."""
+    meshFrom: Union[
+        vtkDataSet,
+    ] = dataSetTest( meshFromName )
+    meshTo: Union[
+        vtkDataSet,
+    ] = dataSetTest( meshToName )
+
+  
+    meshToMeshInterpolator = MeshToMeshInterpolator( meshFrom, meshTo, attributeNames )
+    meshToMeshInterpolator.applyFilter()
+    output = meshToMeshInterpolator.getOutput()
+
+    counts = {}
+    for i,m in enumerate([meshTo,output]):
+        cell_types = dsa.WrapDataObject(m).GetCellTypes()
+        counts[i] = Counter(cell_types)
+
+    assert(counts[0]==counts[1])

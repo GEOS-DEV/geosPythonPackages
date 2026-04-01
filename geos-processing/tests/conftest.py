@@ -54,6 +54,8 @@ def dataSetTest() -> Any:
             vtkFilename = "geos-mesh/tests/data/rank0WithAttr.vtu"
         elif datasetType == "mergeVolumeWithAttr":
             vtkFilename = "geos-mesh/tests/data/mergeVolumeWithAttr.vtu"
+        elif datasetType == "hasFault":
+            vtkFilename = "geos-mesh/tests/data/hasFault.vtu"
         # Small useful meshes
         elif datasetType == "quads2_tris4":
             vtkFilename = "geos-processing/tests/data/quads2_tris4.vtu"

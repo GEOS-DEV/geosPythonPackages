@@ -199,7 +199,7 @@ class MeshToMeshInterpolator:
         vtkDataSet,
     ], meshTarget: Union[
         vtkDataSet,
-    ] ) -> bool:
+    ] ) -> int:
         """Check if meshSource is fully contained in meshTarget.
 
         Args:
@@ -216,8 +216,8 @@ class MeshToMeshInterpolator:
         boundTarget -= minPoint
         targetBox = vtkBoundingBox( tuple( boundTarget ) )
         #non isotropic inflation to get the condition more robust for real world mesh
-        targetBox.Inflate( 0.01 * targetBox.GetLength( 0 ), 0.01 * targetBox.GetLength( 1 ),
-                           0.01 * targetBox.GetLength( 2 ) )
+        targetBox.Inflate( 0.1 * targetBox.GetLength( 0 ), 0.1 * targetBox.GetLength( 1 ),
+                           0.1 * targetBox.GetLength( 2 ) )
         getLogger( loggerTitle, True ).debug( f"boundSource={boundSource}" )
         getLogger( loggerTitle, True ).debug( f"boundTarget={boundTarget}" )
         getLogger( loggerTitle, True ).debug( f"Inflate box target={[targetBox.GetBound(i) for i in range(6)]}" )
@@ -253,11 +253,10 @@ class MeshToMeshInterpolator:
         getLogger( loggerTitle, True ).info( f"[after] Inflate clamping target={[box.GetBound(i) for i in range(6)]}" )
 
         for i in range( tgPts.GetNumberOfPoints() ):
-            if box.ContainsPoint( tgPts.GetPoint( i ) ):
-                dist = reference( 0. )  # type: ignore[call-overload]
-                idSource = kd.FindClosestPoint( tgPts.GetPoint( i ), dist )
-                if ( len( toMask ) > 0 and toMask[ i ] ) or len( toMask ) == 0:
-                    # getLogger( loggerTitle, True ).info(f"{i}/{idSource} : {tgPts.GetPoint(i)}/{_getPoints( meshSource ).GetPoint(idSource)} on {dist}")
+            dist = reference( 0. )
+            idSource = kd.FindClosestPoint( tgPts.GetPoint( i ), dist )  # type: ignore[call-overload]
+            if np.ndim( toMask ) == 0 or ( np.ndim( toMask ) == 1 and toMask[ i ] ):
+                if box.ContainsPoint( tgPts.GetPoint( i ) ):
                     source2target[ i ].append( ( dist, idSource ) )
                 else:
                     source2target[ i ].append( ( np.inf, -1 ) )
@@ -402,13 +401,16 @@ class MeshToMeshInterpolator:
         sn.SetContentType( vtkSelectionNode.INDICES )
         sn.SetSelectionList( volumeIds )
         Esn = vtkSelectionNode()
+        Esn.GetProperties().Set( vtkSelectionNode.INVERSE(), 1 )
         Esn.SetFieldType( vtkSelectionNode.CELL )
         Esn.SetContentType( vtkSelectionNode.INDICES )
         Esn.SetSelectionList( volumeIds )
+
         sel = vtkSelection()
         sel.AddNode( sn )
         Esel = vtkSelection()
         Esel.AddNode( Esn )
+
         ext = vtkExtractSelection()
         ext.SetInputData( 0, mesh )
         ext.SetInputData( 1, sel )
@@ -417,6 +419,7 @@ class MeshToMeshInterpolator:
         Eext.SetInputData( 0, mesh )
         Eext.SetInputData( 1, Esel )
         Eext.Update()
+
         getLogger( loggerTitle, True ).info( f"Filtered → {nVolume} cells "
                                              f"(removed {nSurface + nOther})" )
 
@@ -474,6 +477,7 @@ class MeshToMeshInterpolator:
 
         if regionId >= 0:
             meshFrom = self._extractRegion( self.meshFrom, self._getFromMaskFromId( regionId ) )
+            getLogger( loggerTitle, True ).info( f"meshFrom extracted to [{regionId}] ({meshFrom.GetNumberOfCells()})" )
             maskId = self._getToMaskFromId( regionId )
 
         if len( self.attributes[ Piece.CELLS ] ) > 0:
@@ -484,9 +488,11 @@ class MeshToMeshInterpolator:
                     MeshToMeshInterpolator._clampInterpolate(
                         meshFrom, self.meshTo, lambda m: MeshToMeshInterpolator._getCellCenters( m ), maskId ) )
             ]
+
             transferCell += sourceVec[ Piece.CELLS ][ s2t[ Piece.CELLS ], :, : ]
-            # self.logger.info(np.argwhere(transferCell[:,0,0]>0.))
-            # self.logger.info(len(np.argwhere(transferCell[:,0,0]>0.)))
+
+            uncovered = np.where( ( maskId ) & ( transferCell[ :, 0, 0 ] == self.fillInValue ) )[ 0 ]
+            getLogger( loggerTitle, True ).warning( f"Region {regionId}: {len(uncovered)} uncovered target cells" )
 
         if len( self.attributes[ Piece.POINTS ] ) > 0:
             sourceVec[ Piece.POINTS ], self.fieldnc[ Piece.POINTS ] = self._vectorizeFieldsOut(
@@ -496,8 +502,6 @@ class MeshToMeshInterpolator:
                     MeshToMeshInterpolator._clampInterpolate( self.meshFrom, self.meshTo, lambda m: m.GetPoints() ) )
             ]
             transferPoint += sourceVec[ Piece.CELLS ][ s2t[ Piece.CELLS ], :, : ]
-            # self.logger.info(np.argwhere(transferPoint[:,0,0]>0.))
-            # self.logger.info(len(np.argwhere(transferPoint[:,0,0]>0.)))
 
         return transferCell, transferPoint
 
@@ -538,17 +542,17 @@ class MeshToMeshInterpolator:
         if self.isApplied:
             f = vtkAppendFilter()
             f.SetInputData( self.meshTo )
-            self.logger.info(
+            self.logger.debug(
                 f"Available field [Vol] {[self.meshTo.GetCellData().GetArrayName(i) for i in range(self.meshTo.GetCellData().GetNumberOfArrays())]}"
             )
             if self.nonVolumicPart.GetNumberOfCells() > 0 or self.nonVolumicPart.GetNumberOfPoints() > 0:
-                self.logger.info(
+                self.logger.debug(
                     f"Available field [nonVol] {[self.nonVolumicPart.GetCellData().GetArrayName(i) for i in range(self.meshTo.GetCellData().GetNumberOfArrays())]}"
                 )
                 f.AddInputData( self.nonVolumicPart )
             f.Update()
 
-            self.logger.info(
+            self.logger.debug(
                 f"Available field [Appended] {[f.GetOutput().GetCellData().GetArrayName(i) for i in range(self.meshTo.GetCellData().GetNumberOfArrays())]}"
             )
             return f.GetOutput()
