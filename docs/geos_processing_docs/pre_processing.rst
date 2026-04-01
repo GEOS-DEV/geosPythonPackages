@@ -18,3 +18,11 @@ MeshQualityEnhanced filter
     :members:
     :undoc-members:
     :show-inheritance:
+
+TetQualityAnalysis filter
+---------------------------------------------------------
+
+.. automodule:: geos.processing.pre_processing.TetQualityAnalysis
+    :members:
+    :undoc-members:
+    :show-inheritance:

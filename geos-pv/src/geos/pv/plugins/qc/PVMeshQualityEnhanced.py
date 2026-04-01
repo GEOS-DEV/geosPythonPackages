@@ -58,6 +58,8 @@ To use it:
     Please refer to the `Verdict Manual <https://visit-sphinx-github-user-manual.readthedocs.io/en/v3.4.0/_downloads/9d944264b44b411aeb4a867a1c9b1ed5/VerdictManual-revA.pdf>`_ for metrics and range definitions.
 """
 
+HANDLER: logging.Handler = VTKHandler()
+
 
 @SISOFilter( category=FilterCategory.QC, decoratedLabel="Mesh Quality Enhanced", decoratedType="vtkUnstructuredGrid" )
 class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
@@ -67,8 +69,6 @@ class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
         self._filename: Optional[ str ] = None
         self._saveToFile: bool = True
         self._blockIndex: int = 0
-
-        self.handler: logging.Handler = VTKHandler()
 
         # Used to concatenate results if vtkMultiBlockDataSet
         self._metricsAll: list[ float ] = []
@@ -232,8 +232,8 @@ class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
         otherMetrics: set[ int ] = self._getQualityMetricsToUse( self._commonMeshQualityMetric )
 
         meshQualityEnhancedFilter: MeshQualityEnhanced = MeshQualityEnhanced( inputMesh, True )
-        if not isHandlerInLogger( self.handler, meshQualityEnhancedFilter.logger ):
-            meshQualityEnhancedFilter.setLoggerHandler( self.handler )
+        if not isHandlerInLogger( HANDLER, meshQualityEnhancedFilter.logger ):
+            meshQualityEnhancedFilter.setLoggerHandler( HANDLER )
 
         meshQualityEnhancedFilter.SetCellQualityMetrics( triangleMetrics=triangleMetrics,
                                                          quadMetrics=quadMetrics,

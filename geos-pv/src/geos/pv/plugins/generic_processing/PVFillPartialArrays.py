@@ -41,6 +41,8 @@ To use it:
 
 """
 
+HANDLER: logging.Handler = VTKHandler()
+
 
 @SISOFilter( category=FilterCategory.GENERIC_PROCESSING,
              decoratedLabel="Fill Partial Arrays",
@@ -51,7 +53,6 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
         """Fill a partial attribute with constant value per component."""
         self.clearDictAttributesValues: bool = True
         self.dictAttributesValues: dict[ str, Union[ list[ Any ], None ] ] = {}
-        self.handler: logging.Handler = VTKHandler()
 
     @smproperty.xml( """
         <StringVectorProperty
@@ -108,8 +109,8 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
             speHandler=True,
         )
 
-        if not isHandlerInLogger( self.handler, fillPartialArraysFilter.logger ):
-            fillPartialArraysFilter.setLoggerHandler( self.handler )
+        if not isHandlerInLogger( HANDLER, fillPartialArraysFilter.logger ):
+            fillPartialArraysFilter.setLoggerHandler( HANDLER )
 
         try:
             fillPartialArraysFilter.applyFilter()
