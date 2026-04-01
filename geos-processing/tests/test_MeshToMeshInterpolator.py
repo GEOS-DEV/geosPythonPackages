@@ -14,7 +14,6 @@ sys.path.insert( 0, "/data/pau901/SIM_CS/users/jfranc/geosPythonPackages/geos-pr
 
 from geos.processing.generic_processing_tools.MeshToMeshInterpolator import MeshToMeshInterpolator
 from vtkmodules.vtkCommonDataModel import vtkDataSet
-from vtkmodules.vtkIOXML import vtkXMLUnstructuredGridWriter
 from vtkmodules.util.numpy_support import vtk_to_numpy
 
 
@@ -98,12 +97,13 @@ def test_ExpectedFailure_MeshToMeshInterpolator( dataSetTest: Any, meshFromName:
     with pytest.raises( NotImplementedError ):
         MeshToMeshInterpolator( meshFrom, meshTo, attributeNames )
 
+
 # TODO test surfaces extractions
 @pytest.mark.parametrize( "meshFromName, meshToName, attributeNames", [
     ( "hasFault", "hasFault", { "elementVolume" } ),
 ] )
 def test_ExtractNonVol_MeshToMeshInterpolator( dataSetTest: Any, meshFromName: str, meshToName: str,
-                                                 attributeNames: set[ str ] ) -> None:
+                                               attributeNames: set[ str ] ) -> None:
     """Test rejection of surfacic meshes as input."""
     meshFrom: Union[
         vtkDataSet,
@@ -112,14 +112,13 @@ def test_ExtractNonVol_MeshToMeshInterpolator( dataSetTest: Any, meshFromName: s
         vtkDataSet,
     ] = dataSetTest( meshToName )
 
-  
     meshToMeshInterpolator = MeshToMeshInterpolator( meshFrom, meshTo, attributeNames )
     meshToMeshInterpolator.applyFilter()
     output = meshToMeshInterpolator.getOutput()
 
     counts = {}
-    for i,m in enumerate([meshTo,output]):
-        cell_types = dsa.WrapDataObject(m).GetCellTypes()
-        counts[i] = Counter(cell_types)
+    for i, m in enumerate( [ meshTo, output ] ):
+        cell_types = dsa.WrapDataObject( m ).GetCellTypes()
+        counts[ i ] = Counter( cell_types )
 
-    assert(counts[0]==counts[1])
+    assert ( counts[ 0 ] == counts[ 1 ] )
