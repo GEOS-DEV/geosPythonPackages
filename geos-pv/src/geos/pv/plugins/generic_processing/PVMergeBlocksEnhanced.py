@@ -53,6 +53,8 @@ To use it:
     - nan for float data.
 """
 
+HANDLER: logging.Handler = VTKHandler()
+
 
 @smproxy.filter( name="PVMergeBlocksEnhanced", label="Merge Blocks Keeping Partial Attributes" )
 @smhint.xml( f'<ShowInMenu category="{ FilterCategory.GENERIC_PROCESSING.value }"/>' )
@@ -68,7 +70,6 @@ class PVMergeBlocksEnhanced( VTKPythonAlgorithmBase ):
             inputType="vtkMultiBlockDataSet",
             outputType="vtkUnstructuredGrid",
         )
-        self.handler: logging.Handler = VTKHandler()
 
     def RequestDataObject(
         self: Self,
@@ -118,8 +119,8 @@ class PVMergeBlocksEnhanced( VTKPythonAlgorithmBase ):
 
         mergeBlockEnhancedFilter: MergeBlockEnhanced = MergeBlockEnhanced( inputMesh, True )
 
-        if not isHandlerInLogger( self.handler, mergeBlockEnhancedFilter.logger ):
-            mergeBlockEnhancedFilter.setLoggerHandler( self.handler )
+        if not isHandlerInLogger( HANDLER, mergeBlockEnhancedFilter.logger ):
+            mergeBlockEnhancedFilter.setLoggerHandler( HANDLER )
 
         try:
             mergeBlockEnhancedFilter.applyFilter()

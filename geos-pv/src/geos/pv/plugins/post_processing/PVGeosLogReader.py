@@ -39,7 +39,7 @@ from geos.pv.geosLogReaderUtils.GeosLogReaderFlow import GeosLogReaderFlow
 from geos.pv.geosLogReaderUtils.GeosLogReaderWells import GeosLogReaderWells
 from geos.utils.enumUnits import ( Mass, MassRate, Pressure, Time, Unit, Volume, VolumetricRate, enumerationDomainUnit )
 from geos.utils.UnitRepository import UnitRepository
-from geos.utils.Logger import ( CountWarningHandler, getLoggerHandlerType )
+from geos.utils.Logger import ( CountVerbosityHandler, getLoggerHandlerType )
 from geos.pv.utils.checkboxFunction import createModifiedCallback  # type: ignore[attr-defined]
 from geos.pv.utils.paraviewTreatments import strListToEnumerationDomainXml
 
@@ -60,6 +60,7 @@ To use it:
 
 """
 
+HANDLER: logging.Handler = VTKHandler()
 loggerTitle: str = "Geos Log Reader"
 
 
@@ -150,14 +151,13 @@ class PVGeosLogReader( VTKPythonAlgorithmBase ):
         for prop in propsSolvers:
             self.m_convergence.AddArray( prop )
 
-        self.handler: logging.Handler = VTKHandler()
         self.logger = logging.getLogger( loggerTitle )
         self.logger.setLevel( logging.INFO )
-        self.logger.addHandler( self.handler )
+        self.logger.addHandler( HANDLER )
         self.logger.propagate = False
 
-        counter: CountWarningHandler = CountWarningHandler()
-        self.counter: CountWarningHandler
+        counter: CountVerbosityHandler = CountVerbosityHandler()
+        self.counter: CountVerbosityHandler
         self.nbWarnings: int = 0
         try:
             self.counter = getLoggerHandlerType( type( counter ), self.logger )
