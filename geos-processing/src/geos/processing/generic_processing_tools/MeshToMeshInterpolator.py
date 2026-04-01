@@ -232,7 +232,7 @@ class MeshToMeshInterpolator:
                                vtkDataSet,
                            ],
                            _getPoints: Any,
-                            toMask: npt.NDArray = np.ndarray( [] )  ) -> list:
+                           toMask: npt.NDArray = np.ndarray( [] ) ) -> list:
         """Clamp interpolation of points from meshSource to meshTarget, return list of list of tuple (distance,id_closer) for each point in target mesh.
 
         Args:
@@ -490,7 +490,6 @@ class MeshToMeshInterpolator:
             ]
 
             transferCell += sourceVec[ Piece.CELLS ][ s2t[ Piece.CELLS ], :, : ]
-
 
         if len( self.attributes[ Piece.POINTS ] ) > 0:
             sourceVec[ Piece.POINTS ], self.fieldnc[ Piece.POINTS ] = self._vectorizeFieldsOut(
