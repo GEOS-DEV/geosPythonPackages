@@ -38,14 +38,6 @@ def test_MeshToMeshInterpolator( dataSetTest: Any, meshFromName: str, meshToName
         a1 = vtk_to_numpy( meshTo.GetCellData().GetArray( f"mapped{attrib.capitalize()}" ) )
         assert np.linalg.norm( a0 ) == pytest.approx( np.linalg.norm( a1 ), rel=1e-2, abs=0 )
 
-    # output = meshToMeshInterpolator.getOutput()
-    # w = vtkXMLUnstructuredGridWriter()
-    # w.SetFileName( "/data/pau901/SIM_CS/04_WORKSPACE/USERS/jfranc/tmp/test_crumbs/test0.vtu" )
-    # w.SetInputData( output )
-    # w.Update()
-    # w.Write()
-
-
 @pytest.mark.parametrize( "meshFromName, meshToName, attributeNames,attributeRegionsName,regionIds", [
     ( "rank0WithAttr", "mergeVolumeWithAttr", { "elementVolume" }, "attributes", { 4, 5 } ),
 ] )
@@ -73,14 +65,6 @@ def test_AttributeOnly_MeshToMeshInterpolator( dataSetTest: Any, meshFromName: s
             mask |= ( attr == rid )
         assert np.linalg.norm( a0[ mask ] ) == pytest.approx( np.linalg.norm( a1 ), rel=1e-2, abs=0 )
 
-    # output = meshToMeshInterpolator.getOutput()
-    # w = vtkXMLUnstructuredGridWriter()
-    # w.SetFileName(f"/data/pau901/SIM_CS/04_WORKSPACE/USERS/jfranc/tmp/test_crumbs/test.vtu")
-    # w.SetInputData(output)
-    # w.Update()
-    # w.Write()
-
-
 @pytest.mark.parametrize( "meshFromName, meshToName, attributeNames", [
     ( "extractAndMergeFault", "extractAndMergeVolume", { "Texture Coordinates" } ),
 ] )
@@ -97,8 +81,6 @@ def test_ExpectedFailure_MeshToMeshInterpolator( dataSetTest: Any, meshFromName:
     with pytest.raises( NotImplementedError ):
         MeshToMeshInterpolator( meshFrom, meshTo, attributeNames )
 
-
-# TODO test surfaces extractions
 @pytest.mark.parametrize( "meshFromName, meshToName, attributeNames", [
     ( "hasFault", "hasFault", { "elementVolume" } ),
 ] )
