@@ -19,7 +19,7 @@ def test_AttributesDiff( dataSetTest: vtkMultiBlockDataSet, ) -> None:
     mesh1: vtkMultiBlockDataSet = dataSetTest( "2Ranks" )
     mesh2: vtkMultiBlockDataSet = dataSetTest( "4Ranks" )
 
-    attributesDiffFilter: AttributesDiff = AttributesDiff()
+    attributesDiffFilter: AttributesDiff = AttributesDiff( computePoints=True, computeCells=True )
     attributesDiffFilter.setMeshes( [ mesh1, mesh2 ] )
     attributesDiffFilter.logSharedAttributeInfo()
     dictAttributesToCompare: dict[ Piece, set[ str ] ] = {
