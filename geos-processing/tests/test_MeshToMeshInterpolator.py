@@ -8,10 +8,6 @@ from vtkmodules.numpy_interface import dataset_adapter as dsa
 from collections import Counter
 import numpy as np
 
-import sys
-
-sys.path.insert( 0, "/data/pau901/SIM_CS/users/jfranc/geosPythonPackages/geos-processing" )
-
 from geos.processing.generic_processing_tools.MeshToMeshInterpolator import MeshToMeshInterpolator
 from vtkmodules.vtkCommonDataModel import vtkDataSet
 from vtkmodules.util.numpy_support import vtk_to_numpy

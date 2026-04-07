@@ -9,16 +9,12 @@ from geos.utils.PhysicalConstants import EPSILON
 
 __doc__ = """Functions to permform geometry calculations."""
 
-CANONICAL_BASIS_3D: tuple[ npt.NDArray[ np.float64 ], npt.NDArray[ np.float64 ],
-                           npt.NDArray[ np.float64 ] ] = ( np.array( [ 1.0, 0.0, 0.0 ] ), np.array( [ 0.0, 1.0, 0.0 ] ),
-                                                           np.array( [ 0.0, 0.0, 1.0 ] ) )
+CANONICAL_BASIS_3D: npt.NDArray[ np.float64 ] = np.array( [ [ 1.0, 0.0, 0.0 ],[ 0.0, 1.0, 0.0 ],[ 0.0, 0.0, 1.0 ] ] ) 
 
 
 def getChangeOfBasisMatrix(
-    basisFrom: tuple[ npt.NDArray[ np.floating[ Any ] ], npt.NDArray[ np.floating[ Any ] ],
-                      npt.NDArray[ np.floating[ Any ] ] ],
-    basisTo: tuple[ npt.NDArray[ np.floating[ Any ] ], npt.NDArray[ np.floating[ Any ] ],
-                    npt.NDArray[ np.floating[ Any ] ] ],
+    basisFrom:  npt.NDArray[ np.floating[ Any ] ],
+    basisTo: npt.NDArray[ np.floating[ Any ] ],
 ) -> Any:
     """Get the change of basis matrix from basis basisFrom to basis basisTo.
 
@@ -36,19 +32,20 @@ def getChangeOfBasisMatrix(
     Returns:
         npt.NDArray[np.floating[Any]]: Change of basis matrix.
     """
-    assert ( basisFrom[ 0 ].size == basisFrom[ 1 ].size ) and ( basisFrom[ 0 ].size == basisFrom[ 2 ].size ), (
+    assert ( basisFrom.shape[1] == basisFrom.shape[2]) , (
         "Origin space vectors must have the same size." )
 
-    assert ( basisTo[ 0 ].size == basisTo[ 1 ].size ) and ( basisTo[ 0 ].size == basisTo[ 2 ].size ), (
+    basisTo = np.repeat(basisTo[None,:],basisFrom.shape[0], axis=0) 
+    assert ( basisTo.shape[1] == basisTo.shape[2]) , (
         "Destination space vectors must have the same size." )
 
     # build the matrices where columns are the vectors of the bases
-    B = np.transpose( np.array( basisFrom ) )
-    C = np.transpose( np.array( basisTo ) )
-    # compute the inverse of C
-    C1: npt.NDArray[ np.floating[ Any ] ] = np.linalg.inv( C )
+    # B = np.transpose( np.array( basisFrom ) )
+    # C = np.transpose( np.array( basisTo ) )
+    # no need to compute the inverse of C as it is orthonormal checked - transpose is enough 
+    assert np.linalg.norm( np.einsum('nji,nij->nij',basisTo,basisTo) - np.repeat(np.eye(3)[None,:],basisFrom.shape[0], axis=0) ) < 1e-6
     # get the change of basis matrix
-    return np.dot( C1, B )
+    return np.einsum('nji,nij->nij',basisTo,basisFrom)
 
 
 def computeCoordinatesInNewBasis( vec: npt.NDArray[ np.floating[ Any ] ],

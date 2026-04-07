@@ -11,9 +11,8 @@ import numpy as np
 import numpy.typing as npt
 from typing_extensions import Self
 
-
-sys.path.insert(0,"/data/pau901/SIM_CS/04_WORKSPACE/USERS/jfranc/geosPythonPackages/geos-geomechanics/src")
-sys.path.insert(0,"/data/pau901/SIM_CS/04_WORKSPACE/USERS/jfranc/geosPythonPackages/geos-utils/src")
+# sys.path.insert( 0, "/data/pau901/SIM_CS/04_WORKSPACE/USERS/jfranc/geosPythonPackages/geos-geomechanics/src" )
+# sys.path.insert( 0, "/data/pau901/SIM_CS/04_WORKSPACE/USERS/jfranc/geosPythonPackages/geos-utils/src" )
 dir_path = os.path.dirname( os.path.realpath( __file__ ) )
 parent_dir_path = os.path.join( os.path.dirname( dir_path ), "src" )
 if parent_dir_path not in sys.path:
@@ -40,7 +39,7 @@ effectiveStress: npt.NDArray[ np.float64 ] = -1.0 * np.array( [
 verticalStress: npt.NDArray[ np.float64 ] = effectiveStress[ :, 2 ]
 horizontalStress: npt.NDArray[ np.float64 ] = np.min( effectiveStress[ :, :2 ], axis=1 )
 
-stressVector: npt.NDArray[ np.float64 ] = np.array( [ 1.8, 2.5, 5.2, 0.3, 0.4, 0.1 ] ).reshape(1,6)
+stressVector: npt.NDArray[ np.float64 ] = np.array( [ 1.8, 2.5, 5.2, 0.3, 0.4, 0.1 ] ).reshape( 1, 6 )
 stressTensor: npt.NDArray[ np.float64 ] = getAttributeMatrixFromVector( stressVector )
 
 
@@ -256,19 +255,21 @@ class TestsFunctionsGeomechanicsCalculator( unittest.TestCase ):
     def test_computeStressPrincipalComponentsFromStressVector( self: Self ) -> None:
         """Test calculation of stress principal components from stress vector."""
         obtained: list[ float ] = [
-            round(val,3) for val in list( fcts.computeStressPrincipalComponentsFromStressVector( stressVector )[0] )
+            round( val, 3 )
+            for val in list( fcts.computeStressPrincipalComponentsFromStressVector( stressVector )[ 0 ].flatten() )
         ]
         expected: tuple[ float, float, float ] = ( 1.748, 2.471, 5.281 )
         self.assertSequenceEqual( tuple( obtained ), expected )
 
     def test_computeNormalShearStress( self: Self ) -> None:
         """Test calculation of normal and shear stress."""
-        directionVector = np.array( [ 1.0, 1.0, 0.0 ] ).reshape(1,3)
-        dv = np.vstack([directionVector,directionVector])
-        sv = np.vstack([stressTensor,stressTensor])
-        obtained: tuple[ npt.NDArray[np.float64], npt.NDArray[np.float64] ] = fcts.computeNormalShearStress( sv, dv )
-        expected: tuple[ list[float], list[float] ] = ( [2.250,2.250], [0.606,0.606] )
-        assert np.linalg.norm( [ obt-exp  for obt,exp in zip(obtained,expected) ]) < 1e-3
+        directionVector = np.array( [ 1.0, 1.0, 0.0 ] ).reshape( 1, 3 )
+        dv = np.vstack( [ directionVector, directionVector ] )
+        sv = np.vstack( [ stressTensor, stressTensor ] )
+        obtained: tuple[ npt.NDArray[ np.float64 ],
+                         npt.NDArray[ np.float64 ] ] = fcts.computeNormalShearStress( sv, dv )
+        expected: tuple[ list[ float ], list[ float ] ] = ( [ 2.250, 2.250 ], [ 0.606, 0.606 ] )
+        assert np.linalg.norm( [ obt - exp for obt, exp in zip( obtained, expected ) ] ) < 1e-3
 
 
 if __name__ == "__main__":

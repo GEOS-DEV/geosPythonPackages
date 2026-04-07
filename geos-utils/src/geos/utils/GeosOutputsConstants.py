@@ -203,6 +203,10 @@ class PostProcessingOutputsEnum( AttributeEnum ):
     AVERAGE_STRAIN = ( "averageStrain", 6, Piece.CELLS )
     RSP_OED = ( "rsp_oed", 1, Piece.CELLS )
     RSP_REAL = ( "rsp_real", 6, Piece.CELLS )
+    PRINCIPAL_AXIS_VAL = ( "principalAxisVal", 3, Piece.CELLS )
+    PRINCIPAL_AXIS_DIR_1 = ( "principalAxisDir1", 3, Piece.CELLS )
+    PRINCIPAL_AXIS_DIR_2 = ( "principalAxisDir2", 3, Piece.CELLS )
+    PRINCIPAL_AXIS_DIR_3 = ( "principalAxisDir3", 3, Piece.CELLS )
 
     # advanced geomechanical outputs
     CRITICAL_TOTAL_STRESS_RATIO = ( "totalStressRatioCritical_real", 1, Piece.CELLS )

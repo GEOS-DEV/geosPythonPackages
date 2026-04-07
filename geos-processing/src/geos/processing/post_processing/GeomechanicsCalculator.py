@@ -11,7 +11,8 @@ import numpy as np
 import numpy.typing as npt
 
 import sys
-sys.path.insert(0,"/data/pau901/SIM_CS/04_WORKSPACE/USERS/jfranc/geosPythonPackages/geos-processing/src")
+
+sys.path.insert( 0, "/data/pau901/SIM_CS/04_WORKSPACE/USERS/jfranc/geosPythonPackages/geos-processing/src" )
 
 import geos.geomechanics.processing.geomechanicsCalculatorFunctions as fcts
 
@@ -158,7 +159,7 @@ BASIC_PROPERTIES: tuple[ AttributeEnum,
                          ...] = ( BIOT_COEFFICIENT, COMPRESSIBILITY, COMPRESSIBILITY_OED, COMPRESSIBILITY_REAL,
                                   SPECIFIC_GRAVITY, STRESS_EFFECTIVE_RATIO_REAL, STRESS_TOTAL, STRESS_TOTAL_T0,
                                   STRESS_TOTAL_RATIO_REAL, LITHOSTATIC_STRESS, AVERAGE_STRAIN, STRESS_TOTAL_DELTA,
-                                  RSP_REAL, RSP_OED, STRESS_EFFECTIVE_RATIO_OED, PRINCIPAL_AXIS_VAL, 
+                                  RSP_REAL, RSP_OED, STRESS_EFFECTIVE_RATIO_OED, PRINCIPAL_AXIS_VAL,
                                   PRINCIPAL_AXIS_DIR_1, PRINCIPAL_AXIS_DIR_2, PRINCIPAL_AXIS_DIR_3 )
 
 # Advanced properties:
@@ -613,6 +614,14 @@ class GeomechanicsCalculator:
                 return self.rspOed
             elif name == STRESS_EFFECTIVE_RATIO_OED.attributeName:
                 return self.effectiveStressRatioOed
+            elif name == PRINCIPAL_AXIS_VAL.attributeName:
+                return self._principalAxesVal
+            elif name == PRINCIPAL_AXIS_DIR_1.attributeName:
+                return self._principalAxesDir1
+            elif name == PRINCIPAL_AXIS_DIR_2.attributeName:
+                return self._principalAxesDir2
+            elif name == PRINCIPAL_AXIS_DIR_3.attributeName:
+                return self._principalAxesDir3
             else:
                 raise NameError( f"The property { name } is not a basic property." )
 
@@ -913,15 +922,17 @@ class GeomechanicsCalculator:
 
         self.logger.info( "All geomechanics basic properties have been successfully computed." )
         return
-    
-    def _computePrincipalAxesAndDirections( self: Self )->None:
+
+    def _computePrincipalAxesAndDirections( self: Self ) -> None:
         """Compute the Principal axis and directions."""
-        self._basicProperties._principalAxesVal, dirs = fcts.computeStressPrincipalComponentsFromStressVector(self._mandatoryProperties._effectiveStress)
-        for i in range(3):
-            self._basicProperties._principalAxesDir1[:,:,i] = dirs[:,i]
+        self._basicProperties._principalAxesVal, dir = fcts.computeStressPrincipalComponentsFromStressVector(
+            self._mandatoryProperties._effectiveStress )
+        self._basicProperties._principalAxesDir1, self._basicProperties._principalAxesDir2, self._basicProperties._principalAxesDir3 = np.unstack(
+            dir, axis=2 )
+        self._attributesToCreate.extend(
+            [ PRINCIPAL_AXIS_VAL, PRINCIPAL_AXIS_DIR_1, PRINCIPAL_AXIS_DIR_2, PRINCIPAL_AXIS_DIR_3 ] )
         self.logger.info( "All geomechanics basic properties have been successfully computed." )
         return
-        
 
     def _computeAdvancedProperties( self: Self ) -> None:
         """Compute the advanced geomechanics properties."""
