@@ -89,7 +89,8 @@ def getAttributeMatrixFromVector( attrArray: npt.NDArray[ np.float64 ], ) -> npt
     return matrices
 
 
-def getAttributeVectorFromMatrix( attrMatrix: npt.NDArray[ np.float64 ], shape: tuple[int,int,int] ) -> npt.NDArray[ np.float64 ]:
+def getAttributeVectorFromMatrix( attrMatrix: npt.NDArray[ np.float64 ],
+                                  shape: tuple[ int, int, int ] ) -> npt.NDArray[ np.float64 ]:
     r"""Get the vector of attribute values from the matrix.
 
     Matrix to vector conversion is the following:
@@ -129,7 +130,7 @@ def getAttributeVectorFromMatrix( attrMatrix: npt.NDArray[ np.float64 ], shape: 
 
     Args:
         attrMatrix (npt.NDArray[np.float64]): Matrix of attribute values.
-        size (int): Size of the final vector. Values accepted are 3, 9 or 6.
+        shape (tuple[int, int, int]): Shape of the output vector (n, 3), (n, 6) or (n, 9).
 
     Raises:
         ValueError: The output vector size requested can only be 3, 9 or 6.
@@ -139,28 +140,28 @@ def getAttributeVectorFromMatrix( attrMatrix: npt.NDArray[ np.float64 ], shape: 
         npt.NDArray[np.float64]: Vector of attribute values.
     """
     attrArray: npt.NDArray[ np.float64 ] = np.zeros( shape )
-    if shape[1] not in ( 3, 6, 9 ):
+    if shape[ 1 ] not in ( 3, 6, 9 ):
         raise ValueError( "Requested output size can only be 3, 9 or 6 (symmetrical case)." )
-    if attrMatrix.shape[1:] != ( 3, 3 ):
+    if attrMatrix.shape[ 1: ] != ( 3, 3 ):
         raise ValueError( "Input matrix shape must be (3,3)." )
 
     # Diagonal terms
-    attrArray[:, 0 ] = attrMatrix[:,0,0]
-    attrArray[:, 1 ] = attrMatrix[:,1,1]
-    attrArray[:, 2 ] = attrMatrix[:,2,2]
+    attrArray[ :, 0 ] = attrMatrix[ :, 0, 0 ]
+    attrArray[ :, 1 ] = attrMatrix[ :, 1, 1 ]
+    attrArray[ :, 2 ] = attrMatrix[ :, 2, 2 ]
 
     # shear stress components
     if attrArray.size == 6:
-        attrArray[:, 3 ] = attrMatrix[:, 1, 2 ]
-        attrArray[:, 4 ] = attrMatrix[:, 0, 2 ]
-        attrArray[:, 5 ] = attrMatrix[:, 0, 1 ]
+        attrArray[ :, 3 ] = attrMatrix[ :, 1, 2 ]
+        attrArray[ :, 4 ] = attrMatrix[ :, 0, 2 ]
+        attrArray[ :, 5 ] = attrMatrix[ :, 0, 1 ]
 
     elif attrArray.size == 9:
-        attrArray[:, 3 ] = attrMatrix[:, 1, 2 ]
-        attrArray[:, 4 ] = attrMatrix[:, 0, 2 ]
-        attrArray[:, 5 ] = attrMatrix[:, 0, 1 ]
-        attrArray[:, 6 ] = attrMatrix[:, 2, 1 ]
-        attrArray[:, 7 ] = attrMatrix[:, 2, 0 ]
-        attrArray[:, 8 ] = attrMatrix[:, 1, 0 ]
+        attrArray[ :, 3 ] = attrMatrix[ :, 1, 2 ]
+        attrArray[ :, 4 ] = attrMatrix[ :, 0, 2 ]
+        attrArray[ :, 5 ] = attrMatrix[ :, 0, 1 ]
+        attrArray[ :, 6 ] = attrMatrix[ :, 2, 1 ]
+        attrArray[ :, 7 ] = attrMatrix[ :, 2, 0 ]
+        attrArray[ :, 8 ] = attrMatrix[ :, 1, 0 ]
 
     return attrArray

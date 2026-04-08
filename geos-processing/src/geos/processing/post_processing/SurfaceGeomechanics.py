@@ -364,7 +364,7 @@ class SurfaceGeomechanics:
         # Get all local basis vectors
         localBasis: npt.NDArray[ np.float64 ] = getLocalBasisVectors( self.outputMesh, self.logger )
 
-        if len( attrArray[0] ) not in ( 3, 6, 9 ):
+        if len( attrArray[ 0 ] ) not in ( 3, 6, 9 ):
             raise ValueError(
                 f"Inconsistent number of components for attribute. Expected 3, 6 or 9 but got { len( attrArray[0].shape ) }."
             )

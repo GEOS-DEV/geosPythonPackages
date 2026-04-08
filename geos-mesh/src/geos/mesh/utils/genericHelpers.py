@@ -421,7 +421,7 @@ def convertAttributeFromLocalToXYZ(
     transformMatrix: npt.NDArray[ np.float64 ] = getChangeOfBasisMatrix( localBasisVectors, CANONICAL_BASIS_3D )
 
     # Apply transformation
-    arrayXYZ: npt.NDArray[ np.float64 ] = np.einsum('nij,njk,nlk->nil', transformMatrix,matrix3x3,transformMatrix )
+    arrayXYZ: npt.NDArray[ np.float64 ] = np.einsum( 'nij,njk,nlk->nil', transformMatrix, matrix3x3, transformMatrix )
 
     # Convert back to GEOS type attribute and return
     return getAttributeVectorFromMatrix( arrayXYZ, vector.shape )
@@ -465,7 +465,8 @@ def getTangentsVectors( surface: vtkPolyData ) -> Tuple[ npt.NDArray[ np.float64
     tangents1: npt.NDArray[ np.float64 ]
 
     try:
-        tangents1 = np.einsum('ni,n->ni',vtk_to_numpy( vtkTangents ),1/np.linalg.norm(vtk_to_numpy( vtkTangents ), axis=1))
+        tangents1 = np.einsum( 'ni,n->ni', vtk_to_numpy( vtkTangents ),
+                               1 / np.linalg.norm( vtk_to_numpy( vtkTangents ), axis=1 ) )
     except AttributeError as err:
         context: str = f"No tangential attribute found in the mesh. Use the computeTangents function beforehand.\n{ err }"
         raise VTKError( context ) from err
@@ -474,7 +475,7 @@ def getTangentsVectors( surface: vtkPolyData ) -> Tuple[ npt.NDArray[ np.float64
         normals: npt.NDArray[ np.float64 ] = getNormalVectors( surface )
 
         tangents2: npt.NDArray[ np.float64 ] = np.cross( normals, tangents1, axis=1 ).astype( np.float64 )
-        tangents2 = np.einsum('ni,n->ni',tangents2, 1/np.linalg.norm(tangents2, axis=1))
+        tangents2 = np.einsum( 'ni,n->ni', tangents2, 1 / np.linalg.norm( tangents2, axis=1 ) )
 
     return ( tangents1, tangents2 )
 
@@ -514,7 +515,7 @@ def getLocalBasisVectors(
         surfaceWithTangents: vtkPolyData = computeTangents( surfaceWithNormals, logger )
         tangents = getTangentsVectors( surfaceWithTangents )
 
-    return np.swapaxes(np.array( ( normals, *tangents ) ), 0, 1)
+    return np.swapaxes( np.array( ( normals, *tangents ) ), 0, 1 )
 
 
 def computeNormals(
