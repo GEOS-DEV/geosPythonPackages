@@ -14,7 +14,7 @@ from vtkmodules.util.numpy_support import vtk_to_numpy
 
 from geos.mesh.utils.genericHelpers import ( computeSurfaceTextureCoordinates, computeTangents, computeNormals,
                                              getLocalBasisVectors, getTangentsVectors, getNormalVectors,
-                                             convertAttributeFromLocalToXYZForOneCell )
+                                             convertAttributeFromLocalToXYZ )
 
 from geos.utils.Errors import VTKError
 
@@ -297,6 +297,6 @@ def test_convertAttributesToXYZ( testcase: AttributeConversionTestCase ) -> None
     """Test the conversion of one cell attribute from local to canonic basis."""
     localAttr: npt.NDArray[ np.float64 ] = testcase.vector
 
-    attrXYZ: npt.NDArray[ np.float64 ] = convertAttributeFromLocalToXYZForOneCell(
+    attrXYZ: npt.NDArray[ np.float64 ] = convertAttributeFromLocalToXYZ(
         localAttr, ( testcase.normal, testcase.tangent1, testcase.tangent2 ) )
     assert np.allclose( attrXYZ, testcase.expectedVectorXYZ, rtol=1e-6 )

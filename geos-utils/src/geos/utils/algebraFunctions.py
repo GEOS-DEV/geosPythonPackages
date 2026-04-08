@@ -58,7 +58,7 @@ def getAttributeMatrixFromVector( attrArray: npt.NDArray[ np.float64 ], ) -> npt
         raise ValueError( "Vectorial attribute must contain 3, 6 or 9 components." )
 
     # diagonal terms
-    matrices: npt.NDArray[ np.float64 ] = np.empty( shape=( attrArray.shape[ 0 ], 3, 3 ) )
+    matrices: npt.NDArray[ np.float64 ] = np.zeros( shape=( attrArray.shape[ 0 ], 3, 3 ) )
 
     #diag
     matrices[ :, 0, 0 ] = attrArray[ :, 0 ]  #

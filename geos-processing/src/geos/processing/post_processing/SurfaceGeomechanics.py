@@ -13,7 +13,7 @@ from vtkmodules.vtkCommonDataModel import vtkPolyData
 
 from geos.mesh.utils.arrayModifiers import createAttribute
 from geos.mesh.utils.arrayHelpers import ( getArrayInObject, getAttributeSet, isAttributeInObject )
-from geos.mesh.utils.genericHelpers import ( getLocalBasisVectors, convertAttributeFromLocalToXYZForOneCell )
+from geos.mesh.utils.genericHelpers import ( getLocalBasisVectors, convertAttributeFromLocalToXYZ )
 import geos.geomechanics.processing.geomechanicsCalculatorFunctions as fcts
 from geos.utils.pieceEnum import Piece
 from geos.utils.Logger import ( getLogger, Logger, CountVerbosityHandler, isHandlerInLogger, getLoggerHandlerType )
@@ -371,7 +371,7 @@ class SurfaceGeomechanics:
 
             # Compute attribute XYZ components
         # cellLocalBasis: npt.NDArray[ np.float64 ] = localBasis[ :, i, : ]
-        attrXYZ = convertAttributeFromLocalToXYZForOneCell( attrArray, localBasis )
+        attrXYZ = convertAttributeFromLocalToXYZ( attrArray, localBasis )
 
         if not np.any( np.isfinite( attrXYZ ) ):
             raise ValueError( "Attribute new coordinates calculation failed." )

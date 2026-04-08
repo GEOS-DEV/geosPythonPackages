@@ -33,7 +33,7 @@ def getChangeOfBasisMatrix(
         npt.NDArray[np.floating[Any]]: Change of basis matrix.
     """
     assert ( basisFrom.shape[1] == basisFrom.shape[2]) , (
-        "Origin space vectors must have the same size." )
+        f"Origin space vectors must have the same size. shape: {basisFrom.shape}" )
 
     basisTo = np.repeat(basisTo[None,:],basisFrom.shape[0], axis=0) 
     assert ( basisTo.shape[1] == basisTo.shape[2]) , (

@@ -397,7 +397,7 @@ def createVertices( cellPtsCoord: list[ npt.NDArray[ np.float64 ] ],
     return points, cellVertexMapAll
 
 
-def convertAttributeFromLocalToXYZForOneCell(
+def convertAttributeFromLocalToXYZ(
     vector: npt.NDArray[ np.float64 ], localBasisVectors: tuple[ npt.NDArray[ np.float64 ], npt.NDArray[ np.float64 ],
                                                                  npt.NDArray[ np.float64 ] ]
 ) -> npt.NDArray[ np.float64 ]:
