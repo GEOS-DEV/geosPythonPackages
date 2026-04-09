@@ -22,7 +22,7 @@ def test_getChangeOfBasisMatrixToCanonic() -> None:
     # matrix where the columns are the vectors
     expected: npt.NDArray[ np.float64 ] = np.vstack( [
         fcts._normBasis( basisTo0 ).transpose( 0, 2, 1 ),
-        np.array( [ [ 0., -1., 0. ], [ 1., 0., 0. ], [ 0., 0., 1. ] ] )
+        np.array( [ [ [ 0., -1., 0. ], [ 1., 0., 0. ], [ 0., 0., 1. ] ] ] )
     ] )
     assert np.linalg.norm( obtained - expected ) < 10e-12, f"Expected array is {np.round( expected, 2 ).tolist()}"
 
