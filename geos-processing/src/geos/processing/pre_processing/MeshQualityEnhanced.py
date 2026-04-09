@@ -778,6 +778,7 @@ class MeshQualityEnhanced():
         copyData: vtkUnstructuredGrid = vtkUnstructuredGrid()
         copyData.ShallowCopy( self._outputMesh )
         points: vtkPoints = copyData.GetPoints()
+
         for c in range( copyData.GetNumberOfCells() ):
             cell: vtkCell = copyData.GetCell( c )
             # Applies only to polyhedra
@@ -796,6 +797,7 @@ class MeshQualityEnhanced():
                 for i in range( ptsIdsList.GetNumberOfIds() ):
                     ptsIds.InsertNextValue( ptsIdsList.GetId( i ) )
                 faceCenter: npt.NDArray[ np.float64 ] = self._getCellCenter( face, ptsIds, points )
+                # TODO use vtkFilter instead of reinvening the wheel a 1000th time !!!
                 faceNormal: npt.NDArray[ np.float64 ] = self._getNormalVector( points, face )
 
                 vec: npt.NDArray[ np.float64 ] = cellCenter - faceCenter
@@ -810,6 +812,7 @@ class MeshQualityEnhanced():
         cellArrays.AddArray( newArray )
         cellArrays.Modified()
         self._outputMesh.Modified()
+
 
     def _getCellCenter( self: Self,
                         cell: vtkCell,

@@ -466,7 +466,7 @@ def getTangentsVectors( surface: vtkPolyData ) -> Tuple[ npt.NDArray[ np.float64
 
     try:
         tangents1 = np.einsum( 'ni,n->ni', vtk_to_numpy( vtkTangents ),
-                               1 / np.linalg.norm( vtk_to_numpy( vtkTangents ), axis=1 ) )
+                               1 / np.linalg.norm( vtk_to_numpy( vtkTangents ), axis=1) )
     except AttributeError as err:
         context: str = f"No tangential attribute found in the mesh. Use the computeTangents function beforehand.\n{ err }"
         raise VTKError( context ) from err
@@ -474,7 +474,7 @@ def getTangentsVectors( surface: vtkPolyData ) -> Tuple[ npt.NDArray[ np.float64
         # Compute second tangential component
         normals: npt.NDArray[ np.float64 ] = getNormalVectors( surface )
 
-        tangents2: npt.NDArray[ np.float64 ] = np.cross( normals, tangents1, axis=1 ).astype( np.float64 )
+        # tangents2: npt.NDArray[ np.float64 ] = np.cross( normals, tangents1, axis=1 ).astype( np.float64 )
         tangents2 = np.einsum( 'ni,n->ni', tangents2, 1 / np.linalg.norm( tangents2, axis=1 ) )
 
     return ( tangents1, tangents2 )
