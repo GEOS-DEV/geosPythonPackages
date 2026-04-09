@@ -255,7 +255,7 @@ class TestsFunctionsGeomechanicsCalculator( unittest.TestCase ):
     def test_computeStressPrincipalComponentsFromStressVector( self: Self ) -> None:
         """Test calculation of stress principal components from stress vector."""
         obtained: npt.NDArray[ np.float64 ] = fcts.computeStressPrincipalComponentsFromStressVector( stressVector )[ 0 ]
-        expected: npt.NDArray[ np.float64 ] = np.array( [ 5.281, 2.471, 1.748 ] ).reshape(1,-1)
+        expected: npt.NDArray[ np.float64 ] = np.array( [ 5.281, 2.471, 1.748 ] ).reshape( 1, -1 )
         assert np.linalg.norm( obtained - expected ) < 1e-3
 
     def test_computeNormalShearStress( self: Self ) -> None:

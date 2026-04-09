@@ -137,4 +137,6 @@ class MohrCircle:
                 Stress vector must follow GEOS convention (XX, YY, ZZ, YZ, XZ, XY)
         """
         # Get stress principal components
-        self.p3, self.p2, self.p1 = ( computeStressPrincipalComponentsFromStressVector( stressVector ) )
+        vp1, vp2, vp3 =  np.unstack( np.swapaxes(computeStressPrincipalComponentsFromStressVector( stressVector.reshape(-1,6) )[0],0,1) )
+        self.p1, self.p2, self.p3 = (vp1[0], vp2[0], vp3[0])
+

@@ -461,8 +461,7 @@ def getTangentsVectors( surface: vtkPolyData ) -> Tuple[ npt.NDArray[ np.float64
         Tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]: The tangents vectors of the input surface.
     """
     try:
-        tangents1: npt.NDArray[ np.float64 ] = _normalize(
-           vtk_to_numpy( surface.GetCellData().GetTangents() ) )
+        tangents1: npt.NDArray[ np.float64 ] = _normalize( vtk_to_numpy( surface.GetCellData().GetTangents() ) )
         # Compute second tangential component
         normals: npt.NDArray[ np.float64 ] = getNormalVectors( surface )
         # tangents2: npt.NDArray[ np.float64 ] = np.cross( normals, tangents1, axis=1 ).astype( np.float64 )
