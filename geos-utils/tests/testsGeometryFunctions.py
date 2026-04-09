@@ -2,21 +2,14 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay, Jacques Franc
 # ruff: noqa: E402 # disable Module level import not at top of file
-import pytest
 import numpy as np
 import numpy.typing as npt
-from typing import Iterator
-from dataclasses import dataclass
-from itertools import combinations
 import geos.utils.geometryFunctions as fcts
 
-basisCanon: npt.NDArray[ np.float64 ] = np.array( [[[ 1.0, 0.0, 0.0 ] ,[ 0.0, 1.0, 0.0 ], 
-                                            [ 0.0, 0.0, 1.0 ]]] )
+basisCanon: npt.NDArray[ np.float64 ] = np.array( [ [ [ 1.0, 0.0, 0.0 ], [ 0.0, 1.0, 0.0 ], [ 0.0, 0.0, 1.0 ] ] ] )
 # destination basis according to canonic coordinates
-basisTo0: npt.NDArray[ np.float64 ] = np.array( [[ [1.0, 1.0, 0.0 ] ,[ -1.0, 1.0, 0.0 ], 
-                                                  [ 0.0, 0.0, 1.0 ] ]] )
-basisTo1: npt.NDArray[ np.float64 ] = np.array( [[ [1.0, -1.0, 0.0 ] ,[ 1.0, 1.0, 0.0 ], 
-                                                 [ 0.0, 0.0, 2.0 ] ]])
+basisTo0: npt.NDArray[ np.float64 ] = np.array( [ [ [ 1.0, 1.0, 0.0 ], [ -1.0, 1.0, 0.0 ], [ 0.0, 0.0, 1.0 ] ] ] )
+basisTo1: npt.NDArray[ np.float64 ] = np.array( [ [ [ 1.0, -1.0, 0.0 ], [ 1.0, 1.0, 0.0 ], [ 0.0, 0.0, 2.0 ] ] ] )
 # basisTo2: npt.NDArray[ np.float64 ] = np.array( [[ [0.0, 2.0, 0.0 ] ,[ -2.0, 0.0, 0.0 ],
 #                                                  [0.0, 0.0, 2.0 ] ]])
 
@@ -25,13 +18,13 @@ def test_getChangeOfBasisMatrixToCanonic() -> None:
     """Test change of basis matrix using canonic basis."""
     obtained: npt.NDArray[ np.float64 ] = fcts.getChangeOfBasisMatrix( basisTo0, basisCanon )
     # matrix where the columns are the vectors
-    expected: npt.NDArray[ np.float64 ] = fcts._normBasis(basisTo0).transpose(0, 2, 1)
-    assert np.linalg.norm( obtained-expected ) < 10e-12 , f"Expected array is {np.round( expected, 2 ).tolist()}"
-    # 
+    expected: npt.NDArray[ np.float64 ] = fcts._normBasis( basisTo0 ).transpose( 0, 2, 1 )
+    assert np.linalg.norm( obtained - expected ) < 10e-12, f"Expected array is {np.round( expected, 2 ).tolist()}"
+    #
     obtained: npt.NDArray[ np.float64 ] = fcts.getChangeOfBasisMatrix( basisTo0, basisTo1 )
     # matrix where the columns are the vectors
-    expected: npt.NDArray[ np.float64 ] = np.array([ [0., -1., 0.],[1., 0., 0.],[0., 0., 1.] ]) 
-    assert np.linalg.norm( obtained-expected ) < 10e-12 , f"Expected array is {np.round( expected, 2 ).tolist()}"
+    expected: npt.NDArray[ np.float64 ] = np.array( [ [ 0., -1., 0. ], [ 1., 0., 0. ], [ 0., 0., 1. ] ] )
+    assert np.linalg.norm( obtained - expected ) < 10e-12, f"Expected array is {np.round( expected, 2 ).tolist()}"
 
 
 # def test_computeCoordinatesInNewBasis() -> None:
@@ -45,7 +38,6 @@ def test_getChangeOfBasisMatrixToCanonic() -> None:
 #     assert np.array_equal( np.round( obtained, 2 ), np.round( expected, 2 ),
 #                            equal_nan=True ), f"Expected array is {np.round( expected, 2 ).tolist()}"
 
-
 # def test_computePlaneFrom3Points() -> None:
 #     """Test calculation of plane coefficients from 3 points."""
 #     pt1: npt.NDArray[ np.float64 ] = np.array( [[ 1.0, 2.0, 1.0 ]] )
@@ -55,7 +47,6 @@ def test_getChangeOfBasisMatrixToCanonic() -> None:
 #     expected: tuple[ npt.NDArray[ np.float64 ], npt.NDArray[ np.float64 ], npt.NDArray[ np.float64 ], npt.NDArray[ np.float64 ] ]  = ( np.array([-1.0]), np.array([2.0]), np.array([2.0]), np.array([-5.0]) )
 #     assert obtained == expected, f"Expected tuple is {expected}"
 
-
 # def test_getPointSideAgainstPlaneAssertion() -> None:
 #     """Test get point side against a plane."""
 #     planePt: npt.NDArray[ np.float64 ] = np.array( [[ 0.0, 0.0, 0.0 ]] )
@@ -64,7 +55,6 @@ def test_getChangeOfBasisMatrixToCanonic() -> None:
 #     planeNormal: npt.NDArray[ np.float64 ] = np.array( [[ 0.0, 0.0, 1.0 ]] )
 #     with pytest.raises( AssertionError ):
 #         fcts.getPointSideAgainstPlane( planePt, planePt, planeNormal )
-
 
 # # yapf: disable
 # listPtsCoords_all = ( [ np.array( [ 0.5, 0.5, 0.5 ] ), np.array( [ 0.5, 0.5, -0.5 ] ) ],
@@ -159,7 +149,6 @@ def test_getChangeOfBasisMatrixToCanonic() -> None:
 # )
 # # yapf: enable
 
-
 # @dataclass( frozen=True )
 # class TestCaseAngle:
 #     """Test case."""
@@ -168,7 +157,6 @@ def test_getChangeOfBasisMatrixToCanonic() -> None:
 #     pt2: npt.NDArray[ np.float64 ]
 #     pt3: npt.NDArray[ np.float64 ]
 #     angleExp: float
-
 
 # def __generate_Angle_test_data() -> Iterator[ TestCaseAngle ]:
 #     """Generate test cases.
@@ -179,13 +167,11 @@ def test_getChangeOfBasisMatrixToCanonic() -> None:
 #     for pts, angle in zip( list( combinations( pts_all, 3 ) ), angleExp_all, strict=True ):
 #         yield TestCaseAngle( pts[ 0 ], pts[ 1 ], pts[ 2 ], angle )
 
-
 # @pytest.mark.parametrize( "test_case", __generate_Angle_test_data() )
 # def test_computeAngleFromPoints( test_case: TestCaseAngle ) -> None:
 #     """Test computeAngleFromPoints method."""
 #     obs: float = fcts.computeAngleFromPoints( test_case.pt1, test_case.pt2, test_case.pt3 )
 #     assert np.isclose( obs, test_case.angleExp ), f"Expected angle {test_case.angleExp}, but got {obs}."
-
 
 # @pytest.mark.parametrize( "test_case", __generate_Angle_test_data() )
 # def test_computeAngleFromVectors( test_case: TestCaseAngle ) -> None:
@@ -198,23 +184,23 @@ def test_getChangeOfBasisMatrixToCanonic() -> None:
 
 def test_computeNormalFromPoints() -> None:
     """Test computeNormalFromPoints method."""
-    pt1 = np.array( [[ 1.0, 0.0, 0.0 ]] )
-    pt2 = np.array( [[ 0.0, 0.0, 0.0 ]] )
-    pt3 = np.array( [[ 0.0, 1.0, 0.0 ]] )
+    pt1 = np.array( [ [ 1.0, 0.0, 0.0 ] ] )
+    pt2 = np.array( [ [ 0.0, 0.0, 0.0 ] ] )
+    pt3 = np.array( [ [ 0.0, 1.0, 0.0 ] ] )
     # The function normalizes these vectors before computing the cross product.
     # The cross product of (1,0,0) and (0,1,0) is (0,0,1).
     obtained: npt.NDArray[ np.float64 ] = fcts.computeNormalFromPoints( pt1, pt2, pt3 )
-    expected: npt.NDArray[ np.float64 ] = np.array( [[ 0.0, 0.0, 1.0 ]] )
+    expected: npt.NDArray[ np.float64 ] = np.array( [ [ 0.0, 0.0, 1.0 ] ] )
     assert np.allclose( obtained, expected ), f"Expected normal {expected}, but got {obtained}."
 
 
 def test_computeNormalFromVectors() -> None:
     """Test computeNormalFromVectors method."""
     # Use non-unit vectors to test normalization step
-    vec1 = np.array( [[ 5.0, 0.0, 0.0 ]] )
-    vec2 = np.array( [[ 0.0, 2.0, 0.0 ]] )
+    vec1 = np.array( [ [ 5.0, 0.0, 0.0 ] ] )
+    vec2 = np.array( [ [ 0.0, 2.0, 0.0 ] ] )
     # The function should normalize vec1 to (1,0,0) and vec2 to (0,1,0)
     # The resulting cross product should be (0,0,1)
     obtained: npt.NDArray[ np.float64 ] = fcts.computeNormalFromVectors( vec1, vec2 )
-    expected: npt.NDArray[ np.float64 ] = np.array( [[ 0.0, 0.0, 1.0 ]] )
+    expected: npt.NDArray[ np.float64 ] = np.array( [ [ 0.0, 0.0, 1.0 ] ] )
     assert np.allclose( obtained, expected ), f"Expected normal {expected}, but got {obtained}."

@@ -802,7 +802,7 @@ class MeshQualityEnhanced():
 
                 vec: npt.NDArray[ np.float64 ] = cellCenter - faceCenter
                 # TODO vtk Batch ??
-                angle: float = vtkMath.AngleBetweenVectors( vec, faceNormal[0] )  # type: ignore[arg-type]
+                angle: float = vtkMath.AngleBetweenVectors( vec, faceNormal[ 0 ] )  # type: ignore[arg-type]
                 squishIndex[ f ] = np.sin( angle )
             newArray.InsertValue( c, np.nanmax( squishIndex ) )
 
@@ -813,7 +813,6 @@ class MeshQualityEnhanced():
         cellArrays.AddArray( newArray )
         cellArrays.Modified()
         self._outputMesh.Modified()
-
 
     def _getCellCenter( self: Self,
                         cell: vtkCell,
@@ -865,5 +864,6 @@ class MeshQualityEnhanced():
         ptsCoords: npt.NDArray[ np.float64 ] = np.zeros( ( 3, 3 ), dtype=float )
         for i in range( 3 ):
             points.GetPoint( facePtsIds.GetId( i ), ptsCoords[ i ] )
-        # TODO vectorize !!! 
-        return geom.computeNormalFromPoints( np.array([ptsCoords[ 0 ] ]), np.array([ptsCoords[ 1 ]]), np.array([ptsCoords[ 2 ]]) )
+        # TODO vectorize !!!
+        return geom.computeNormalFromPoints( np.array( [ ptsCoords[ 0 ] ] ), np.array( [ ptsCoords[ 1 ] ] ),
+                                             np.array( [ ptsCoords[ 2 ] ] ) )

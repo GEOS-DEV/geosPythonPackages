@@ -18,7 +18,7 @@ class TestAttributeMatrixFromVector( TestCase ):
 
     def test_wrongInputVectorSize( self: Self ) -> None:
         """Test failure on incorrect input vector size."""
-        emptyVector: npt.NDArray[ np.float64 ] = np.array( [[]] )
+        emptyVector: npt.NDArray[ np.float64 ] = np.array( [ [] ] )
         with self.assertRaises( ValueError ):
             getAttributeMatrixFromVector( emptyVector )
 
@@ -49,18 +49,18 @@ class TestAttributeVectorFromMatrix( TestCase ):
 
     def setUp( self: Self ) -> None:
         """Set up parameters."""
-        self.rdMatrix = np.arange( 1, 10 ).reshape(1, 3, 3 )
-        self.expected: npt.NDArray[ np.float64 ] = np.array( [[ 1, 5, 9, 6, 3, 2, 8, 7, 4 ]] )
+        self.rdMatrix = np.arange( 1, 10 ).reshape( 1, 3, 3 )
+        self.expected: npt.NDArray[ np.float64 ] = np.array( [ [ 1, 5, 9, 6, 3, 2, 8, 7, 4 ] ] )
 
     def test_wrongInputMatrixShape( self ) -> None:
         """Test failure on empty input matrix."""
-        emptyMatrix = np.array( [[]] )
+        emptyMatrix = np.array( [ [] ] )
         with self.assertRaises( ValueError ):
-            getAttributeVectorFromMatrix( emptyMatrix, (1,3) )
+            getAttributeVectorFromMatrix( emptyMatrix, ( 1, 3 ) )
 
     def test_wrongOutputShape( self: Self ) -> None:
         """Test failure on incorrect output shape requested."""
-        shape = (1, 4)
+        shape = ( 1, 4 )
         with self.assertRaises( ValueError ):
             getAttributeVectorFromMatrix( self.rdMatrix, shape )
 
@@ -69,5 +69,6 @@ class TestAttributeVectorFromMatrix( TestCase ):
         listSize = ( 3, 6, 9 )
         for size in listSize:
             with self.subTest( size ):
-                expectedVector = np.array( self.expected[:, :size ] )
-                self.assertTrue( np.array_equal( expectedVector, getAttributeVectorFromMatrix( self.rdMatrix, (1,size) ) ) )
+                expectedVector = np.array( self.expected[ :, :size ] )
+                self.assertTrue(
+                    np.array_equal( expectedVector, getAttributeVectorFromMatrix( self.rdMatrix, ( 1, size ) ) ) )
