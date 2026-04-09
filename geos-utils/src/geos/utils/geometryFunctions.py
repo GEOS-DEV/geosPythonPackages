@@ -17,17 +17,21 @@ EPS[ 0, 2, 1 ] = EPS[ 2, 1, 0 ] = EPS[ 1, 0, 2 ] = -1
 
 
 # (n,x,x) opertors
-def _normalize( arr : npt.NDArray[ np.float64 ]) -> npt.NDArray[ np.float64 ]:
+def _normalize( arr: npt.NDArray[ np.float64 ] ) -> npt.NDArray[ np.float64 ]:
     """N generatlization of normalization."""
     return np.einsum( 'ni,n->ni', arr, 1 / np.linalg.norm( arr, axis=1 ) )
 
-def _transposeProd( basisTo: npt.NDArray[ np.float64 ], basisFrom : npt.NDArray[ np.float64 ])-> npt.NDArray[ np.float64 ]:
+
+def _transposeProd( basisTo: npt.NDArray[ np.float64 ],
+                    basisFrom: npt.NDArray[ np.float64 ] ) -> npt.NDArray[ np.float64 ]:
     """N generalization of transpose product."""
     return np.einsum( 'nlj,nkj->nlk', basisTo, basisFrom )
 
-def _cross( vec1 : npt.NDArray[ np.float64 ],  vec2 : npt.NDArray[ np.float64 ]) -> npt.NDArray[ np.float64 ]:
+
+def _cross( vec1: npt.NDArray[ np.float64 ], vec2: npt.NDArray[ np.float64 ] ) -> npt.NDArray[ np.float64 ]:
     """N generatlization of cross product."""
     return np.einsum( 'ijk,nj,nk->ni', EPS, vec1, vec2 )
+
 
 def _normBasis( basis: npt.NDArray[ np.float64 ] ) -> npt.NDArray[ np.float64 ]:
     """Norm and orthonormalize basis vector wise."""
@@ -36,6 +40,7 @@ def _normBasis( basis: npt.NDArray[ np.float64 ] ) -> npt.NDArray[ np.float64 ]:
     Q[ det < 0 ] *= -1
 
     return Q
+
 
 def getChangeOfBasisMatrix(
     basisFrom: npt.NDArray[ np.float64 ],
@@ -72,10 +77,9 @@ def getChangeOfBasisMatrix(
     # C = np.transpose( np.array( basisTo ) )
     # no need to compute the inverse of C as it is orthonormal checked - transpose is enough
     assert np.linalg.norm(
-        _transposeProd(basisTo,basisTo)
-        np.repeat( np.eye( 3 )[ None, : ], basisFrom.shape[ 0 ], axis=0 ) ) < 1e-6
+        _transposeProd( basisTo, basisTo ) - np.repeat( np.eye( 3 )[ None, : ], basisFrom.shape[ 0 ], axis=0 ) ) < 1e-6
     # get the change of basis matrix
-    return _transposeProd(basisTo,basisFrom)
+    return _transposeProd( basisTo, basisFrom )
 
 
 # def computeCoordinatesInNewBasis( vec: npt.NDArray[ np.float64 ],
@@ -285,5 +289,5 @@ def computeNormalFromVectors(
     """
     # normalization
     vec1_norm = _normalize( vec1 )
-    vec2_norm = _normalize( vec2 ) 
-    return _cross( vec1_norm, vec2_norm) 
+    vec2_norm = _normalize( vec2 )
+    return _cross( vec1_norm, vec2_norm )

@@ -7,7 +7,7 @@ import numpy.typing as npt
 import pandas as pd
 import random as rd
 import pytest
-from typing import Iterator
+from typing import Iterator, Any
 from matplotlib.figure import Figure
 
 from geos.mesh.model.QualityMetricSummary import QualityMetricSummary, StatTypes
@@ -24,7 +24,7 @@ expectedStatTypes_all: tuple[ float | int, ...] = ( 0.5957, 0.6508, -2.2055, 1.6
 
 cellType_all: tuple[ int, ...] = ( VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_PYRAMID, VTK_WEDGE, VTK_HEXAHEDRON,
                                    VTK_POLYGON, VTK_POLYHEDRON )
-cellMetricIndexes_all: tuple[ int, ...] = (
+cellMetricIndexes_all: tuple[ Any, ...] = (
     ( vtkMeshQuality.QualityMeasureTypes.EDGE_RATIO, vtkMeshQuality.QualityMeasureTypes.AREA,
       vtkMeshQuality.QualityMeasureTypes.CONDITION ),
     ( vtkMeshQuality.QualityMeasureTypes.MED_ASPECT_FROBENIUS, vtkMeshQuality.QualityMeasureTypes.AREA,
@@ -41,7 +41,7 @@ cellMetricIndexes_all: tuple[ int, ...] = (
     ( vtkMeshQuality.QualityMeasureTypes.SHAPE, vtkMeshQuality.QualityMeasureTypes.VOLUME ),
 )
 
-metricIndexesFail_all: tuple[ int, ...] = (
+metricIndexesFail_all: tuple[ Any, ...] = (
     ( vtkMeshQuality.QualityMeasureTypes.MED_ASPECT_FROBENIUS, vtkMeshQuality.QualityMeasureTypes.VOLUME, 200 ),
     ( vtkMeshQuality.QualityMeasureTypes.NORMALIZED_INRADIUS, vtkMeshQuality.QualityMeasureTypes.VOLUME, 200 ),
     ( vtkMeshQuality.QualityMeasureTypes.ODDY, vtkMeshQuality.QualityMeasureTypes.AREA, 200 ),
@@ -58,7 +58,7 @@ class TestCase_StatsType:
     """Test case."""
     __test__ = False
     statType: StatTypes
-    values: tuple[ float, ...]
+    values: npt.NDArray[ Any ]
     expected: int | float
 
 
@@ -135,7 +135,7 @@ def __generate_failed_test_data() -> Iterator[ TestCase ]:
     """
     for metricIndexes, cellType in zip( metricIndexesFail_all, cellType_all, strict=True ):
         otherMetricIndexes: tuple = ()
-        values: tuple[ float, float, float, float, int ] = ( 0., 0., 0., 0., 0., 0 )
+        values: tuple[ float, float, float, float, int ] = ( 0., 0., 0., 0., 0 )
         yield TestCase( metricIndexes, otherMetricIndexes, cellType, statTypes, values )
 
 

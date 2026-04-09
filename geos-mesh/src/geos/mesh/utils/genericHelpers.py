@@ -7,7 +7,7 @@ import numpy.typing as npt
 from typing import ( Iterator, List, Sequence, Any, Union, Tuple )
 
 from vtkmodules.util.numpy_support import ( numpy_to_vtk, vtk_to_numpy )
-from vtkmodules.vtkCommonCore import vtkIdList, vtkPoints, reference, vtkDataArray, vtkLogger, vtkFloatArray
+from vtkmodules.vtkCommonCore import vtkIdList, vtkPoints, reference, vtkDataArray, vtkLogger
 from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkMultiBlockDataSet, vtkPolyData, vtkDataSet,
                                             vtkDataObject, vtkPlane, vtkCellTypes, vtkIncrementalOctreePointLocator,
                                             VTK_TRIANGLE, vtkSelection, vtkSelectionNode )
@@ -22,7 +22,7 @@ from vtkmodules.vtkFiltersVerdict import vtkCellSizeFilter
 from geos.mesh.utils.multiblockHelpers import ( getBlockElementIndexesFlatten, getBlockFromFlatIndex )
 
 from geos.utils.algebraFunctions import ( getAttributeMatrixFromVector, getAttributeVectorFromMatrix )
-from geos.utils.geometryFunctions import ( getChangeOfBasisMatrix, CANONICAL_BASIS_3D , _normalize, _cross)
+from geos.utils.geometryFunctions import ( getChangeOfBasisMatrix, CANONICAL_BASIS_3D, _normalize, _cross )
 from geos.utils.Logger import ( getLogger, Logger, VTKCaptureLog, RegexExceptionFilter )
 from geos.utils.Errors import ( VTKError )
 
@@ -238,7 +238,7 @@ def getMonoBlockBounds( input: vtkUnstructuredGrid, ) -> tuple[ float, float, fl
     Args:
         input (vtkMultiBlockDataSet): input single block mesh
 
-     Returns:
+    Returns:
         tuple[float, float, float, float, float, float]: tuple containing
             bounds (xmin, xmax, ymin, ymax, zmin, zmax)
 
@@ -460,21 +460,17 @@ def getTangentsVectors( surface: vtkPolyData ) -> Tuple[ npt.NDArray[ np.float64
     Returns:
         Tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]: The tangents vectors of the input surface.
     """
-    # Get first tangential component
-    vtkTangents: Union[ vtkFloatArray, None ] = surface.GetCellData().GetTangents()  # type: ignore[no-untyped-call]
-    tangents1: npt.NDArray[ np.float64 ]
-
     try:
-        tangents1 = _normalize( tangents1 )
-    except AttributeError as err:
-        context: str = f"No tangential attribute found in the mesh. Use the computeTangents function beforehand.\n{ err }"
-        raise VTKError( context ) from err
-    else:
+        tangents1: npt.NDArray[ np.float64 ] = _normalize(
+            np.array( [ vtk_to_numpy( surface.GetCellData().GetTangents() ) ] ) )
         # Compute second tangential component
         normals: npt.NDArray[ np.float64 ] = getNormalVectors( surface )
         # tangents2: npt.NDArray[ np.float64 ] = np.cross( normals, tangents1, axis=1 ).astype( np.float64 )
-        tangents2 : npt.NDArray[ np.float64 ] = _cross( normals, tangents1 )
+        tangents2: npt.NDArray[ np.float64 ] = _cross( normals, tangents1 )
         tangents2 = _normalize( tangents2 )
+    except AttributeError as err:
+        context: str = f"No tangential attribute found in the mesh. Use the computeTangents function beforehand.\n{ err }"
+        raise VTKError( context ) from err
 
     return ( tangents1, tangents2 )
 
