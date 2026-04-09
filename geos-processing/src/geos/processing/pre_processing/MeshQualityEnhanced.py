@@ -801,7 +801,8 @@ class MeshQualityEnhanced():
                 faceNormal: npt.NDArray[ np.float64 ] = self._getNormalVector( points, face )
 
                 vec: npt.NDArray[ np.float64 ] = cellCenter - faceCenter
-                angle: float = vtkMath.AngleBetweenVectors( vec, faceNormal )  # type: ignore[arg-type]
+                # TODO vtk Batch ??
+                angle: float = vtkMath.AngleBetweenVectors( vec, faceNormal[0] )  # type: ignore[arg-type]
                 squishIndex[ f ] = np.sin( angle )
             newArray.InsertValue( c, np.nanmax( squishIndex ) )
 
@@ -864,4 +865,5 @@ class MeshQualityEnhanced():
         ptsCoords: npt.NDArray[ np.float64 ] = np.zeros( ( 3, 3 ), dtype=float )
         for i in range( 3 ):
             points.GetPoint( facePtsIds.GetId( i ), ptsCoords[ i ] )
-        return geom.computeNormalFromPoints( ptsCoords[ 0 ], ptsCoords[ 1 ], ptsCoords[ 2 ] )
+        # TODO vectorize !!! 
+        return geom.computeNormalFromPoints( np.array([ptsCoords[ 0 ] ]), np.array([ptsCoords[ 1 ]]), np.array([ptsCoords[ 2 ]]) )

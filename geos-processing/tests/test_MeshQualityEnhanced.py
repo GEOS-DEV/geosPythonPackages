@@ -81,6 +81,7 @@ class TestCase:
 ] )
 def test_MeshQualityEnhanced( dataSetTest: Any, case: int ) -> None:
     """Test of MeshQualityEnhanced filter."""
+    print(f"test [{meshName_all[ case ]}]")
     test_case: TestCase = TestCase( dataSetTest( meshName_all[ case ] ), cellTypes_all[ case ],
                                     qualityMetrics_all[ case ], cellTypeCounts_all[ case ], metricsSummary_all[ case ] )
     mesh: vtkUnstructuredGrid = test_case.mesh
