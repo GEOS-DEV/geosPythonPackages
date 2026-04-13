@@ -11,8 +11,6 @@ import numpy as np
 import numpy.typing as npt
 from typing_extensions import Self
 
-# sys.path.insert( 0, "/data/pau901/SIM_CS/04_WORKSPACE/USERS/jfranc/geosPythonPackages/geos-geomechanics/src" )
-# sys.path.insert( 0, "/data/pau901/SIM_CS/04_WORKSPACE/USERS/jfranc/geosPythonPackages/geos-utils/src" )
 dir_path = os.path.dirname( os.path.realpath( __file__ ) )
 parent_dir_path = os.path.join( os.path.dirname( dir_path ), "src" )
 if parent_dir_path not in sys.path:

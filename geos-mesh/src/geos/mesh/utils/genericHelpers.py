@@ -598,50 +598,6 @@ def computeTangents(
     triangulatedSurface.Modified()
     return triangulatedSurface
 
-
-# def computeSurfaceTextureCoordinates(
-#     surface: vtkPolyData,
-#     logger: Union[ Logger, None ] = None,
-# ) -> vtkPolyData:
-#     """Generate the 2D texture coordinates required for tangent computation. The dataset points are mapped onto a plane generated automatically.
-
-#     Args:
-#         surface (vtkPolyData): The input surface.
-#         logger (Union[Logger, None], optional): A logger to manage the output messages.
-#             Defaults to None, an internal logger is used.
-
-#     Returns:
-#         vtkPolyData: The input surface with generated texture map.
-#     """
-#     # Need to compute texture coordinates required for tangent calculation
-#     vtkErrorLogger: Logger
-#     if logger is None:
-#         vtkErrorLogger = getLogger( "Compute Surface Texture Coordinates vtkError Logger", True )
-#     else:
-#         vtkErrorLogger = logging.getLogger( f"{ logger.name } vtkError Logger" )
-#         vtkErrorLogger.setLevel( logging.INFO )
-#         vtkErrorLogger.addHandler( logger.handlers[ 0 ] )
-#         vtkErrorLogger.propagate = False
-
-#     vtkLogger.SetStderrVerbosity( vtkLogger.VERBOSITY_ERROR )
-#     vtkErrorLogger.addFilter( RegexExceptionFilter() )  # will raise VTKError if captured VTK Error
-
-#     with VTKCaptureLog() as capturedLog:
-
-#         textureFilter: vtkTextureMapToPlane = vtkTextureMapToPlane()
-#         textureFilter.SetInputData( surface )
-#         textureFilter.AutomaticPlaneGenerationOn()
-#         textureFilter.Update()
-
-#         capturedLog.seek( 0 )
-#         captured = capturedLog.read().decode()
-
-#     if captured != "":
-#         vtkErrorLogger.error( captured.strip() )
-
-#     return textureFilter.GetOutput()
-
-
 def extractCellSelection( mesh: vtkUnstructuredGrid, ids: list[ int ] ) -> vtkUnstructuredGrid:
     """Extract cell selection from list of cell Ids.
 
