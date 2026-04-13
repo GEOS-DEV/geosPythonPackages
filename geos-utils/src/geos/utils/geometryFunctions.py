@@ -73,13 +73,13 @@ def getChangeOfBasisMatrix(
         npt.NDArray[np.float64 Change of basis matrix.
     """
     basisFrom = _normBasis( basisFrom )
+    if len( basisTo.shape ) < len( basisFrom.shape ):
+        basisTo = np.repeat( basisTo[ None, : ], basisFrom.shape[ 0 ], axis=0 )
     basisTo = _normBasis( basisTo )
 
     assert ( basisFrom.shape[ 1 ] == basisFrom.shape[ 2 ] ), (
         f"Origin space vectors must have the same size. shape: {basisFrom.shape}" )
 
-    if len( basisTo.shape ) < len( basisFrom.shape ):
-        basisTo = np.repeat( basisTo[ None, : ], basisFrom.shape[ 0 ], axis=0 )
     assert ( basisTo.shape[ 1 ] == basisTo.shape[ 2 ] ), ( "Destination space vectors must have the same size." )
 
     # build the matrices where columns are the vectors of the bases
