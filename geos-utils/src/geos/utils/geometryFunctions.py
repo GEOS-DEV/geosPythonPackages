@@ -4,6 +4,7 @@
 from typing import Any
 
 import numpy as np
+from scipy.linalg import polar
 import numpy.typing as npt
 
 __doc__ = """Functions to permform geometry calculations."""
@@ -35,11 +36,12 @@ def _cross( vec1: npt.NDArray[ np.float64 ], vec2: npt.NDArray[ np.float64 ] ) -
 
 def _normBasis( basis: npt.NDArray[ np.float64 ] ) -> npt.NDArray[ np.float64 ]:
     """Norm and orthonormalize basis vector wise."""
-    Q, _ = np.linalg.qr( basis )
-    det = np.linalg.det( Q )
-    Q[ det < 0 ] *= -1
+    # Q, R = np.linalg.qr( basis )
+    U, P = polar( basis )
+    # det = np.linalg.det( Q )
+    # Q[ det < 0 ] *= -1
 
-    return Q
+    return U
 
 
 def getChangeOfBasisMatrix(
