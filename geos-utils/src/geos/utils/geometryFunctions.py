@@ -5,6 +5,8 @@ from typing import Any
 
 import numpy as np
 from scipy.linalg import polar
+from packaging.version import Version
+from scipy import __version__ as __scipy_version__
 import numpy.typing as npt
 
 __doc__ = """Functions to permform geometry calculations."""
@@ -37,7 +39,13 @@ def _cross( vec1: npt.NDArray[ np.float64 ], vec2: npt.NDArray[ np.float64 ] ) -
 def _normBasis( basis: npt.NDArray[ np.float64 ] ) -> npt.NDArray[ np.float64 ]:
     """Norm and orthonormalize basis vector wise."""
     # Q, R = np.linalg.qr( basis )
-    U, P = polar( basis )
+    if Version( __scipy_version__ ) > Version( "1.15.3" ):
+        U, _ = polar( basis )
+    else:
+        U = np.zeros_like( basis )
+        for i in range( basis.shape[ 0 ] ):
+            U[ i, :, : ], _ = polar( basis[ i, :, : ] )
+
     # det = np.linalg.det( Q )
     # Q[ det < 0 ] *= -1
 
