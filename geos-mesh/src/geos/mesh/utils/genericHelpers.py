@@ -598,6 +598,7 @@ def computeTangents(
     triangulatedSurface.Modified()
     return triangulatedSurface
 
+
 def extractCellSelection( mesh: vtkUnstructuredGrid, ids: list[ int ] ) -> vtkUnstructuredGrid:
     """Extract cell selection from list of cell Ids.
 
