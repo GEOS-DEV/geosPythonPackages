@@ -13,7 +13,7 @@ from vtkmodules.vtkCommonDataModel import vtkPolyData
 
 from geos.mesh.utils.arrayModifiers import createAttribute
 from geos.mesh.utils.arrayHelpers import ( getArrayInObject, getAttributeSet, isAttributeInObject )
-from geos.mesh.utils.genericHelpers import ( getLocalBasisVectors, convertAttributeFromLocalToXYZForOneCell )
+from geos.mesh.utils.genericHelpers import ( getLocalBasisVectors, convertAttributeFromLocalToXYZ )
 import geos.geomechanics.processing.geomechanicsCalculatorFunctions as fcts
 from geos.utils.pieceEnum import Piece
 from geos.utils.Logger import ( getLogger, Logger, CountVerbosityHandler, isHandlerInLogger, getLoggerHandlerType )
@@ -359,20 +359,19 @@ class SurfaceGeomechanics:
         Raises:
             ValueError: Error with the shape of attrArray or the computation of the attribute coordinates.
         """
-        attrXYZ: npt.NDArray[ np.float64 ] = np.full_like( attrArray, np.nan )
+        attrXYZ: npt.NDArray[ np.float64 ] = np.zeros_like( attrArray )
 
         # Get all local basis vectors
         localBasis: npt.NDArray[ np.float64 ] = getLocalBasisVectors( self.outputMesh, self.logger )
 
-        for i, cellAttribute in enumerate( attrArray ):
-            if len( cellAttribute ) not in ( 3, 6, 9 ):
-                raise ValueError(
-                    f"Inconsistent number of components for attribute. Expected 3, 6 or 9 but got { len( cellAttribute.shape ) }."
-                )
+        if len( attrArray[ 0 ] ) not in ( 3, 6, 9 ):
+            raise ValueError(
+                f"Inconsistent number of components for attribute. Expected 3, 6 or 9 but got { len( attrArray[0].shape ) }."
+            )
 
             # Compute attribute XYZ components
-            cellLocalBasis: npt.NDArray[ np.float64 ] = localBasis[ :, i, : ]
-            attrXYZ[ i ] = convertAttributeFromLocalToXYZForOneCell( cellAttribute, cellLocalBasis )
+        # cellLocalBasis: npt.NDArray[ np.float64 ] = localBasis[ :, i, : ]
+        attrXYZ = convertAttributeFromLocalToXYZ( attrArray, localBasis )
 
         if not np.any( np.isfinite( attrXYZ ) ):
             raise ValueError( "Attribute new coordinates calculation failed." )

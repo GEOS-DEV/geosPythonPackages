@@ -778,6 +778,7 @@ class MeshQualityEnhanced():
         copyData: vtkUnstructuredGrid = vtkUnstructuredGrid()
         copyData.ShallowCopy( self._outputMesh )
         points: vtkPoints = copyData.GetPoints()
+
         for c in range( copyData.GetNumberOfCells() ):
             cell: vtkCell = copyData.GetCell( c )
             # Applies only to polyhedra
@@ -796,10 +797,12 @@ class MeshQualityEnhanced():
                 for i in range( ptsIdsList.GetNumberOfIds() ):
                     ptsIds.InsertNextValue( ptsIdsList.GetId( i ) )
                 faceCenter: npt.NDArray[ np.float64 ] = self._getCellCenter( face, ptsIds, points )
+                # TODO use vtkFilter instead of reinvening the wheel a 1000th time !!!
                 faceNormal: npt.NDArray[ np.float64 ] = self._getNormalVector( points, face )
 
                 vec: npt.NDArray[ np.float64 ] = cellCenter - faceCenter
-                angle: float = vtkMath.AngleBetweenVectors( vec, faceNormal )  # type: ignore[arg-type]
+                # TODO vtk Batch ??
+                angle: float = vtkMath.AngleBetweenVectors( vec, faceNormal[ 0 ] )  # type: ignore[arg-type]
                 squishIndex[ f ] = np.sin( angle )
             newArray.InsertValue( c, np.nanmax( squishIndex ) )
 
@@ -861,4 +864,6 @@ class MeshQualityEnhanced():
         ptsCoords: npt.NDArray[ np.float64 ] = np.zeros( ( 3, 3 ), dtype=float )
         for i in range( 3 ):
             points.GetPoint( facePtsIds.GetId( i ), ptsCoords[ i ] )
-        return geom.computeNormalFromPoints( ptsCoords[ 0 ], ptsCoords[ 1 ], ptsCoords[ 2 ] )
+        # TODO vectorize !!!
+        return geom.computeNormalFromPoints( np.array( [ ptsCoords[ 0 ] ] ), np.array( [ ptsCoords[ 1 ] ] ),
+                                             np.array( [ ptsCoords[ 2 ] ] ) )
