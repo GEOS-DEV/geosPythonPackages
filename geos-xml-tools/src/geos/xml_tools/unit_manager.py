@@ -1,8 +1,35 @@
+# ------------------------------------------------------------------------------------------------------------
+# SPDX-License-Identifier: LGPL-2.1-only
+#
+# Copyright (c) 2016-2025 Lawrence Livermore National Security LLC
+# Copyright (c) 2018-2025 TotalEnergies
+# Copyright (c) 2018-2025 The Board of Trustees of the Leland Stanford Junior University
+# Copyright (c) 2023-2025 Chevron
+# Copyright (c) 2019-     GEOS/GEOSX Contributors
+# All rights reserved
+#
+# See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+# ------------------------------------------------------------------------------------------------------------
 import re
+from typing import Any
 from geos.xml_tools import regex_tools
-from typing import List, Any, Dict
 
-__doc__ = """Tools for managing units in GEOSX."""
+__doc__ = """
+Unit Management Tools for GEOS XML.
+
+This module provides utilities for parsing, converting, and evaluating physical units in XML attributes.
+Features:
+* Handles SI, imperial, and other commonly used units.
+* Expands prefixes and alternate names.
+* Evaluates unit expressions and converts to base SI.
+
+Typical usage:
+    from geos.xml_tools.unit_manager import UnitManager
+    um = UnitManager()
+    result = um(["1.0", "psi"])
+
+Used internally by the XML processor for unit conversion.
+"""
 
 
 class UnitManager():
@@ -10,11 +37,11 @@ class UnitManager():
 
     def __init__( self ) -> None:
         """Initialize the class by creating an instance of the dict regex handler, building units."""
-        self.units: Dict[ str, str ] = {}
+        self.units: dict[ str, str ] = {}
         self.unitMatcher = regex_tools.DictRegexHandler()
         self.buildUnits()
 
-    def __call__( self, unitStruct: List[ Any ] ) -> str:
+    def __call__( self, unitStruct: list[ Any ] ) -> str:
         """Evaluate the symbolic expression for matched strings.
 
         Args:
@@ -54,7 +81,7 @@ class UnitManager():
         """Build the unit definitions."""
         # yapf: disable
         # Long, short names for SI prefixes
-        unit_dict_type = Dict[str, Dict[str, Any]]
+        unit_dict_type = dict[str, dict[str, Any]]
 
         prefixes: unit_dict_type = {
                     'giga':  {'value': 1e9,  'alt': 'G'},

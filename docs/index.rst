@@ -96,8 +96,6 @@ Packages
 
     geos-xml-tools
 
-    geos-xml-viewer
-
     geos-utils
 
     pygeos-tools
