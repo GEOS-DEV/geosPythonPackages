@@ -516,11 +516,8 @@ def __performSplit( oldMesh: vtkUnstructuredGrid, cellToNodeMapping: Mapping[ in
     return newMesh
 
 
-def __faceIsActuallySplit( oldMesh: vtkUnstructuredGrid,
-                           cellToNodeMapping: Mapping[ int, IDMapping ],
-                           ns: Collection[ int ],
-                           pointIdsList: vtkIdList,
-                           neighbors: vtkIdList ) -> bool:
+def __faceIsActuallySplit( oldMesh: vtkUnstructuredGrid, cellToNodeMapping: Mapping[ int, IDMapping ],
+                           ns: Collection[ int ], pointIdsList: vtkIdList, neighbors: vtkIdList ) -> bool:
     """Tells whether the matrix will actually be split along the face whose vertices are ``ns``.
 
     A candidate fracture face is a real fracture surface only if the split
@@ -547,8 +544,10 @@ def __faceIsActuallySplit( oldMesh: vtkUnstructuredGrid,
         pointIdsList.InsertNextId( n )
     neighbors.Reset()
     oldMesh.GetCellNeighbors( -1, pointIdsList, neighbors )
-    adjacentCells = [ neighbors.GetId( i ) for i in range( neighbors.GetNumberOfIds() )
-                      if oldMesh.GetCell( neighbors.GetId( i ) ).GetCellDimension() == 3 ]
+    adjacentCells = [
+        neighbors.GetId( i ) for i in range( neighbors.GetNumberOfIds() )
+        if oldMesh.GetCell( neighbors.GetId( i ) ).GetCellDimension() == 3
+    ]
     if len( adjacentCells ) < 2:
         # Boundary face with only one adjacent 3D cell => keep it.
         return True
@@ -682,8 +681,7 @@ def __splitMeshOnFractures( mesh: vtkUnstructuredGrid,
     outputMesh: vtkUnstructuredGrid = __performSplit( mesh, cellToNodeMapping )
     fractureMeshes: list[ vtkUnstructuredGrid ] = []
     for fractureInfoSeparated in allFractureInfos:
-        fractureMesh: vtkUnstructuredGrid = __generateFractureMesh( mesh, fractureInfoSeparated,
-                                                                    cellToNodeMapping )
+        fractureMesh: vtkUnstructuredGrid = __generateFractureMesh( mesh, fractureInfoSeparated, cellToNodeMapping )
         fractureMeshes.append( fractureMesh )
     return ( outputMesh, fractureMeshes )
 
