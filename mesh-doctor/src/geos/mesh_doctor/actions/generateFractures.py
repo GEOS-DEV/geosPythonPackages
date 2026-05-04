@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
-# SPDX-FileContributor: Thomas Gazolla, Alexandre Benedicto
+# SPDX-FileContributor: Thomas Gazolla, Alexandre Benedicto, Bertrand Denel
 from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum
