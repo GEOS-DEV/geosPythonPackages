@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
-# SPDX-FileContributor: Thomas Gazolla, Alexandre Benedicto
+# SPDX-FileContributor: Thomas Gazolla, Alexandre Benedicto, Bertrand Denel
 from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum
 import networkx
-from numpy import empty, ones, zeros
+from numpy import empty, ones
 from tqdm import tqdm
 from typing import Collection, Iterable, Mapping, Optional, Sequence, TypeAlias
 from vtk import vtkDataArray
@@ -516,6 +516,49 @@ def __performSplit( oldMesh: vtkUnstructuredGrid, cellToNodeMapping: Mapping[ in
     return newMesh
 
 
+def __faceIsActuallySplit( oldMesh: vtkUnstructuredGrid, cellToNodeMapping: Mapping[ int, IDMapping ],
+                           ns: Collection[ int ], pointIdsList: vtkIdList, neighbors: vtkIdList ) -> bool:
+    """Tells whether the matrix will actually be split along the face whose vertices are ``ns``.
+
+    A candidate fracture face is a real fracture surface only if the split
+    algorithm ends up assigning *different* node copies to its two adjacent 3D
+    cells for at least one of its vertices. If every vertex resolves to the
+    same copy in both cells the matrix is not separated along this face.
+    This includes fully-tip faces (no node duplicated anywhere) and intersection
+    artifacts (duplication exists but is for another fracture, and both
+    adjacent cells fell on the same side of that other fracture).
+
+    Args:
+        oldMesh (vtkUnstructuredGrid): The input (pre-split) 3D mesh.
+        cellToNodeMapping (Mapping[ int, IDMapping ]): For each input cell, the per-vertex
+                                                       remap from original to split-time node ids.
+        ns (Collection[ int ]): The face's vertex ids in the original mesh.
+        pointIdsList (vtkIdList): Scratch buffer for the face's vertex ids (reused across calls).
+        neighbors (vtkIdList): Scratch buffer for the adjacent-cells query (reused across calls).
+
+    Returns:
+        bool: ``True`` if the face is a true fracture surface (kept), ``False`` if it should be discarded.
+    """
+    pointIdsList.Reset()
+    for n in ns:
+        pointIdsList.InsertNextId( n )
+    neighbors.Reset()
+    oldMesh.GetCellNeighbors( -1, pointIdsList, neighbors )
+    adjacentCells = [
+        neighbors.GetId( i ) for i in range( neighbors.GetNumberOfIds() )
+        if oldMesh.GetCell( neighbors.GetId( i ) ).GetCellDimension() == 3
+    ]
+    if len( adjacentCells ) < 2:
+        # Boundary face with only one adjacent 3D cell => keep it.
+        return True
+    for n in ns:
+        copyA = cellToNodeMapping.get( adjacentCells[ 0 ], {} ).get( n, n )
+        copyB = cellToNodeMapping.get( adjacentCells[ 1 ], {} ).get( n, n )
+        if copyA != copyB:
+            return True
+    return False
+
+
 def __generateFractureMesh( oldMesh: vtkUnstructuredGrid, fractureInfo: FractureInfo,
                             cellToNodeMapping: Mapping[ int, IDMapping ] ) -> vtkUnstructuredGrid:
     """Generates the mesh of the fracture.
@@ -532,35 +575,33 @@ def __generateFractureMesh( oldMesh: vtkUnstructuredGrid, fractureInfo: Fracture
     setupLogger.info( "Generating the meshes" )
 
     meshPoints: vtkPoints = oldMesh.GetPoints()
-    isNodeDuplicated = zeros( meshPoints.GetNumberOfPoints(), dtype=bool )  # defaults to False
-    for nodeMapping in cellToNodeMapping.values():
-        for i, o in nodeMapping.items():
-            if not isNodeDuplicated[ i ]:
-                isNodeDuplicated[ i ] = i != o
 
-    # Some elements can have all their nodes not duplicated.
-    # In this case, it's mandatory not get rid of this element because the neighboring 3d elements won't follow.
+    # Filter out candidate faces that don't correspond to real fracture surfaces.
+    # See ``__faceIsActuallySplit`` for the criterion.
+    pointIdsList = vtkIdList()
+    neighbors = vtkIdList()
     faceNodes: list[ Collection[ int ] ] = []
     discardedFaceNodes: set[ Iterable[ int ] ] = set()
     if fractureInfo.faceCellId != []:  # The fracture policy is 'internalSurfaces'
         faceCellId: list[ int ] = []
         for ns, fId in zip( fractureInfo.faceNodes, fractureInfo.faceCellId ):
-            if any( map( isNodeDuplicated.__getitem__, ns ) ):
+            if __faceIsActuallySplit( oldMesh, cellToNodeMapping, ns, pointIdsList, neighbors ):
                 faceNodes.append( ns )
                 faceCellId.append( fId )
             else:
                 discardedFaceNodes.add( ns )
     else:  # The fracture policy is 'field'
         for ns in fractureInfo.faceNodes:
-            if any( map( isNodeDuplicated.__getitem__, ns ) ):
+            if __faceIsActuallySplit( oldMesh, cellToNodeMapping, ns, pointIdsList, neighbors ):
                 faceNodes.append( ns )
             else:
                 discardedFaceNodes.add( ns )
 
     if discardedFaceNodes:
         msg: str = "(" + '), ('.join( ", ".join( map( str, dfns ) ) for dfns in discardedFaceNodes ) + ")"
-        setupLogger.info( f"The faces made of nodes [{msg}] were/was discarded"
-                          " from the fracture mesh because none of their/its nodes were duplicated." )
+        setupLogger.info( f"The faces made of nodes [{msg}] were/was discarded from the fracture mesh"
+                          " because the matrix is not actually split along them"
+                          " (no node duplicated, or duplication is for another fracture)." )
 
     fractureNodesTmp = ones( meshPoints.GetNumberOfPoints(), dtype=int ) * -1
     for ns in faceNodes:

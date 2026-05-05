@@ -17,7 +17,7 @@ jobs:
       pull-requests: write  # for amannn/action-semantic-pull-request to analyze PRs and
       statuses: write  # for amannn/action-semantic-pull-request to mark status of analyzed PR
       contents: read
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Check if the PR name has conventional semantics
