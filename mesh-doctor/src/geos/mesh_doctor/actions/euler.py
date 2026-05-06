@@ -1,382 +1,414 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
-"""Compute Solid Euler Characteristic for mesh files (3D elements only)."""
+"""Compute Euler characteristic for mesh files (3D solid and/or 2D surface)."""
 
-from dataclasses import dataclass
+from __future__ import annotations
+from collections import Counter
+from dataclasses import dataclass, field
+from typing import Optional
+
+import numpy as np
 import vtk
 from tqdm import tqdm
+from vtk.util.numpy_support import vtk_to_numpy
 
 from geos.mesh_doctor.parsing.cliParsing import setupLogger
 from geos.mesh.io.vtkIO import readUnstructuredGrid
 
+# --- Options & Result types ---------------------------------------------------
+
 
 @dataclass( frozen=True )
 class Options:
-    """Options for Euler characteristic computation."""
-    pass
+    """Options for Euler characteristic computation.
+
+    Attributes:
+        mode: "solid"   -> analyze 3D cells only (chi = V - E + F - C).
+              "surface" -> analyze 2D cells only (chi = V - E + F),
+                           always per connected component.
+              "all"     -> both, in one report; missing dimension is silently
+                           skipped.
+        tagArray: Cell-data array used to group surface cells (e.g.
+                  "FaultMask"). If None, all 2D cells are analyzed as one
+                  group. Ignored in `solid` mode.
+        tagValue: If set together with `tagArray`, only that value is
+                  analyzed. If None and `tagArray` is set, all distinct
+                  non-zero values present in the array are screened.
+    """
+    mode: str = "solid"
+    tagArray: Optional[ str ] = None
+    tagValue: Optional[ float ] = None
+
+
+@dataclass( frozen=True )
+class SurfaceComponent:
+    """Per-component topology for a 2D surface."""
+    componentId: int
+    numCells: int
+    numVertices: int
+    numEdges: int
+    numFaces: int
+    eulerCharacteristic: int
+    numBoundaryEdges: int
+    numNonManifoldEdges: int
+    interpretation: str
+
+
+@dataclass( frozen=True )
+class SurfaceGroup:
+    """Surface analysis for one tag value, or the whole 2D mesh if no tag."""
+    tagArray: Optional[ str ]
+    tagValue: Optional[ float ]
+    numCells: int
+    numVertices: int
+    numEdges: int
+    numFaces: int
+    eulerCharacteristic: int
+    numBoundaryEdges: int
+    numNonManifoldEdges: int
+    components: tuple[ SurfaceComponent, ...]
 
 
 @dataclass( frozen=True )
 class Result:
-    """Result of solid Euler characteristic computation.
+    """Result of Euler characteristic computation.
 
-    Attributes:
-        numVertices: Number of vertices (V) in 3D mesh
-        numEdges: Number of unique edges (E) in 3D mesh
-        numFaces: Number of unique faces (F) in 3D mesh
-        numCells: Number of 3D cells (C)
-        solidEulerCharacteristic: Solid Euler characteristic (chi = V - E + F - C)
-        num3dCells: Number of 3D volumetric cells in input
-        num2dCells: Number of 2D surface cells in input (ignored)
-        numOtherCells: Number of other cells in input
-        numBoundaryEdges: Number of boundary edges on surface
-        numNonManifoldEdges: Number of non-manifold edges on surface
-        numConnectedComponents: Number of disconnected 3D mesh regions
+    The `solid*` fields are populated when `mode in {"solid","all"}` and the
+    input mesh has 3D cells. The `surface*` fields are populated when
+    `mode in {"surface","all"}` and the input mesh has 2D cells.
     """
-    numVertices: int
-    numEdges: int
-    numFaces: int
-    numCells: int
-    solidEulerCharacteristic: int
+    mode: str
+    # cell breakdown of the input
     num3dCells: int
     num2dCells: int
     numOtherCells: int
-    numBoundaryEdges: int
-    numNonManifoldEdges: int
-    numConnectedComponents: int
+    # solid
+    solidComputed: bool = False
+    numVertices: int = 0
+    numEdges: int = 0
+    numFaces: int = 0
+    numCells: int = 0
+    solidEulerCharacteristic: int = 0
+    numBoundaryEdges: int = 0
+    numNonManifoldEdges: int = 0
+    numConnectedComponents: int = 0
+    # surface
+    surfaceComputed: bool = False
+    surfaceGroups: tuple[ SurfaceGroup, ...] = field( default_factory=tuple )
+
+
+# --- Cell-classification helpers ---------------------------------------------
+
+
+def __classifyCells( mesh: vtk.vtkUnstructuredGrid ) -> tuple[ list[ int ], list[ int ], int ]:
+    """Classify cells by topological dimension.
+
+    Returns:
+        (cell3dIds, cell2dIds, nOther)
+    """
+    cell3dIds: list[ int ] = []
+    cell2dIds: list[ int ] = []
+    nOther = 0
+    for i in tqdm( range( mesh.GetNumberOfCells() ), desc="Scanning cells" ):
+        d = mesh.GetCell( i ).GetCellDimension()
+        if d == 3:
+            cell3dIds.append( i )
+        elif d == 2:
+            cell2dIds.append( i )
+        else:
+            nOther += 1
+    return cell3dIds, cell2dIds, nOther
+
+
+def __extractCells( mesh: vtk.vtkUnstructuredGrid, cellIds: list[ int ] ) -> vtk.vtkUnstructuredGrid:
+    """Return a new unstructured grid containing only the listed cells."""
+    idList = vtk.vtkIdList()
+    for c in cellIds:
+        idList.InsertNextId( c )
+    ext = vtk.vtkExtractCells()
+    ext.SetInputData( mesh )
+    ext.SetCellList( idList )
+    ext.Update()
+    return ext.GetOutput()
+
+
+def __filterByTagValue( mesh: vtk.vtkUnstructuredGrid, tagArray: str, tagValue: float ) -> vtk.vtkUnstructuredGrid:
+    """Keep only cells whose `tagArray` equals `tagValue`."""
+    th = vtk.vtkThreshold()
+    th.SetInputData( mesh )
+    th.SetInputArrayToProcess( 0, 0, 0, vtk.vtkDataObject.FIELD_ASSOCIATION_CELLS, tagArray )
+    th.SetLowerThreshold( float( tagValue ) )
+    th.SetUpperThreshold( float( tagValue ) )
+    th.SetThresholdFunction( vtk.vtkThreshold.THRESHOLD_BETWEEN )
+    th.Update()
+    return th.GetOutput()
+
+
+# --- Solid path --------------------------------------------------------------
 
 
 def __countConnectedComponents( mesh: vtk.vtkUnstructuredGrid ) -> int:
-    """Count number of disconnected mesh components.
-
-    Args:
-        mesh: Input unstructured grid
-
-    Returns:
-        Number of disconnected regions
-    """
-    setupLogger.info( "Checking for disconnected 3D components..." )
-
-    connectivity = vtk.vtkConnectivityFilter()
-    connectivity.SetInputData( mesh )
-    connectivity.SetExtractionModeToAllRegions()
-    connectivity.ColorRegionsOn()
-    connectivity.Update()
-
-    numRegions = connectivity.GetNumberOfExtractedRegions()
-
-    setupLogger.info( f"Found {numRegions} disconnected 3D component(s)" )
-
-    return numRegions
-
-
-def __filter3dElements( mesh: vtk.vtkUnstructuredGrid ) -> tuple[ vtk.vtkUnstructuredGrid, int, int, int, bool ]:
-    """Filter only 3D volumetric elements from unstructured grid.
-
-    Removes 2D faces, 1D edges, and 0D vertices.
-
-    Args:
-        mesh: Input unstructured grid
-
-    Returns:
-        Tuple of (filtered_mesh, n_3d, n_2d, n_other, has_3d)
-    """
-    # Classify cells by dimension
-    cell3dIds = []
-    n3d = 0
-    n2d = 0
-    nOther = 0
-
-    setupLogger.info( "Classifying cell types..." )
-    for i in tqdm( range( mesh.GetNumberOfCells() ), desc="Scanning cells" ):
-        cell = mesh.GetCell( i )
-        cellDim = cell.GetCellDimension()
-
-        if cellDim == 3:
-            cell3dIds.append( i )
-            n3d += 1
-        elif cellDim == 2:
-            n2d += 1
-        else:
-            nOther += 1
-
-    setupLogger.info( "Cell type breakdown:" )
-    setupLogger.info( f"  3D volumetric cells: {n3d}" )
-    setupLogger.info( f"  2D surface cells:    {n2d}" )
-    setupLogger.info( f"  Other cells:         {nOther}" )
-
-    # Check if we have 3D cells
-    has3d = n3d > 0
-
-    if not has3d:
-        setupLogger.warning( "No 3D volumetric elements found!" )
-        setupLogger.warning( "This appears to be a pure surface mesh." )
-        setupLogger.warning( "Cannot compute solid Euler characteristic." )
-        return mesh, n3d, n2d, nOther, False
-
-    if n2d > 0:
-        setupLogger.info( f"Filtering out {n2d} 2D boundary cells..." )
-        setupLogger.info( f"Using only {n3d} volumetric elements" )
-
-    # Extract only 3D cells using vtkExtractCells
-    idList = vtk.vtkIdList()
-    for cellId in cell3dIds:
-        idList.InsertNextId( cellId )
-
-    extractor = vtk.vtkExtractCells()
-    extractor.SetInputData( mesh )
-    extractor.SetCellList( idList )
-    extractor.Update()
-
-    filteredMesh = extractor.GetOutput()
-
-    return filteredMesh, n3d, n2d, nOther, has3d
+    """Count disconnected regions (cells connected via shared points)."""
+    cf = vtk.vtkConnectivityFilter()
+    cf.SetInputData( mesh )
+    cf.SetExtractionModeToAllRegions()
+    cf.ColorRegionsOn()
+    cf.Update()
+    return cf.GetNumberOfExtractedRegions()
 
 
 def __countUniqueEdgesAndFaces( mesh: vtk.vtkUnstructuredGrid ) -> tuple[ int, int ]:
-    """Count unique edges and faces in 3D mesh (NumPy optimized).
-
-    Args:
-        mesh: 3D unstructured grid
-
-    Returns:
-        Tuple of (num_edges, num_faces)
-    """
+    """Count unique edges and faces in a 3D mesh."""
     setupLogger.info( "Counting unique edges and faces in 3D mesh..." )
-
-    try:
-        import numpy as np
-        use_numpy = True
-    except ImportError:
-        use_numpy = False
-
-    numCells = mesh.GetNumberOfCells()
-
-    if use_numpy:
-        # Use numpy for faster operations
-        edge_list = []
-        face_list = []
-
-        for i in tqdm( range( numCells ), desc="Processing cells", mininterval=1.0 ):
-
-            cell = mesh.GetCell( i )
-
-            # Edges
-            numEdges = cell.GetNumberOfEdges()
-            for edge_idx in range( numEdges ):
-                edge = cell.GetEdge( edge_idx )
-                p0 = edge.GetPointId( 0 )
-                p1 = edge.GetPointId( 1 )
-                edge_list.append( ( min( p0, p1 ), max( p0, p1 ) ) )
-
-            # Faces
-            numFaces = cell.GetNumberOfFaces()
-            for face_idx in range( numFaces ):
-                face = cell.GetFace( face_idx )
-                num_pts = face.GetNumberOfPoints()
-                point_ids = tuple( sorted( [ face.GetPointId( j ) for j in range( num_pts ) ] ) )
-                face_list.append( point_ids )
-
-        # Use numpy unique for deduplication (faster than set)
-        setupLogger.info( "  Deduplicating edges and faces..." )
-
-        # For edges: convert to array and use unique
-        edge_array = np.array( edge_list, dtype=np.int64 )
-        unique_edges = np.unique( edge_array, axis=0 )
-        num_edges = len( unique_edges )
-
-        # For faces: use set (numpy doesn't handle variable-length well)
-        num_faces = len( set( face_list ) )
-
-    else:
-        # Fallback to optimized set-based approach
-        edge_set = set()
-        face_set = set()
-
-        for i in tqdm( range( numCells ), desc="Processing cells", mininterval=0.5 ):
-            cell = mesh.GetCell( i )
-
-            numEdges = cell.GetNumberOfEdges()
-            for edge_idx in range( numEdges ):
-                edge = cell.GetEdge( edge_idx )
-                p0 = edge.GetPointId( 0 )
-                p1 = edge.GetPointId( 1 )
-                edge_set.add( ( min( p0, p1 ), max( p0, p1 ) ) )
-
-            numFaces = cell.GetNumberOfFaces()
-            for face_idx in range( numFaces ):
-                face = cell.GetFace( face_idx )
-                num_pts = face.GetNumberOfPoints()
-                face_set.add( tuple( sorted( [ face.GetPointId( j ) for j in range( num_pts ) ] ) ) )
-
-        num_edges = len( edge_set )
-        num_faces = len( face_set )
-
-    setupLogger.info( f"  Unique edges: {num_edges:,}" )
-    setupLogger.info( f"  Unique faces: {num_faces:,}" )
-
-    return num_edges, num_faces
+    edgeList: list[ tuple[ int, int ] ] = []
+    faceSet: set[ tuple[ int, ...] ] = set()
+    for i in tqdm( range( mesh.GetNumberOfCells() ), desc="Processing cells", mininterval=1.0 ):
+        cell = mesh.GetCell( i )
+        for k in range( cell.GetNumberOfEdges() ):
+            e = cell.GetEdge( k )
+            p0 = e.GetPointId( 0 )
+            p1 = e.GetPointId( 1 )
+            edgeList.append( ( min( p0, p1 ), max( p0, p1 ) ) )
+        for k in range( cell.GetNumberOfFaces() ):
+            f = cell.GetFace( k )
+            faceSet.add( tuple( sorted( f.GetPointId( j ) for j in range( f.GetNumberOfPoints() ) ) ) )
+    edges = np.unique( np.asarray( edgeList, dtype=np.int64 ), axis=0 )
+    return len( edges ), len( faceSet )
 
 
-def __extractSurface( mesh: vtk.vtkUnstructuredGrid ) -> vtk.vtkPolyData:
-    """Extract surface from unstructured grid (3D elements only).
-
-    Args:
-        mesh: Input unstructured grid (3D elements)
-
-    Returns:
-        Surface as polydata
-    """
-    setupLogger.info( "Extracting boundary surface from 3D elements..." )
+def __surfaceQualityOfSolidBoundary( mesh3d: vtk.vtkUnstructuredGrid ) -> tuple[ int, int ]:
+    """Count boundary and non-manifold edges on the boundary of a 3D mesh."""
     surfaceFilter = vtk.vtkDataSetSurfaceFilter()
-    surfaceFilter.SetInputData( mesh )
+    surfaceFilter.SetInputData( mesh3d )
     surfaceFilter.Update()
-    return surfaceFilter.GetOutput()
+    surf = surfaceFilter.GetOutput()
+    fb = vtk.vtkFeatureEdges()
+    fb.SetInputData( surf )
+    fb.BoundaryEdgesOn()
+    fb.ManifoldEdgesOff()
+    fb.NonManifoldEdgesOff()
+    fb.FeatureEdgesOff()
+    fb.Update()
+    boundary = fb.GetOutput().GetNumberOfCells()
+    fn = vtk.vtkFeatureEdges()
+    fn.SetInputData( surf )
+    fn.BoundaryEdgesOff()
+    fn.ManifoldEdgesOff()
+    fn.NonManifoldEdgesOn()
+    fn.FeatureEdgesOff()
+    fn.Update()
+    nonManifold = fn.GetOutput().GetNumberOfCells()
+    return boundary, nonManifold
 
 
-def __checkMeshQuality( surface: vtk.vtkPolyData ) -> tuple[ int, int ]:
-    """Check for boundary edges and non-manifold features.
+# --- Surface path -------------------------------------------------------------
 
-    Args:
-        surface: Surface mesh
 
-    Returns:
-        Tuple of (boundary_edges, non_manifold_edges)
-    """
-    setupLogger.info( "Checking mesh quality..." )
+def __interpretSurface( chi: int, boundaryEdges: int, nonManifoldEdges: int ) -> str:
+    """Short topology label for a surface component."""
+    if nonManifoldEdges > 0:
+        return f"non-manifold ({nonManifoldEdges} edge(s))"
+    if boundaryEdges == 0:
+        if chi == 2:
+            return "closed sphere"
+        if chi == 0:
+            return "torus (closed, genus 1)"
+        if chi < 0 and chi % 2 == 0:
+            return f"closed surface (genus {( 2 - chi ) // 2})"
+        return f"closed (chi={chi}, unusual)"
+    if chi == 1:
+        return "disk"
+    if chi == 0:
+        return "annulus / cylinder"
+    if chi < 0:
+        return f"surface with multiple boundaries / holes (chi={chi})"
+    return f"open (chi={chi}, unusual)"
 
-    # Count boundary edges
-    featureEdgesBoundary = vtk.vtkFeatureEdges()
-    featureEdgesBoundary.SetInputData( surface )
-    featureEdgesBoundary.BoundaryEdgesOn()
-    featureEdgesBoundary.ManifoldEdgesOff()
-    featureEdgesBoundary.NonManifoldEdgesOff()
-    featureEdgesBoundary.FeatureEdgesOff()
-    featureEdgesBoundary.Update()
-    boundaryEdges = featureEdgesBoundary.GetOutput().GetNumberOfCells()
 
-    # Count non-manifold edges
-    featureEdgesNm = vtk.vtkFeatureEdges()
-    featureEdgesNm.SetInputData( surface )
-    featureEdgesNm.BoundaryEdgesOff()
-    featureEdgesNm.ManifoldEdgesOff()
-    featureEdgesNm.NonManifoldEdgesOn()
-    featureEdgesNm.FeatureEdgesOff()
-    featureEdgesNm.Update()
-    nonManifoldEdges = featureEdgesNm.GetOutput().GetNumberOfCells()
+def __surfaceComponentsFromColored( colored: vtk.vtkUnstructuredGrid ) -> list[ SurfaceComponent ]:
+    """Compute (V, E, F, chi, boundary, non-manifold) per RegionId of a colored 2D mesh."""
+    rid = vtk_to_numpy( colored.GetCellData().GetArray( "RegionId" ) ).astype( np.int64 )
+    cells = colored.GetCells()
+    conn = vtk_to_numpy( cells.GetConnectivityArray() ).astype( np.int64, copy=False )
+    off = vtk_to_numpy( cells.GetOffsetsArray() ).astype( np.int64, copy=False )
 
-    return boundaryEdges, nonManifoldEdges
+    components: list[ SurfaceComponent ] = []
+    sizes = sorted( Counter( rid.tolist() ).items(), key=lambda kv: -kv[ 1 ] )
+    for regionId, _nCells in sizes:
+        sel = np.flatnonzero( rid == regionId )
+        verts: set[ int ] = set()
+        edgeCount: dict[ tuple[ int, int ], int ] = {}
+        for cid in sel:
+            pts = conn[ off[ cid ]:off[ cid + 1 ] ]
+            K = len( pts )
+            for v in pts:
+                verts.add( int( v ) )
+            for i in range( K ):
+                a, b = int( pts[ i ] ), int( pts[ ( i + 1 ) % K ] )
+                ek = ( a, b ) if a < b else ( b, a )
+                edgeCount[ ek ] = edgeCount.get( ek, 0 ) + 1
+        V = len( verts )
+        E = len( edgeCount )
+        F = int( len( sel ) )
+        bE = sum( 1 for c in edgeCount.values() if c == 1 )
+        nm = sum( 1 for c in edgeCount.values() if c > 2 )
+        chi = V - E + F
+        components.append(
+            SurfaceComponent( componentId=int( regionId ),
+                              numCells=F,
+                              numVertices=V,
+                              numEdges=E,
+                              numFaces=F,
+                              eulerCharacteristic=chi,
+                              numBoundaryEdges=bE,
+                              numNonManifoldEdges=nm,
+                              interpretation=__interpretSurface( chi, bE, nm ) ) )
+    return components
+
+
+def __runSurfaceGroup( mesh2d: vtk.vtkUnstructuredGrid, tagArray: Optional[ str ],
+                       tagValue: Optional[ float ] ) -> SurfaceGroup:
+    """Filter (optionally) and per-component analyze one surface group."""
+    if tagValue is not None and tagArray is not None:  # noqa: SIM108
+        sub = __filterByTagValue( mesh2d, tagArray, tagValue )
+    else:
+        sub = mesh2d
+    nCells = sub.GetNumberOfCells()
+    if nCells == 0:
+        return SurfaceGroup( tagArray=tagArray,
+                             tagValue=tagValue,
+                             numCells=0,
+                             numVertices=0,
+                             numEdges=0,
+                             numFaces=0,
+                             eulerCharacteristic=0,
+                             numBoundaryEdges=0,
+                             numNonManifoldEdges=0,
+                             components=() )
+    cf = vtk.vtkConnectivityFilter()
+    cf.SetInputData( sub )
+    cf.SetExtractionModeToAllRegions()
+    cf.ColorRegionsOn()
+    cf.Update()
+    components = __surfaceComponentsFromColored( cf.GetOutput() )
+    V = sum( c.numVertices for c in components )
+    E = sum( c.numEdges for c in components )
+    F = sum( c.numFaces for c in components )
+    bE = sum( c.numBoundaryEdges for c in components )
+    nm = sum( c.numNonManifoldEdges for c in components )
+    return SurfaceGroup( tagArray=tagArray,
+                         tagValue=tagValue,
+                         numCells=nCells,
+                         numVertices=V,
+                         numEdges=E,
+                         numFaces=F,
+                         eulerCharacteristic=V - E + F,
+                         numBoundaryEdges=bE,
+                         numNonManifoldEdges=nm,
+                         components=tuple( components ) )
+
+
+def __discoverTagValues( mesh: vtk.vtkUnstructuredGrid, tagArray: str, skipZero: bool = True ) -> list[ float ]:
+    """Return the sorted distinct values of `tagArray`, optionally skipping 0."""
+    arr = mesh.GetCellData().GetArray( tagArray )
+    if arr is None:
+        setupLogger.warning( f"Tag array '{tagArray}' not found on input mesh." )
+        return []
+    values = vtk_to_numpy( arr )
+    unique = sorted( { float( v ) for v in np.asarray( values ).ravel() } )
+    if skipZero:
+        unique = [ v for v in unique if v != 0.0 ]
+    return unique
+
+
+# --- Top-level dispatch ------------------------------------------------------
+
+
+def __solidAction( mesh3d: vtk.vtkUnstructuredGrid ) -> dict:
+    """Run the existing solid analysis and return the resulting fields."""
+    nComponents = __countConnectedComponents( mesh3d )
+    V = mesh3d.GetNumberOfPoints()
+    C = mesh3d.GetNumberOfCells()
+    E, F = __countUniqueEdgesAndFaces( mesh3d )
+    chi = V - E + F - C
+    boundary, nonManifold = __surfaceQualityOfSolidBoundary( mesh3d )
+    return {
+        "numVertices": V,
+        "numEdges": E,
+        "numFaces": F,
+        "numCells": C,
+        "solidEulerCharacteristic": chi,
+        "numBoundaryEdges": boundary,
+        "numNonManifoldEdges": nonManifold,
+        "numConnectedComponents": nComponents,
+    }
+
+
+def __surfaceAction( mesh2d: vtk.vtkUnstructuredGrid, options: Options ) -> list[ SurfaceGroup ]:
+    """Run the surface analysis. Returns one or more SurfaceGroups."""
+    if options.tagArray is None:
+        return [ __runSurfaceGroup( mesh2d, None, None ) ]
+    if options.tagValue is not None:
+        return [ __runSurfaceGroup( mesh2d, options.tagArray, options.tagValue ) ]
+    # discover all distinct non-zero values and screen them
+    values = __discoverTagValues( mesh2d, options.tagArray, skipZero=True )
+    return [ __runSurfaceGroup( mesh2d, options.tagArray, v ) for v in values ]
 
 
 def meshAction( mesh: vtk.vtkUnstructuredGrid, options: Options ) -> Result:
-    """Compute solid Euler characteristic for a mesh.
-
-    Only considers 3D volumetric elements. Computes chi_solid = V - E + F - C.
+    """Compute Euler characteristic for a mesh.
 
     Args:
         mesh: Input unstructured grid
-        options: Computation options
+        options: Configuration options
 
     Returns:
-        Result with solid Euler characteristic and topology information
+        Result with the requested topology information.
     """
-    setupLogger.info( "Starting solid Euler characteristic computation..." )
-    setupLogger.info( f"Input mesh: {mesh.GetNumberOfPoints()} points, {mesh.GetNumberOfCells()} cells" )
+    setupLogger.info( "Starting Euler characteristic computation..." )
+    setupLogger.info( f"Input mesh: {mesh.GetNumberOfPoints():,} points, "
+                      f"{mesh.GetNumberOfCells():,} cells, mode={options.mode}" )
 
-    # Filter to 3D elements only
-    mesh3d, n3d, n2d, nOther, has3d = __filter3dElements( mesh )
+    cell3dIds, cell2dIds, nOther = __classifyCells( mesh )
+    n3d = len( cell3dIds )
+    n2d = len( cell2dIds )
+    setupLogger.info( f"Cell breakdown: 3D={n3d:,}, 2D={n2d:,}, other={nOther:,}" )
 
-    if not has3d:
-        raise RuntimeError( "Cannot compute solid Euler - no 3D cells found" )
+    wantSolid = options.mode in { "solid", "all" }
+    wantSurface = options.mode in { "surface", "all" }
+    if options.mode == "solid" and n3d == 0:
+        raise RuntimeError( "Cannot compute solid Euler characteristic, no 3D cells." )
+    if options.mode == "surface" and n2d == 0:
+        raise RuntimeError( "Cannot compute surface Euler characteristic, no 2D cells." )
 
-    # Count connected components
-    numComponents = __countConnectedComponents( mesh3d )
+    solidFields: dict = {}
+    solidComputed = False
+    if wantSolid and n3d > 0:
+        mesh3d = __extractCells( mesh, cell3dIds )
+        solidFields = __solidAction( mesh3d )
+        solidComputed = True
+    elif wantSolid:
+        setupLogger.info( "No 3D cells in input, skipping solid analysis." )
 
-    # Get basic counts
-    V = mesh3d.GetNumberOfPoints()
-    C = mesh3d.GetNumberOfCells()
+    surfaceGroups: list[ SurfaceGroup ] = []
+    surfaceComputed = False
+    if wantSurface and n2d > 0:
+        mesh2d = __extractCells( mesh, cell2dIds )
+        surfaceGroups = __surfaceAction( mesh2d, options )
+        surfaceComputed = True
+    elif wantSurface:
+        setupLogger.info( "No 2D cells in input, skipping surface analysis." )
 
-    # Count unique edges and faces in 3D mesh
-    E, F = __countUniqueEdgesAndFaces( mesh3d )
-
-    setupLogger.info( "Solid mesh topology:" )
-    setupLogger.info( f"  Vertices (V): {V:,}" )
-    setupLogger.info( f"  Edges    (E): {E:,}" )
-    setupLogger.info( f"  Faces    (F): {F:,}" )
-    setupLogger.info( f"  Cells    (C): {C:,}" )
-
-    # Calculate solid Euler characteristic
-    solidEuler = V - E + F - C
-
-    setupLogger.info( f"Solid Euler characteristic (chi = V - E + F - C): {solidEuler}" )
-
-    # Interpret result
-    setupLogger.info( "Topology interpretation:" )
-    setupLogger.info( f"  3D connected components: {numComponents}" )
-
-    if numComponents == 1:
-        if solidEuler == 1:
-            setupLogger.info( "  chi = 1: Contractible (solid ball topology)" )
-            setupLogger.info( "  VALID simple 3D region for simulation" )
-        elif solidEuler == 0:
-            setupLogger.warning( "  chi = 0: Solid torus (has through-hole)" )
-            setupLogger.warning( "  Verify this matches your domain geometry" )
-        elif solidEuler == 2:
-            setupLogger.warning( "  chi = 2: Hollow shell or internal cavity topology" )
-            setupLogger.warning( "  Expected chi = 1 for simple solid ball" )
-            setupLogger.warning( "  This suggests internal void or nested structure" )
-            setupLogger.warning( "  3D cells ARE connected (verified above) - verify intended" )
-        else:
-            setupLogger.warning( f"  chi = {solidEuler}: Unusual topology" )
-            setupLogger.warning( "  Verify mesh integrity" )
-    else:
-        setupLogger.error( f"  Mesh has {numComponents} disconnected 3D components!" )
-        setupLogger.error( "  This is NOT suitable for simulation without fixing" )
-
-    # Check mesh quality
-    surface = __extractSurface( mesh3d )
-    boundaryEdges, nonManifoldEdges = __checkMeshQuality( surface )
-
-    setupLogger.info( "Mesh quality:" )
-    setupLogger.info( f"  Boundary edges:     {boundaryEdges:,}" )
-    setupLogger.info( f"  Non-manifold edges: {nonManifoldEdges:,}" )
-
-    # Final validation
-    if numComponents == 1 and boundaryEdges == 0 and nonManifoldEdges == 0:
-        if solidEuler == 1:
-            setupLogger.info( "  Perfect: single connected volume, simple topology - READY!" )
-        else:
-            setupLogger.warning( f"  Connected volume but chi = {solidEuler}" )
-            setupLogger.warning( "  Verify internal features are intended" )
-    elif numComponents > 1:
-        setupLogger.error( "  Multiple disconnected regions - INVALID!" )
-    elif boundaryEdges > 0:
-        setupLogger.error( "  Open surface detected - INVALID!" )
-    elif nonManifoldEdges > 0:
-        setupLogger.error( "  Non-manifold geometry detected - INVALID!" )
-
-    return Result( numVertices=V,
-                   numEdges=E,
-                   numFaces=F,
-                   numCells=C,
-                   solidEulerCharacteristic=solidEuler,
+    return Result( mode=options.mode,
                    num3dCells=n3d,
                    num2dCells=n2d,
                    numOtherCells=nOther,
-                   numBoundaryEdges=boundaryEdges,
-                   numNonManifoldEdges=nonManifoldEdges,
-                   numConnectedComponents=numComponents )
+                   solidComputed=solidComputed,
+                   **solidFields,
+                   surfaceComputed=surfaceComputed,
+                   surfaceGroups=tuple( surfaceGroups ) )
 
 
 def action( vtuInputFile: str, options: Options ) -> Result:
-    """Compute solid Euler characteristic for a VTU file.
-
-    Args:
-        vtuInputFile: Path to input VTU file
-        options: Computation options
-
-    Returns:
-        Result with solid Euler characteristic and topology information
-    """
-    mesh = readUnstructuredGrid( vtuInputFile )
-    return meshAction( mesh, options )
+    """Compute Euler characteristic for a VTU file."""
+    return meshAction( readUnstructuredGrid( vtuInputFile ), options )
