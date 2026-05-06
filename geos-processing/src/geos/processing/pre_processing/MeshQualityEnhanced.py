@@ -28,7 +28,7 @@ from geos.mesh.stats.meshQualityMetricHelpers import ( getQualityMeasureNameFrom
                                                        getChildrenCellTypes )
 
 import geos.utils.geometryFunctions as geom
-from geos.utils.Logger import ( getLogger, Logger, CountWarningHandler, isHandlerInLogger, getLoggerHandlerType )
+from geos.utils.Logger import ( getLogger, Logger, CountVerbosityHandler, isHandlerInLogger, getLoggerHandlerType )
 from geos.utils.pieceEnum import Piece
 
 __doc__ = """
@@ -145,13 +145,13 @@ class MeshQualityEnhanced():
             handlers: list[ logging.Handler ] = self.logger.handlers
             # Get the handler to specify if the logger already exist and has it
             for handler in handlers:
-                # The CountWarningHandler can't be the handler to specify
-                if type( handler ) is not type( CountWarningHandler() ):
+                # The CountVerbosityHandler can't be the handler to specify
+                if type( handler ) is not type( CountVerbosityHandler() ):
                     self.handler = handler
                     break
 
-        counter: CountWarningHandler = CountWarningHandler()
-        self.counter: CountWarningHandler
+        counter: CountVerbosityHandler = CountVerbosityHandler()
+        self.counter: CountVerbosityHandler
         self.nbWarnings: int = 0
         try:
             self.counter = getLoggerHandlerType( type( counter ), self.logger )
@@ -332,6 +332,7 @@ class MeshQualityEnhanced():
         else:
             self.logger.info( f"{ result }." )
 
+        # Keep number of warnings logged during the filter application and reset the warnings count in case the filter is applied again.
         self.nbWarnings = self.counter.warningCount
         self.counter.resetWarningCount()
 
@@ -777,6 +778,7 @@ class MeshQualityEnhanced():
         copyData: vtkUnstructuredGrid = vtkUnstructuredGrid()
         copyData.ShallowCopy( self._outputMesh )
         points: vtkPoints = copyData.GetPoints()
+
         for c in range( copyData.GetNumberOfCells() ):
             cell: vtkCell = copyData.GetCell( c )
             # Applies only to polyhedra
@@ -795,10 +797,12 @@ class MeshQualityEnhanced():
                 for i in range( ptsIdsList.GetNumberOfIds() ):
                     ptsIds.InsertNextValue( ptsIdsList.GetId( i ) )
                 faceCenter: npt.NDArray[ np.float64 ] = self._getCellCenter( face, ptsIds, points )
+                # TODO use vtkFilter instead of reinvening the wheel a 1000th time !!!
                 faceNormal: npt.NDArray[ np.float64 ] = self._getNormalVector( points, face )
 
                 vec: npt.NDArray[ np.float64 ] = cellCenter - faceCenter
-                angle: float = vtkMath.AngleBetweenVectors( vec, faceNormal )  # type: ignore[arg-type]
+                # TODO vtk Batch ??
+                angle: float = vtkMath.AngleBetweenVectors( vec, faceNormal[ 0 ] )  # type: ignore[arg-type]
                 squishIndex[ f ] = np.sin( angle )
             newArray.InsertValue( c, np.nanmax( squishIndex ) )
 
@@ -860,4 +864,6 @@ class MeshQualityEnhanced():
         ptsCoords: npt.NDArray[ np.float64 ] = np.zeros( ( 3, 3 ), dtype=float )
         for i in range( 3 ):
             points.GetPoint( facePtsIds.GetId( i ), ptsCoords[ i ] )
-        return geom.computeNormalFromPoints( ptsCoords[ 0 ], ptsCoords[ 1 ], ptsCoords[ 2 ] )
+        # TODO vectorize !!!
+        return geom.computeNormalFromPoints( np.array( [ ptsCoords[ 0 ] ] ), np.array( [ ptsCoords[ 1 ] ] ),
+                                             np.array( [ ptsCoords[ 2 ] ] ) )

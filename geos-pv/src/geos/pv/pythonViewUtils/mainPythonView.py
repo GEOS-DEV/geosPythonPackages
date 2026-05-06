@@ -3,16 +3,6 @@
 # SPDX-FileContributor: Alexandre Benedicto
 # type: ignore
 # ruff: noqa
-from logging import Logger, getLogger, INFO
-from paraview.detail.loghandler import (  # type: ignore[import-not-found]
-    VTKHandler,
-)  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
-
-logger: Logger = getLogger( "Python View Configurator" )
-logger.setLevel( INFO )
-vtkHandler: VTKHandler = VTKHandler()
-logger.addHandler( vtkHandler )
-
 try:
     import matplotlib.pyplot as plt
     from paraview import python_view
@@ -30,7 +20,7 @@ try:
         variableName  # noqa: F821
     )
     dataframe = pvt.mergeDataframes( dataframes, variableName )  # noqa: F821
-    obj_figure = Figure2DGenerator( dataframe, userChoices, logger )  # noqa: F821
+    obj_figure = Figure2DGenerator( dataframe, userChoices )  # noqa: F821
     fig = obj_figure.getFigure()
 
     def setup_data( view ) -> None:  # noqa
@@ -42,4 +32,4 @@ try:
         return imageToReturn
 
 except Exception as e:
-    logger.critical( e, exc_info=True )
+    raise ChildProcessError( f"Error during the plot:\n{ e }" ) from e

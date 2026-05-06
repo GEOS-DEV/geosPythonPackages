@@ -37,7 +37,7 @@ effectiveStress: npt.NDArray[ np.float64 ] = -1.0 * np.array( [
 verticalStress: npt.NDArray[ np.float64 ] = effectiveStress[ :, 2 ]
 horizontalStress: npt.NDArray[ np.float64 ] = np.min( effectiveStress[ :, :2 ], axis=1 )
 
-stressVector: npt.NDArray[ np.float64 ] = np.array( [ 1.8, 2.5, 5.2, 0.3, 0.4, 0.1 ] )
+stressVector: npt.NDArray[ np.float64 ] = np.array( [ 1.8, 2.5, 5.2, 0.3, 0.4, 0.1 ] ).reshape( 1, 6 )
 stressTensor: npt.NDArray[ np.float64 ] = getAttributeMatrixFromVector( stressVector )
 
 
@@ -250,28 +250,21 @@ class TestsFunctionsGeomechanicsCalculator( unittest.TestCase ):
 
         self.assertSequenceEqual( np.round( obtained, 3 ).flatten().tolist(), expected )
 
-    def test_computeStressPrincipalComponents( self: Self ) -> None:
-        """Test calculation of stress principal components from stress tensor."""
-        obtained: list[ float ] = [ round( val, 3 ) for val in fcts.computeStressPrincipalComponents( stressTensor ) ]
-        expected: tuple[ float, float, float ] = ( 1.748, 2.471, 5.281 )
-        self.assertSequenceEqual( tuple( obtained ), expected )
-
     def test_computeStressPrincipalComponentsFromStressVector( self: Self ) -> None:
         """Test calculation of stress principal components from stress vector."""
-        obtained: list[ float ] = [
-            round( val, 3 ) for val in fcts.computeStressPrincipalComponentsFromStressVector( stressVector )
-        ]
-        expected: tuple[ float, float, float ] = ( 1.748, 2.471, 5.281 )
-        self.assertSequenceEqual( tuple( obtained ), expected )
+        obtained: npt.NDArray[ np.float64 ] = fcts.computeStressPrincipalComponentsFromStressVector( stressVector )[ 0 ]
+        expected: npt.NDArray[ np.float64 ] = np.array( [ 5.281, 2.471, 1.748 ] ).reshape( 1, -1 )
+        assert np.linalg.norm( obtained - expected ) < 1e-3
 
     def test_computeNormalShearStress( self: Self ) -> None:
         """Test calculation of normal and shear stress."""
-        directionVector = np.array( [ 1.0, 1.0, 0.0 ] )
-        obtained: list[ float ] = [
-            round( val, 3 ) for val in fcts.computeNormalShearStress( stressTensor, directionVector )
-        ]
-        expected: tuple[ float, float ] = ( 2.250, 0.606 )
-        self.assertSequenceEqual( tuple( obtained ), expected )
+        directionVector = np.array( [ 1.0, 1.0, 0.0 ] ).reshape( 1, 3 )
+        dv = np.vstack( [ directionVector, directionVector ] )
+        sv = np.vstack( [ stressTensor, stressTensor ] )
+        obtained: tuple[ npt.NDArray[ np.float64 ],
+                         npt.NDArray[ np.float64 ] ] = fcts.computeNormalShearStress( sv, dv )
+        expected: tuple[ list[ float ], list[ float ] ] = ( [ 2.250, 2.250 ], [ 0.606, 0.606 ] )
+        assert np.linalg.norm( [ obt - exp for obt, exp in zip( obtained, expected ) ] ) < 1e-3
 
 
 if __name__ == "__main__":

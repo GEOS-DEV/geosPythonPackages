@@ -10,13 +10,17 @@ import logging
 import numpy as np
 import numpy.typing as npt
 
+import sys
+
+sys.path.insert( 0, "/data/pau901/SIM_CS/04_WORKSPACE/USERS/jfranc/geosPythonPackages/geos-processing/src" )
+
 import geos.geomechanics.processing.geomechanicsCalculatorFunctions as fcts
 
 from geos.mesh.utils.arrayModifiers import createAttribute
 from geos.mesh.utils.arrayHelpers import ( getArrayInObject, isAttributeInObject )
 
 from geos.utils.pieceEnum import Piece
-from geos.utils.Logger import ( getLogger, Logger, CountWarningHandler, isHandlerInLogger, getLoggerHandlerType )
+from geos.utils.Logger import ( getLogger, Logger, CountVerbosityHandler, isHandlerInLogger, getLoggerHandlerType )
 from geos.utils.GeosOutputsConstants import ( AttributeEnum, ComponentNameEnum, GeosMeshOutputsEnum,
                                               PostProcessingOutputsEnum )
 from geos.utils.PhysicalConstants import ( DEFAULT_FRICTION_ANGLE_RAD, DEFAULT_GRAIN_BULK_MODULUS,
@@ -47,6 +51,7 @@ The basic geomechanics properties computed on the mesh are:
     - Total initial stress, total current stress and total stress ratio
     - Elastic stain
     - Real reservoir stress path and reservoir stress path in oedometric condition
+    - Average stress Principal values and direction
 
 The advanced geomechanics properties computed on the mesh are:
     - Fracture index and threshold
@@ -146,11 +151,16 @@ STRESS_TOTAL_DELTA: AttributeEnum = PostProcessingOutputsEnum.STRESS_TOTAL_DELTA
 RSP_REAL: AttributeEnum = PostProcessingOutputsEnum.RSP_REAL
 RSP_OED: AttributeEnum = PostProcessingOutputsEnum.RSP_OED
 STRESS_EFFECTIVE_RATIO_OED: AttributeEnum = PostProcessingOutputsEnum.STRESS_EFFECTIVE_RATIO_OED
+PRINCIPAL_AXIS_VAL: AttributeEnum = PostProcessingOutputsEnum.PRINCIPAL_AXIS_VAL
+PRINCIPAL_AXIS_DIR_1: AttributeEnum = PostProcessingOutputsEnum.PRINCIPAL_AXIS_DIR_1
+PRINCIPAL_AXIS_DIR_2: AttributeEnum = PostProcessingOutputsEnum.PRINCIPAL_AXIS_DIR_2
+PRINCIPAL_AXIS_DIR_3: AttributeEnum = PostProcessingOutputsEnum.PRINCIPAL_AXIS_DIR_3
 BASIC_PROPERTIES: tuple[ AttributeEnum,
                          ...] = ( BIOT_COEFFICIENT, COMPRESSIBILITY, COMPRESSIBILITY_OED, COMPRESSIBILITY_REAL,
                                   SPECIFIC_GRAVITY, STRESS_EFFECTIVE_RATIO_REAL, STRESS_TOTAL, STRESS_TOTAL_T0,
                                   STRESS_TOTAL_RATIO_REAL, LITHOSTATIC_STRESS, AVERAGE_STRAIN, STRESS_TOTAL_DELTA,
-                                  RSP_REAL, RSP_OED, STRESS_EFFECTIVE_RATIO_OED )
+                                  RSP_REAL, RSP_OED, STRESS_EFFECTIVE_RATIO_OED, PRINCIPAL_AXIS_VAL,
+                                  PRINCIPAL_AXIS_DIR_1, PRINCIPAL_AXIS_DIR_2, PRINCIPAL_AXIS_DIR_3 )
 
 # Advanced properties:
 CRITICAL_TOTAL_STRESS_RATIO: AttributeEnum = PostProcessingOutputsEnum.CRITICAL_TOTAL_STRESS_RATIO
@@ -423,6 +433,10 @@ class GeomechanicsCalculator:
         _rspReal: npt.NDArray[ np.float64 ] | None = None
         _rspOed: npt.NDArray[ np.float64 ] | None = None
         _effectiveStressRatioOed: npt.NDArray[ np.float64 ] | None = None
+        _principalAxesVal: npt.NDArray[ np.float64 ] | None = None
+        _principalAxesDir1: npt.NDArray[ np.float64 ] | None = None
+        _principalAxesDir2: npt.NDArray[ np.float64 ] | None = None
+        _principalAxesDir3: npt.NDArray[ np.float64 ] | None = None
 
         @property
         def biotCoefficient( self: Self ) -> npt.NDArray[ np.float64 ] | None:
@@ -600,6 +614,14 @@ class GeomechanicsCalculator:
                 return self.rspOed
             elif name == STRESS_EFFECTIVE_RATIO_OED.attributeName:
                 return self.effectiveStressRatioOed
+            elif name == PRINCIPAL_AXIS_VAL.attributeName:
+                return self._principalAxesVal
+            elif name == PRINCIPAL_AXIS_DIR_1.attributeName:
+                return self._principalAxesDir1
+            elif name == PRINCIPAL_AXIS_DIR_2.attributeName:
+                return self._principalAxesDir2
+            elif name == PRINCIPAL_AXIS_DIR_3.attributeName:
+                return self._principalAxesDir3
             else:
                 raise NameError( f"The property { name } is not a basic property." )
 
@@ -712,8 +734,8 @@ class GeomechanicsCalculator:
             self.logger.setLevel( logging.INFO )
             self.logger.propagate = False
 
-        counter: CountWarningHandler = CountWarningHandler()
-        self.counter: CountWarningHandler
+        counter: CountVerbosityHandler = CountVerbosityHandler()
+        self.counter: CountVerbosityHandler
         self.nbWarnings: int = 0
         try:
             self.counter = getLoggerHandlerType( type( counter ), self.logger )
@@ -768,6 +790,7 @@ class GeomechanicsCalculator:
         else:
             self.logger.info( f"{ result }." )
 
+        # Keep number of warnings logged during the filter application and reset the warnings count in case the filter is applied again.
         self.nbWarnings = self.counter.warningCount
         self.counter.resetWarningCount()
 
@@ -895,7 +918,19 @@ class GeomechanicsCalculator:
         self._computeEffectiveStressRatioOed()
         self._computeReservoirStressPathOed()
         self._computeReservoirStressPathReal()
+        self._computePrincipalAxesAndDirections()
 
+        self.logger.info( "All geomechanics basic properties have been successfully computed." )
+        return
+
+    def _computePrincipalAxesAndDirections( self: Self ) -> None:
+        """Compute the Principal axis and directions."""
+        self._basicProperties._principalAxesVal, dir = fcts.computeStressPrincipalComponentsFromStressVector(
+            self._mandatoryProperties._effectiveStress )
+        self._basicProperties._principalAxesDir1, self._basicProperties._principalAxesDir2, self._basicProperties._principalAxesDir3 = np.unstack(
+            dir, axis=2 )
+        self._attributesToCreate.extend(
+            [ PRINCIPAL_AXIS_VAL, PRINCIPAL_AXIS_DIR_1, PRINCIPAL_AXIS_DIR_2, PRINCIPAL_AXIS_DIR_3 ] )
         self.logger.info( "All geomechanics basic properties have been successfully computed." )
         return
 

@@ -13,10 +13,10 @@ from vtkmodules.vtkCommonDataModel import vtkPolyData
 
 from geos.mesh.utils.arrayModifiers import createAttribute
 from geos.mesh.utils.arrayHelpers import ( getArrayInObject, getAttributeSet, isAttributeInObject )
-from geos.mesh.utils.genericHelpers import ( getLocalBasisVectors, convertAttributeFromLocalToXYZForOneCell )
+from geos.mesh.utils.genericHelpers import ( getLocalBasisVectors, convertAttributeFromLocalToXYZ )
 import geos.geomechanics.processing.geomechanicsCalculatorFunctions as fcts
 from geos.utils.pieceEnum import Piece
-from geos.utils.Logger import ( getLogger, Logger, CountWarningHandler, isHandlerInLogger, getLoggerHandlerType )
+from geos.utils.Logger import ( getLogger, Logger, CountVerbosityHandler, isHandlerInLogger, getLoggerHandlerType )
 from geos.utils.PhysicalConstants import ( DEFAULT_FRICTION_ANGLE_RAD, DEFAULT_ROCK_COHESION )
 from geos.utils.GeosOutputsConstants import ( ComponentNameEnum, GeosMeshOutputsEnum, PostProcessingOutputsEnum )
 
@@ -65,7 +65,7 @@ To use the filter:
     # Do calculations
     try:
         sg.applyFilter()
-    except ( ValueError, VTKError, AttributeError, AssertionError ) as e:
+    except ( ValueError, VTKError, AttributeError, AssertionError, TypeError ) as e:
         sg.logger.error( f"The filter { sg.logger.name } failed due to: { e }" )
     except Exception as e:
         mess: str = f"The filter { sg.logger.name } failed due to: { e }"
@@ -119,8 +119,8 @@ class SurfaceGeomechanics:
             self.logger.setLevel( logging.INFO )
             self.logger.propagate = False
 
-        counter: CountWarningHandler = CountWarningHandler()
-        self.counter: CountWarningHandler
+        counter: CountVerbosityHandler = CountVerbosityHandler()
+        self.counter: CountVerbosityHandler
         self.nbWarnings: int = 0
         try:
             self.counter = getLoggerHandlerType( type( counter ), self.logger )
@@ -131,9 +131,6 @@ class SurfaceGeomechanics:
 
         self.logger.addHandler( self.counter )
 
-        # Input surfacic mesh
-        if not surfacicMesh.IsA( "vtkPolyData" ):
-            self.logger.error( f"Input surface is expected to be a vtkPolyData, not a { type( surfacicMesh ) }." )
         self.inputMesh: vtkPolyData = surfacicMesh
         # Identification of the input surface (logging purpose)
         self.name: Union[ str, None ] = None
@@ -241,12 +238,17 @@ class SurfaceGeomechanics:
         """Compute Geomechanical properties on input surface.
 
         Raises:
+            TypeError: Error with the type of the input mesh.
             ValueError: Errors during the creation of an attribute.
             VTKError: Error raises during the call of VTK function.
             AttributeError: Attributes must be on cell.
             AssertionError: Something went wrong during the shearCapacityUtilization computation.
         """
         self.logger.info( f"Apply filter { self.logger.name }." )
+
+        # Input surfacic mesh
+        if not self.inputMesh.IsA( "vtkPolyData" ):
+            raise TypeError( f"Input surface is expected to be a vtkPolyData, not a { type( self.inputMesh ) }." )
 
         self.outputMesh = vtkPolyData()
         self.outputMesh.ShallowCopy( self.inputMesh )
@@ -265,6 +267,7 @@ class SurfaceGeomechanics:
         else:
             self.logger.info( f"{ result }." )
 
+        # Keep number of warnings logged during the filter application and reset the warnings count in case the filter is applied again.
         self.nbWarnings = self.counter.warningCount
         self.counter.resetWarningCount()
 
@@ -352,34 +355,31 @@ class SurfaceGeomechanics:
 
         Returns:
             npt.NDArray[np.float64]: Vector of new coordinates of the attribute.
+
+        Raises:
+            ValueError: Error with the shape of attrArray or the computation of the attribute coordinates.
         """
-        attrXYZ: npt.NDArray[ np.float64 ] = np.full_like( attrArray, np.nan )
+        attrXYZ: npt.NDArray[ np.float64 ] = np.zeros_like( attrArray )
 
         # Get all local basis vectors
         localBasis: npt.NDArray[ np.float64 ] = getLocalBasisVectors( self.outputMesh, self.logger )
 
-        for i, cellAttribute in enumerate( attrArray ):
-            if len( cellAttribute ) not in ( 3, 6, 9 ):
-                raise ValueError(
-                    f"Inconsistent number of components for attribute. Expected 3, 6 or 9 but got { len( cellAttribute.shape ) }."
-                )
+        if len( attrArray[ 0 ] ) not in ( 3, 6, 9 ):
+            raise ValueError(
+                f"Inconsistent number of components for attribute. Expected 3, 6 or 9 but got { len( attrArray[0].shape ) }."
+            )
 
             # Compute attribute XYZ components
-            cellLocalBasis: npt.NDArray[ np.float64 ] = localBasis[ :, i, : ]
-            attrXYZ[ i ] = convertAttributeFromLocalToXYZForOneCell( cellAttribute, cellLocalBasis )
+        # cellLocalBasis: npt.NDArray[ np.float64 ] = localBasis[ :, i, : ]
+        attrXYZ = convertAttributeFromLocalToXYZ( attrArray, localBasis )
 
         if not np.any( np.isfinite( attrXYZ ) ):
-            self.logger.error( "Attribute new coordinate calculation failed." )
+            raise ValueError( "Attribute new coordinates calculation failed." )
 
         return attrXYZ
 
     def computeShearCapacityUtilization( self: Self ) -> None:
-        """Compute the shear capacity utilization (SCU) on surface.
-
-        Raises:
-            ValueError: Something went wrong during the creation of an attribute.
-            AssertionError: Something went wrong during the shearCapacityUtilization computation.
-        """
+        """Compute the shear capacity utilization (SCU) on surface."""
         SCUAttributeName: str = PostProcessingOutputsEnum.SCU.attributeName
 
         if not isAttributeInObject( self.outputMesh, SCUAttributeName, self.attributePiece ):

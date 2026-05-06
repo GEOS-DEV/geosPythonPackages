@@ -13,6 +13,12 @@ Mesh Quality Enhanced
 .. automodule:: geos.pv.plugins.qc.PVMeshQualityEnhanced
 
 
+Tetrahedra QC
+---------------------------
+
+.. automodule:: geos.pv.plugins.qc.PVTetQualityAnalysis
+
+
 Python View Configurator
 ------------------------------
 

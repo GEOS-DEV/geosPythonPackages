@@ -672,19 +672,39 @@ def criticalPorePressure(
     assert ( frictionAngle >= 0.0 ) and ( frictionAngle < np.pi / 2.0 ), ( "Fristion angle " +
                                                                            "must range between 0 and pi/2." )
 
-    minimumPrincipalStress: npt.NDArray[ np.float64 ] = np.full( stressVector.shape[ 0 ], np.nan )
-    maximumPrincipalStress: npt.NDArray[ np.float64 ] = np.copy( minimumPrincipalStress )
-    for i in range( minimumPrincipalStress.shape[ 0 ] ):
-        p3, p2, p1 = computeStressPrincipalComponentsFromStressVector( stressVector[ i ] )
-        minimumPrincipalStress[ i ] = p3
-        maximumPrincipalStress[ i ] = p1
+    pca, _ = computeStressPrincipalComponentsFromStressVector( stressVector )
 
     # assertion frictionAngle < np.pi/2., so sin(frictionAngle) != 1
     cohesiveTerm: npt.NDArray[ np.floating[ Any ] ] = ( rockCohesion * np.cos( frictionAngle ) /
                                                         ( 1.0 - np.sin( frictionAngle ) ) )
-    residualTerm: npt.NDArray[ np.floating[ Any ] ] = ( 3.0 * minimumPrincipalStress - maximumPrincipalStress ) / 2.0
+    residualTerm: npt.NDArray[ np.floating[ Any ] ] = ( 3.0 * np.min( pca, axis=1 ) - np.max( pca, axis=1 ) ) / 2.0
 
     return cohesiveTerm + residualTerm
+
+
+def principalAxesAndDirections(
+    stressVector: npt.NDArray[ np.float64 ], ) -> tuple[ npt.NDArray[ np.float64 ], npt.NDArray[ np.float64 ] ]:
+    r"""Getting the principal axes and directions separately by fast eigh decomposition.
+
+    Beware they are ordered in reverse natural ordre so that p1>=p2>=p3.
+
+    Args:
+        stressVector (npt.NDArray[np.float64]): stress vector of Nx6 dims
+            (:math:`\sigma` - Pa).
+
+    Returns:
+        tuple[ npt.NDArray[ np.float64 ], npt.NDArray[ np.float64 ]: tuple containing principal stresses values and directions
+            (p1, p2, p3) and (d1, d2, d3) where p1>=p2>=p3 and d1, d2, d3 are the corresponding eigenvectors.
+
+    """
+    assert stressVector is not None, "Stress vector must be defined"
+    assert stressVector.shape[ 1 ] == 6, "Stress vector must be of size 6."
+
+    principalStresses: npt.NDArray[ np.float64 ] = np.empty( shape=( stressVector.shape[ 0 ], 3 ) )
+    principalDirs: npt.NDArray[ np.float64 ] = np.empty( shape=( stressVector.shape[ 0 ], 3, 3 ) )
+    principalStresses, principalDirs = computeStressPrincipalComponentsFromStressVector( stressVector )
+
+    return principalStresses, principalDirs
 
 
 def criticalPorePressureThreshold( pressure: npt.NDArray[ np.float64 ],
@@ -882,62 +902,49 @@ def shearCapacityUtilization( traction: npt.NDArray[ np.float64 ], rockCohesion:
 
 
 def computeStressPrincipalComponentsFromStressVector(
-    stressVector: npt.NDArray[ np.float64 ], ) -> tuple[ float, float, float ]:
+    stressVector: npt.NDArray[ np.float64 ], ) -> tuple[ npt.NDArray[ np.float64 ], npt.NDArray[ np.float64 ] ]:
     """Compute stress principal components from stress vector.
 
     Args:
         stressVector (npt.NDArray[np.float64]): stress vector.
 
     Returns:
-        tuple[float, float, float]: Principal components sorted in ascending
+        tuple[float, float, float]: Principal components sorted in descending
             order.
 
     """
-    assert stressVector.size == 6, "Stress vector dimension is wrong."
+    assert stressVector.shape[ 1 ] == 6, "Stress vector dimension is wrong."
     stressTensor: npt.NDArray[ np.float64 ] = getAttributeMatrixFromVector( stressVector )
-    return computeStressPrincipalComponents( stressTensor )
-
-
-def computeStressPrincipalComponents( stressTensor: npt.NDArray[ np.float64 ], ) -> tuple[ float, float, float ]:
-    """Compute stress principal components.
-
-    Args:
-        stressTensor (npt.NDArray[np.float64]): stress tensor.
-
-    Returns:
-        tuple[float, float, float]: Principal components sorted in ascending
-            order.
-
-    """
-    # get eigen values
-    e_val, e_vec = np.linalg.eig( stressTensor )
     # sort principal stresses from smallest to largest
-    p3, p2, p1 = np.sort( e_val )
-    return ( p3, p2, p1 )
+    eVal, eVec = np.linalg.eigh( stressTensor )
+
+    return eVal[ :, ::-1 ], eVec[ :, :, ::-1 ]
 
 
-def computeNormalShearStress( stressTensor: npt.NDArray[ np.float64 ],
-                              directionVector: npt.NDArray[ np.float64 ] ) -> tuple[ float, float ]:
+def computeNormalShearStress(
+        stressTensors: npt.NDArray[ np.float64 ],
+        directionVectors: npt.NDArray[ np.float64 ] ) -> tuple[ npt.NDArray[ np.float64 ], npt.NDArray[ np.float64 ] ]:
     """Compute normal and shear stress according to stress tensor and direction.
 
     Args:
-        stressTensor (npt.NDArray[np.float64]): 3x3 stress tensor
-        directionVector (npt.NDArray[np.float64]): direction vector
+        stressTensors (npt.NDArray[np.float64]): stress vector.
+        directionVectors: npt.NDArray[ np.float64 ]: the direction vectors of the local frame.
 
     Returns:
-        tuple[float, float]: normal and shear stresses.
+        tuple[npt.NDArray[np.float64] , npt.NDArray[np.float64]]: normal and shear stresses.
 
     """
-    assert stressTensor.shape == ( 3, 3 ), "Stress tensor must be 3x3 matrix."
-    assert directionVector.size == 3, "Direction vector must have 3 components"
+    assert stressTensors.shape[ 0 ] == directionVectors.shape[ 0 ], "First dim should be number of points"
+    assert stressTensors.shape[ 1: ] == ( 3, 3 ), "Stress tensor must be nx3x3 matrix."
+    assert directionVectors.shape[ 1 ] == 3, "Direction vector must have 3 components"
 
     # normalization of direction vector
-    directionVector = directionVector / np.linalg.norm( directionVector )
+    directionVectors = directionVectors / np.linalg.norm( directionVectors, axis=1, keepdims=True )
     # stress vector
-    T: npt.NDArray[ np.float64 ] = np.dot( stressTensor, directionVector )
+    T: npt.NDArray[ np.float64 ] = np.einsum( 'nij,nj->ni', stressTensors, directionVectors )
     # normal stress
-    sigmaN: float = np.dot( T, directionVector )
+    sigmaN: npt.NDArray[ np.float64 ] = np.einsum( 'ni,ni->n', T, directionVectors )
     # shear stress
-    tauVec: npt.NDArray[ np.float64 ] = T - np.dot( sigmaN, directionVector )
-    tau: float = float( np.linalg.norm( tauVec ) )
+    tauVec: npt.NDArray[ np.float64 ] = T - np.einsum( 'n,nj->nj', sigmaN, directionVectors )
+    tau: npt.NDArray[ np.float64 ] = np.linalg.norm( tauVec, axis=1 )
     return ( sigmaN, tau )

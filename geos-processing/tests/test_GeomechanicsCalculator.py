@@ -8,6 +8,8 @@ import pytest
 
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
 
+from vtkmodules.vtkIOXML import vtkXMLUnstructuredGridWriter
+
 from geos.mesh.utils.arrayHelpers import isAttributeInObject
 from geos.processing.post_processing.GeomechanicsCalculator import ( GeomechanicsCalculator, BASIC_PROPERTIES,
                                                                      ADVANCED_PROPERTIES, LITHOSTATIC_STRESS )
@@ -36,3 +38,9 @@ def test_GeomechanicsCalculator(
     if computeAdvancedProperties:
         for attribute in ADVANCED_PROPERTIES:
             assert isAttributeInObject( output, attribute.attributeName, attribute.piece )
+
+    w = vtkXMLUnstructuredGridWriter()
+    w.SetInputData( output )
+    w.SetFileName( "/data/pau901/SIM_CS/04_WORKSPACE/USERS/jfranc/tmp/testNicola.vtu" )
+    w.Update()
+    w.Write()

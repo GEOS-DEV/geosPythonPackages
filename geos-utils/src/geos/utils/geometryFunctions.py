@@ -4,21 +4,57 @@
 from typing import Any
 
 import numpy as np
+from scipy.linalg import polar
+from packaging.version import Version
+from scipy import __version__ as __scipy_version__
 import numpy.typing as npt
-from geos.utils.PhysicalConstants import EPSILON
 
 __doc__ = """Functions to permform geometry calculations."""
 
-CANONICAL_BASIS_3D: tuple[ npt.NDArray[ np.float64 ], npt.NDArray[ np.float64 ],
-                           npt.NDArray[ np.float64 ] ] = ( np.array( [ 1.0, 0.0, 0.0 ] ), np.array( [ 0.0, 1.0, 0.0 ] ),
-                                                           np.array( [ 0.0, 0.0, 1.0 ] ) )
+CANONICAL_BASIS_3D: npt.NDArray[ np.float64 ] = np.array( [ [ 1.0, 0.0, 0.0 ], [ 0.0, 1.0, 0.0 ], [ 0.0, 0.0, 1.0 ] ] )
+
+# for batch cross product
+EPS = np.zeros( ( 3, 3, 3 ), dtype=int )
+EPS[ 0, 1, 2 ] = EPS[ 1, 2, 0 ] = EPS[ 2, 0, 1 ] = 1
+EPS[ 0, 2, 1 ] = EPS[ 2, 1, 0 ] = EPS[ 1, 0, 2 ] = -1
+
+
+# (n,x,x) opertors
+def _normalize( arr: npt.NDArray[ np.float64 ] ) -> npt.NDArray[ np.float64 ]:
+    """N generatlization of normalization."""
+    return np.einsum( 'ni,n->ni', arr, 1 / np.linalg.norm( arr, axis=1 ) )
+
+
+def _transposeProd( basisTo: npt.NDArray[ np.float64 ],
+                    basisFrom: npt.NDArray[ np.float64 ] ) -> npt.NDArray[ np.float64 ]:
+    """N generalization of transpose product."""
+    return np.einsum( 'nlj,nkj->nlk', basisTo, basisFrom )
+
+
+def _cross( vec1: npt.NDArray[ np.float64 ], vec2: npt.NDArray[ np.float64 ] ) -> npt.NDArray[ np.float64 ]:
+    """N generatlization of cross product."""
+    return np.einsum( 'ijk,nj,nk->ni', EPS, vec1, vec2 )
+
+
+def _normBasis( basis: npt.NDArray[ np.float64 ] ) -> npt.NDArray[ np.float64 ]:
+    """Norm and orthonormalize basis vector wise."""
+    # Q, R = np.linalg.qr( basis )
+    if Version( __scipy_version__ ) > Version( "1.15.3" ):
+        U, _ = polar( basis )
+    else:
+        U = np.zeros_like( basis )
+        for i in range( basis.shape[ 0 ] ):
+            U[ i, :, : ], _ = polar( basis[ i, :, : ] )
+
+    # det = np.linalg.det( Q )
+    # Q[ det < 0 ] *= -1
+
+    return U
 
 
 def getChangeOfBasisMatrix(
-    basisFrom: tuple[ npt.NDArray[ np.floating[ Any ] ], npt.NDArray[ np.floating[ Any ] ],
-                      npt.NDArray[ np.floating[ Any ] ] ],
-    basisTo: tuple[ npt.NDArray[ np.floating[ Any ] ], npt.NDArray[ np.floating[ Any ] ],
-                    npt.NDArray[ np.floating[ Any ] ] ],
+    basisFrom: npt.NDArray[ np.float64 ],
+    basisTo: npt.NDArray[ np.float64 ],
 ) -> Any:
     """Get the change of basis matrix from basis basisFrom to basis basisTo.
 
@@ -30,200 +66,201 @@ def getChangeOfBasisMatrix(
     C is then Vc = P.Vb
 
     Args:
-        basisFrom (tuple[npt.NDArray[np.floating[Any]], npt.NDArray[np.floating[Any]], npt.NDArray[np.floating[Any]]]): Origin basis
-        basisTo (tuple[npt.NDArray[np.floating[Any]], npt.NDArray[np.floating[Any]], npt.NDArray[np.floating[Any]]]): Destination basis
+        basisFrom (tuple[npt.NDArray[np.float64 npt.NDArray[np.float64 npt.NDArray[np.float64): Origin basis
+        basisTo (tuple[npt.NDArray[np.float64 npt.NDArray[np.float64 npt.NDArray[np.float64): Destination basis
 
     Returns:
-        npt.NDArray[np.floating[Any]]: Change of basis matrix.
+        npt.NDArray[np.float64 Change of basis matrix.
     """
-    assert ( basisFrom[ 0 ].size == basisFrom[ 1 ].size ) and ( basisFrom[ 0 ].size == basisFrom[ 2 ].size ), (
-        "Origin space vectors must have the same size." )
+    basisFrom = _normBasis( basisFrom )
+    if len( basisTo.shape ) < len( basisFrom.shape ):
+        basisTo = np.repeat( basisTo[ None, : ], basisFrom.shape[ 0 ], axis=0 )
+    basisTo = _normBasis( basisTo )
 
-    assert ( basisTo[ 0 ].size == basisTo[ 1 ].size ) and ( basisTo[ 0 ].size == basisTo[ 2 ].size ), (
-        "Destination space vectors must have the same size." )
+    assert ( basisFrom.shape[ 1 ] == basisFrom.shape[ 2 ] ), (
+        f"Origin space vectors must have the same size. shape: {basisFrom.shape}" )
+
+    assert ( basisTo.shape[ 1 ] == basisTo.shape[ 2 ] ), ( "Destination space vectors must have the same size." )
 
     # build the matrices where columns are the vectors of the bases
-    B = np.transpose( np.array( basisFrom ) )
-    C = np.transpose( np.array( basisTo ) )
-    # compute the inverse of C
-    C1: npt.NDArray[ np.floating[ Any ] ] = np.linalg.inv( C )
+    # B = np.transpose( np.array( basisFrom ) )
+    # C = np.transpose( np.array( basisTo ) )
+    # no need to compute the inverse of C as it is orthonormal checked - transpose is enough
+    assert np.linalg.norm(
+        _transposeProd( basisTo, basisTo ) - np.repeat( np.eye( 3 )[ None, : ], basisFrom.shape[ 0 ], axis=0 ) ) < 1e-6
     # get the change of basis matrix
-    return np.dot( C1, B )
+    return _transposeProd( basisTo, basisFrom )
 
 
-def computeCoordinatesInNewBasis( vec: npt.NDArray[ np.floating[ Any ] ],
-                                  changeOfBasisMatrix: npt.NDArray[ np.floating[ Any ] ] ) -> Any:
-    """Computes the coordinates of a matrix from a basis B in the new basis B'.
+# def computeCoordinatesInNewBasis( vec: npt.NDArray[ np.float64 ],
+#                                   changeOfBasisMatrix: npt.NDArray[ np.float64 ] ) -> Any:
+#     """Computes the coordinates of a matrix from a basis B in the new basis B'.
 
-    Args:
-        vec (npt.NDArray[np.floating[Any]]): Vector to compute the new coordinates
-        changeOfBasisMatrix (npt.NDArray[np.floating[Any]]): Change of basis matrix
+#     Args:
+#         vec (npt.NDArray[np.float64: Vector to compute the new coordinates
+#         changeOfBasisMatrix (npt.NDArray[np.float64: Change of basis matrix
 
-    Returns:
-        npt.NDArray[np.floating[Any]]: The new coordinates of the matrix in the basis
-        B'.
-    """
-    assert ( vec.size == changeOfBasisMatrix.shape[ 1 ] ), """The size of the vector
-    must be equal to the number of columns of and change of basis matrix."""
-    return np.dot( changeOfBasisMatrix, vec )
+#     Returns:
+#         npt.NDArray[np.float64 The new coordinates of the matrix in the basis
+#         B'.
+#     """
+#     assert ( vec.shape[ 1 ] == changeOfBasisMatrix.shape[ 1 ] ), """The size of the vector
+#     must be equal to the number of columns of and change of basis matrix."""
+#     return np.einsum('nij,ni->ni' ,changeOfBasisMatrix, vec )
 
+# def computePlaneFrom3Points(
+#     pt1: npt.NDArray[ np.float64 ],
+#     pt2: npt.NDArray[ np.float64 ],
+#     pt3: npt.NDArray[ np.float64 ],
+# ) -> tuple[ npt.NDArray[ np.float64 ], npt.NDArray[ np.float64 ], npt.NDArray[ np.float64 ], npt.NDArray[ np.float64 ] ]:
+#     """Compute the 4 coefficients of a plane equation.
 
-def computePlaneFrom3Points(
-    pt1: npt.NDArray[ np.floating[ Any ] ],
-    pt2: npt.NDArray[ np.floating[ Any ] ],
-    pt3: npt.NDArray[ np.floating[ Any ] ],
-) -> tuple[ float, float, float, float ]:
-    """Compute the 4 coefficients of a plane equation.
+#     Let's defined a plane from the following equation: ax + by + cz + d = 0.
+#     This function determines a, b, c, d from 3 points of the plane.
 
-    Let's defined a plane from the following equation: ax + by + cz + d = 0.
-    This function determines a, b, c, d from 3 points of the plane.
+#     Args:
+#         pt1 (npt.NDArray[np.float64: 1st point of the plane.
+#         pt2 (npt.NDArray[np.float64: 2nd point of the plane.
+#         pt3 (npt.NDArray[np.float64: 3rd point of the plane.
 
-    Args:
-        pt1 (npt.NDArray[np.floating[Any]]): 1st point of the plane.
-        pt2 (npt.NDArray[np.floating[Any]]): 2nd point of the plane.
-        pt3 (npt.NDArray[np.floating[Any]]): 3rd point of the plane.
+#     Returns:
+#         tuple[float, float, float, float]: Tuple of the 4 coefficients.
+#     """
+#     assert pt1.shape[0] == pt2.shape[0] and pt2.shape[0] == pt3.shape[0]
 
-    Returns:
-        tuple[float, float, float, float]: Tuple of the 4 coefficients.
-    """
-    # plane vectors
-    v1: npt.NDArray[ np.floating[ Any ] ] = pt2 - pt1
-    v2: npt.NDArray[ np.floating[ Any ] ] = pt3 - pt1
-    # normal vector
-    normal: npt.NDArray[ np.floating[ Any ] ] = np.cross( v1, v2 )
-    assert np.linalg.norm( normal ) != 0, "Vectors of the plane must not be colinear."
-    # first 3 coefficients of the plane equation
-    a, b, c = normal
-    # last coefficient of the plane equation
-    d: float = -np.dot( normal, pt1 )
-    return a, b, c, d
+#     # plane vectors
+#     v1: npt.NDArray[ np.float64 ] = pt2 - pt1
+#     v2: npt.NDArray[ np.float64 ] = pt3 - pt1
+#     # normal vector
+#     normal: npt.NDArray[ np.float64 ] = np.einsum('ijk,nj,nk->ni', EPS, v1, v2)
+#     assert np.linalg.norm( normal ) != 0, "Vectors of the plane must not be colinear."
+#     # first 3 coefficients of the plane equation
+#     a, b, c = np.unstack( normal, axis=1 )
+#     # last coefficient of the plane equation
+#     d: float = -np.einsum('ni,ni->n', normal, pt1 )
+#     return a, b, c, d
 
+# def getCellSideAgainstPlane(
+#     cellPtsCoords: npt.NDArray[ np.float64 ],
+#     planePt: npt.NDArray[ np.float64 ],
+#     planeNormal: npt.NDArray[ np.float64 ],
+# ) -> bool:
+#     """Get the side of input cell against input plane.
 
-def getCellSideAgainstPlane(
-    cellPtsCoords: npt.NDArray[ np.floating[ Any ] ],
-    planePt: npt.NDArray[ np.floating[ Any ] ],
-    planeNormal: npt.NDArray[ np.floating[ Any ] ],
-) -> bool:
-    """Get the side of input cell against input plane.
+#     Input plane is defined by a point on it and its normal vector.
 
-    Input plane is defined by a point on it and its normal vector.
+#     Args:
+#         cellPtsCoords (npt.NDArray[np.float64: Coordinates of the vertices of
+#             the cell to get the side.
+#         planePt (npt.NDArray[np.float64: Point on the plane.
+#         planeNormal (npt.NDArray[np.float64: Normal vector to the plane.
 
-    Args:
-        cellPtsCoords (npt.NDArray[np.floating[Any]]): Coordinates of the vertices of
-            the cell to get the side.
-        planePt (npt.NDArray[np.floating[Any]]): Point on the plane.
-        planeNormal (npt.NDArray[np.floating[Any]]): Normal vector to the plane.
+#     Returns:
+#         bool: True if the cell is in the direction of the normal vector,
+#         False otherwise.
+#     """
+#     assert ( len( cellPtsCoords.shape[0] ) > 1 ), "The list of points must contains more than one element"
+#     ptCenter: npt.NDArray[ np.float64 ] = np.mean( cellPtsCoords, axis=0 )
+#     return getPointSideAgainstPlane( ptCenter, planePt, planeNormal )
 
-    Returns:
-        bool: True if the cell is in the direction of the normal vector,
-        False otherwise.
-    """
-    assert ( len( cellPtsCoords ) > 1 ), "The list of points must contains more than one element"
-    ptCenter: npt.NDArray[ np.floating[ Any ] ] = np.mean( cellPtsCoords, axis=0 )
-    return getPointSideAgainstPlane( ptCenter, planePt, planeNormal )
+# def getPointSideAgainstPlane(
+#     ptCoords: npt.NDArray[ np.float64 ],
+#     planePt: npt.NDArray[ np.float64 ],
+#     planeNormal: npt.NDArray[ np.float64 ],
+# ) -> bool:
+#     """Get the side of input point against input plane.
 
+#     Input plane is defined by a point on it and its normal vector.
 
-def getPointSideAgainstPlane(
-    ptCoords: npt.NDArray[ np.floating[ Any ] ],
-    planePt: npt.NDArray[ np.floating[ Any ] ],
-    planeNormal: npt.NDArray[ np.floating[ Any ] ],
-) -> bool:
-    """Get the side of input point against input plane.
+#     Args:
+#         ptCoords (npt.NDArray[np.float64: Coordinates of the point to get
+#             the side.
+#         planePt (npt.NDArray[np.float64: Point on the plane.
+#         planeNormal (npt.NDArray[np.float64: Normal vector to the plane.
 
-    Input plane is defined by a point on it and its normal vector.
+#     Returns:
+#         bool: True if the point is in the direction of the normal vector,
+#         False otherwise.
+#     """
+#     assert ptCoords.shape[1] == 3, "Point coordinates must have 3 components"
+#     assert planeNormal.shape[1] == 3, "Plane normal vector must have 3 components"
+#     assert planePt.shape[1] == 3, "Plane point must have 3 components"
+#     vec: npt.NDArray[ np.float64 ] = ptCoords - planePt
+#     dot: float = np.einsum('ni,ni->n', planeNormal, vec )
+#     assert np.linalg.norm( dot ) > EPSILON, "The point is on the plane."
+#     return dot > 0
 
-    Args:
-        ptCoords (npt.NDArray[np.floating[Any]]): Coordinates of the point to get
-            the side.
-        planePt (npt.NDArray[np.floating[Any]]): Point on the plane.
-        planeNormal (npt.NDArray[np.floating[Any]]): Normal vector to the plane.
+# def computeAngleFromPoints( pt1: npt.NDArray[ np.float64 ], pt2: npt.NDArray[ np.float64 ],
+#                             pt3: npt.NDArray[ np.float64 ] ) -> float:
+#     """Compute angle from 3 points.
 
-    Returns:
-        bool: True if the point is in the direction of the normal vector,
-        False otherwise.
-    """
-    assert ptCoords.size == 3, "Point coordinates must have 3 components"
-    assert planeNormal.size == 3, "Plane normal vector must have 3 components"
-    assert planePt.size == 3, "Plane point must have 3 components"
-    vec: npt.NDArray[ np.floating[ Any ] ] = ptCoords - planePt
-    dot: float = np.dot( planeNormal, vec )
-    assert abs( dot ) > EPSILON, "The point is on the plane."
-    return dot > 0
+#     Args:
+#         pt1 (npt.NDArray[np.float64]): First point
+#         pt2 (npt.NDArray[np.float64]): Second point
+#         pt3 (npt.NDArray[np.float64]): Third point
 
+#     Returns:
+#         float: Angle
+#     """
+#     # compute vectors
+#     vec1: npt.NDArray[ np.float64 ] = pt1 - pt2
+#     vec2: npt.NDArray[ np.float64 ] = pt3 - pt2
+#     return computeAngleFromVectors( vec1, vec2 )
 
-def computeAngleFromPoints( pt1: npt.NDArray[ np.float64 ], pt2: npt.NDArray[ np.float64 ],
-                            pt3: npt.NDArray[ np.float64 ] ) -> float:
-    """Compute angle from 3 points.
+# def computeAngleFromVectors(
+#     vec1: npt.NDArray[ np.float64 ],
+#     vec2: npt.NDArray[ np.float64 ],
+# ) -> float:
+#     """Compute angle from 2 vectors.
 
-    Args:
-        pt1 (npt.NDArray[np.float64]): First point
-        pt2 (npt.NDArray[np.float64]): Second point
-        pt3 (npt.NDArray[np.float64]): Third point
+#     Args:
+#         vec1 (npt.NDArray[np.float64]): First vector
+#         vec2 (npt.NDArray[np.float64]): Second vector
 
-    Returns:
-        float: Angle
-    """
-    # compute vectors
-    vec1: npt.NDArray[ np.float64 ] = pt1 - pt2
-    vec2: npt.NDArray[ np.float64 ] = pt3 - pt2
-    return computeAngleFromVectors( vec1, vec2 )
+#     Returns:
+#         float: angle
+#     """
+#     assert np.where( np.abs( np.linalg.norm( vec1, axis=0 ) ) ) == 0., "First vector cannot be null"
+#     assert np.where( np.abs( np.linalg.norm( vec2, axis=0 ) ) ) == 0., "Second vector cannot be null"
+#     # normalization
+#     vec1_norm: npt.NDArray[ np.float64 ] = np.einsum( 'ni,nj->ni', vec1, 1. / np.linalg.norm( vec1, axis=1, keepdims=True ) )
+#     vec2_norm: npt.NDArray[ np.float64 ] = np.einsum( 'ni,nj->ni' , vec2, 1. / np.linalg.norm( vec2, axis=1, keepdims=True ) )
 
+#     # Use normalized vectors for dot product
+#     dot: float = np.einsum('ni,nj->n', vec1_norm, vec2_norm)
 
-def computeAngleFromVectors(
-    vec1: npt.NDArray[ np.float64 ],
-    vec2: npt.NDArray[ np.float64 ],
-) -> float:
-    """Compute angle from 2 vectors.
+#     # Clamp to valid range for arccos
+#     dot = np.clip( dot, -1.0, 1.0 )
 
-    Args:
-        vec1 (npt.NDArray[np.float64]): First vector
-        vec2 (npt.NDArray[np.float64]): Second vector
+#     # Handle 2D vs 3D cases
+#     if vec1.shape[1] == 2 and vec2.shape[1] == 2:
+#         # For 2D, use cross product to determine orientation
+#         cross: float = np.einsum('ijk,nj,nk->ni', EPS, vec1_norm, vec2_norm)
+#         angle: float = np.arccos( dot )
+#         return angle if cross >= 0 else 2.0 * np.pi - angle
+#     else:
+#         # For 3D, return angle in [0, π]
+#         return np.arccos( dot )
 
-    Returns:
-        float: angle
-    """
-    assert abs( np.linalg.norm( vec1 ) ) > 0., "First vector cannot be null"
-    assert abs( np.linalg.norm( vec2 ) ) > 0., "Second vector cannot be null"
-    # normalization
-    vec1_norm: npt.NDArray[ np.float64 ] = vec1 / np.linalg.norm( vec1 )
-    vec2_norm: npt.NDArray[ np.float64 ] = vec2 / np.linalg.norm( vec2 )
+# def computeCosineFromVectors(
+#     vec1: npt.NDArray[ np.float64 ],
+#     vec2: npt.NDArray[ np.float64 ],
+# ) -> float:
+#     """Compute cosine from 2 vectors.
 
-    # Use normalized vectors for dot product
-    dot: float = np.dot( vec1_norm, vec2_norm )
+#     Args:
+#         vec1 (npt.NDArray[np.float64]): First vector
+#         vec2 (npt.NDArray[np.float64]): Second vector
 
-    # Clamp to valid range for arccos
-    dot = np.clip( dot, -1.0, 1.0 )
-
-    # Handle 2D vs 3D cases
-    if vec1.size == 2 and vec2.size == 2:
-        # For 2D, use cross product to determine orientation
-        cross: float = vec1_norm[ 0 ] * vec2_norm[ 1 ] - vec1_norm[ 1 ] * vec2_norm[ 0 ]
-        angle: float = np.arccos( dot )
-        return angle if cross >= 0 else 2.0 * np.pi - angle
-    else:
-        # For 3D, return angle in [0, π]
-        return np.arccos( dot )
-
-
-def computeCosineFromVectors(
-    vec1: npt.NDArray[ np.float64 ],
-    vec2: npt.NDArray[ np.float64 ],
-) -> float:
-    """Compute cosine from 2 vectors.
-
-    Args:
-        vec1 (npt.NDArray[np.float64]): First vector
-        vec2 (npt.NDArray[np.float64]): Second vector
-
-    Returns:
-        float: Cosine
-    """
-    assert abs( np.linalg.norm( vec1 ) ) > 0., "First vector cannot be null"
-    assert abs( np.linalg.norm( vec2 ) ) > 0., "Second vector cannot be null"
-    # normalization
-    vec1_norm: npt.NDArray[ np.float64 ] = vec1 / np.linalg.norm( vec1 )
-    vec2_norm: npt.NDArray[ np.float64 ] = vec2 / np.linalg.norm( vec2 )
-    return np.dot( vec1_norm, vec2_norm )
+#     Returns:
+#         float: Cosine
+#     """
+#     assert abs( np.linalg.norm( vec1 ) ) > 0., "First vector cannot be null"
+#     assert abs( np.linalg.norm( vec2 ) ) > 0., "Second vector cannot be null"
+#     # normalization
+#     vec1_norm: npt.NDArray[ np.float64 ] = vec1 / np.linalg.norm( vec1 )
+#     vec2_norm: npt.NDArray[ np.float64 ] = vec2 / np.linalg.norm( vec2 )
+#     return np.dot( vec1_norm, vec2_norm )
 
 
 def computeNormalFromPoints( pt1: npt.NDArray[ np.float64 ], pt2: npt.NDArray[ np.float64 ],
@@ -238,9 +275,12 @@ def computeNormalFromPoints( pt1: npt.NDArray[ np.float64 ], pt2: npt.NDArray[ n
     Returns:
         npt.NDArray[np.float64]: Normal vector coordinates
     """
+    assert pt1.shape[ 0 ] == pt2.shape[ 0 ] and pt2.shape[ 0 ] == pt3.shape[ 0 ]
     # compute vectors
     vec1: npt.NDArray[ np.float64 ] = pt1 - pt2
     vec2: npt.NDArray[ np.float64 ] = pt3 - pt2
+    assert np.all( np.abs( np.linalg.norm( vec1, axis=1 ) ) > 0. ), "First and second points must be different"
+    assert np.all( np.abs( np.linalg.norm( vec2, axis=1 ) ) > 0. ), "First and second points must be different"
     return computeNormalFromVectors( vec1, vec2 )
 
 
@@ -257,9 +297,7 @@ def computeNormalFromVectors(
     Returns:
         npt.NDArray[np.float64]: Normal vector coordinates
     """
-    assert abs( np.linalg.norm( vec1 ) ) > 0., "First and second points must be different"
-    assert abs( np.linalg.norm( vec2 ) ) > 0., "Second and third points must be different"
     # normalization
-    vec1_norm = vec1 / np.linalg.norm( vec1 )
-    vec2_norm = vec2 / np.linalg.norm( vec2 )
-    return np.cross( vec1_norm, vec2_norm )
+    vec1_norm = _normalize( vec1 )
+    vec2_norm = _normalize( vec2 )
+    return _cross( vec1_norm, vec2_norm )
