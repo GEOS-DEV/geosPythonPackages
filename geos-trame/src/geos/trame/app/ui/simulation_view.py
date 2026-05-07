@@ -16,103 +16,117 @@ from geos.trame.app.io.hpc_tools import SuggestDecomposition
 # unknowns (oncell,onpoint)
 # for now do not take into account wells as dep on the num of wells (neg vs matrix elmts)
 # for now do not take into account frac as dep on the num of frac elmts (prob neg vs matrix elmts)
-solvers_to_unknowns = { 
-    "CompositionalMultiphaseFVM" : (3, 0),
-    "CompositionalMultiphaseHybridFVM" : (4, 0),
-    "CompositionalMultiphaseReservoirPoromechanics" : (3,3),
-    "CompositionalMultiphaseReservoirPoromechanicsConformingFractures" : (3,6),
-    "CompositionalMultiphaseWell" : (3,0),
-    "ElasticFirstOrderSEM" : (0,3),
-    "ElasticSEM" : (0,3),
-    "ImmiscibleMultiphaseFlow": (3,0),
-    "LaplaceFEM" : (0,3),
-    "MultiphasePoromechanics" : (3,3),
-    "MultiphasePoromechanicsReservoir" : (3,3),#??
-    "MultiphasePoromechanicsConformingFractures" : (3,6) ,
-    "SinglePhaseFVM" : (2,0),
-    "SinglePhaseHybridFVM" : (3,0),
-    "SinglePhasePoromechanics" : (2,3),
-    "SinglePhasePoromechanicsConformingFractures" : (2,3),
-    "SinglePhasePoromechanicsConformingFracturesALM" : (2,3),
-    "SinglePhaseWell" : (2,0),
-    "SolidMechanicsEmbeddedFractures": (0,3),
-    "SolidMechanicsAugmentedLagrangianContact": (0,3),
-    "SolidMechanicsLagrangeContact": (0,3),
-    "SolidMechanicsLagrangeContactBubbleStab": (0,3),
-    "SolidMechanicsLagrangianFEM": (0,3)
+solvers_to_unknowns = {
+    "CompositionalMultiphaseFVM": ( 3, 0 ),
+    "CompositionalMultiphaseHybridFVM": ( 4, 0 ),
+    "CompositionalMultiphaseReservoirPoromechanics": ( 3, 3 ),
+    "CompositionalMultiphaseReservoirPoromechanicsConformingFractures": ( 3, 6 ),
+    "CompositionalMultiphaseWell": ( 3, 0 ),
+    "ElasticFirstOrderSEM": ( 0, 3 ),
+    "ElasticSEM": ( 0, 3 ),
+    "ImmiscibleMultiphaseFlow": ( 3, 0 ),
+    "LaplaceFEM": ( 0, 3 ),
+    "MultiphasePoromechanics": ( 3, 3 ),
+    "MultiphasePoromechanicsReservoir": ( 3, 3 ),  #??
+    "MultiphasePoromechanicsConformingFractures": ( 3, 6 ),
+    "SinglePhaseFVM": ( 2, 0 ),
+    "SinglePhaseHybridFVM": ( 3, 0 ),
+    "SinglePhasePoromechanics": ( 2, 3 ),
+    "SinglePhasePoromechanicsConformingFractures": ( 2, 3 ),
+    "SinglePhasePoromechanicsConformingFracturesALM": ( 2, 3 ),
+    "SinglePhaseWell": ( 2, 0 ),
+    "SolidMechanicsEmbeddedFractures": ( 0, 3 ),
+    "SolidMechanicsAugmentedLagrangianContact": ( 0, 3 ),
+    "SolidMechanicsLagrangeContact": ( 0, 3 ),
+    "SolidMechanicsLagrangeContactBubbleStab": ( 0, 3 ),
+    "SolidMechanicsLagrangianFEM": ( 0, 3 )
 }
 
-  # helpers
-def _what_solver(bcontent) -> int:
-        import xml.etree
-        sim_xml = xml.etree.ElementTree.fromstring(bcontent['content'])
-        nunk = [solvers_to_unknowns.get(elt.tag, (1,0)) for elt in sim_xml.find('Solvers')]
-        return max(nunk)
+
+# helpers
+def _what_solver( bcontent: dict ) -> tuple[ int, int ]:
+    from xml.etree.ElementTree import Element, fromstring
+    sim_xml: Element = fromstring( bcontent[ 'content' ] )
+    solver = sim_xml.find( 'Solvers' )
+    nunk: list[ tuple[ int, int ] ] = [ solvers_to_unknowns.get( elt.tag, ( 1, 0 ) )
+                                        for elt in solver ] if solver else [ ( 0, 0 ) ]
+    return max( nunk )
 
 
-def _how_many_cells( bcontent ) -> tuple[int,int]:
-        import vtk
-        name = bcontent['name']
-        if name.endswith(".vtp"):
-            reader = vtk.vtkXMLPolyDataReader()
-        elif name.endswith(".vtu"):
-            reader = vtk.vtkXMLUnstructuredGridReader()
-        elif name.endswith(".vtm"):
-            reader = vtk.vtkXMLMultiBlockDataReader()
-        else:
-            raise ValueError("Unsupported kind (use 'vtp', 'vtu', or 'vtm').")
+def _how_many_cells( bcontent: dict ) -> tuple[ int, int ]:
+    import vtk
+    name = bcontent[ 'name' ]
+    if name.endswith( ".vtp" ):
+        reader = vtk.vtkXMLPolyDataReader()
+    elif name.endswith( ".vtu" ):
+        reader = vtk.vtkXMLUnstructuredGridReader()
+    elif name.endswith( ".vtm" ):
+        reader = vtk.vtkXMLMultiBlockDataReader()
+    else:
+        raise ValueError( "Unsupported kind (use 'vtp', 'vtu', or 'vtm')." )
 
-        reader.SetReadFromInputString(1)
-        reader.SetInputString(bcontent['content'])
-        reader.Update()
-        output = reader.GetOutput()
-        return (output.GetNumberOfCells(), output.GetNumberOfPoints())
+    reader.SetReadFromInputString( 1 )
+    reader.SetInputString( bcontent[ 'content' ] )
+    reader.Update()
+    output = reader.GetOutput()
+    return ( output.GetNumberOfCells(), output.GetNumberOfPoints() )
 
-def _has_internalMesh(bcontent) -> bool:
-        import xml.etree
-        sim_xml = xml.etree.ElementTree.fromstring(bcontent['content'])
-        return (sim_xml.find('Mesh/InternalMesh') is not None)
 
-def _what_internalMesh(bcontent) -> tuple[int,int]:
-        import xml.etree
-        import re
-        sim_xml = xml.etree.ElementTree.fromstring(bcontent['content'])
-        nx = sim_xml.find('Mesh/InternalMesh').get('nx')
-        nx = sum([int(el) for el in re.findall(r'-?\d+(?:\.\d+)?', nx)])
-        ny = sim_xml.find('Mesh/InternalMesh').get('ny')
-        ny = sum([int(el) for el in re.findall(r'-?\d+(?:\.\d+)?', ny)])
-        nz = sim_xml.find('Mesh/InternalMesh').get('nz')
-        nz = sum([int(el) for el in re.findall(r'-?\d+(?:\.\d+)?', nz)])
-        return (nx*ny*nz, (nx+1)*(ny+1)*(nz+1))
+def _has_internalMesh( bcontent: dict ) -> bool:
+    from xml.etree.ElementTree import Element, fromstring
+    sim_xml: Element = fromstring( bcontent[ 'content' ] )
+    return bool( sim_xml.find( 'Mesh/InternalMesh' ) is not None )
+
+
+def _what_internalMesh( bcontent: dict ) -> tuple[ int, int ]:
+    from xml.etree.ElementTree import Element, fromstring
+    import re
+    sim_xml: Element = fromstring( bcontent[ 'content' ] )
+
+    mesh = sim_xml.find( 'Mesh/InternalMesh' )
+
+    def _parse_sum( value: str | None ) -> int:
+        if value is None:
+            return 0
+        return sum( int( el ) for el in re.findall( r'-?\d+(?:\.\d+)?', value ) )
+
+    if mesh is None:
+        nx = ny = nz = 0
+    else:
+        nx = _parse_sum( mesh.get( 'nx' ) )
+        ny = _parse_sum( mesh.get( 'ny' ) )
+        nz = _parse_sum( mesh.get( 'nz' ) )
+
+    return ( nx * ny * nz, ( nx + 1 ) * ( ny + 1 ) * ( nz + 1 ) )
 
 
 #TODO a class from it
 def define_simulation_view( server: Server ) -> None:
     """Functional definition of UI elements."""
 
-    @server.state.change("other_widget_selected_file")
-    def on_other_widget_file_ready(other_widget_selected_file: dict, **_: Any) -> None:
+    @server.state.change( "other_widget_selected_file" )
+    def on_other_widget_file_ready( other_widget_selected_file: dict, **_: Any ) -> None:
         if not other_widget_selected_file:
             return
 
-        current = list(server.state.simulation_xml_filename)
-        existing_names = {f.get("name") for f in current}
+        current = list( server.state.simulation_xml_filename )
+        existing_names = { f.get( "name" ) for f in current }
 
-        if other_widget_selected_file.get("name") not in existing_names:
-            current.append(other_widget_selected_file)
+        if other_widget_selected_file.get( "name" ) not in existing_names:
+            current.append( other_widget_selected_file )
             server.state.simulation_xml_filename = current
-            
+
     @server.state.change( "selected_cluster_name" )
     def on_cluster_change( selected_cluster_name: str, **_: Any ) -> None:
         print( f"selecting {selected_cluster_name}" )
         server.state.decompositions = SuggestDecomposition( Authentificator.get_cluster( selected_cluster_name ),
                                                             server.state.nunknowns ).get_sd()
-        
+
         server.state.simulation_remote_path = Authentificator.get_cluster(
-                server.state.selected_cluster_name ).simulation_remote_path
-        
+            server.state.selected_cluster_name ).simulation_remote_path
+
         server.state.simulation_dl_path = Authentificator.get_cluster(
-                server.state.selected_cluster_name ).simulation_dl_default_path
+            server.state.selected_cluster_name ).simulation_dl_default_path
 
     # @server.state.change( "decomposition" )
     # def on_decomposition_selected( decomposition: str, **_: Any ) -> None:
@@ -121,87 +135,85 @@ def define_simulation_view( server: Server ) -> None:
     #     except:
     #         server.state.sd = { 'nodes': 0, 'total_ranks': 0 }
 
-    @server.state.change("simulation_xml_temp")
-    def on_temp_change(simulation_xml_temp: list, **_: Any) -> None:
+    @server.state.change( "simulation_xml_temp" )
+    def on_temp_change( simulation_xml_temp: list, **_: Any ) -> None:
         current_list = server.state.simulation_xml_filename
         new_list = current_list + simulation_xml_temp
-    
 
         server.state.simulation_xml_filename = new_list
         server.state.simulation_xml_temp = []
 
-    @server.state.change("nunknowns")
-    def on_nunknowns_change( nunknowns : int , **_ : Any) -> None:
+    @server.state.change( "nunknowns" )
+    def on_nunknowns_change( nunknowns: int, **_: Any ) -> None:
         #re-gen list
-        if len(server.state.decompositions) > 0:
-            server.state.decompositions = SuggestDecomposition( Authentificator.get_cluster( server.state.selected_cluster_name ),
-                                                            nunknowns ).get_sd()
-        print(f'unknowns changed : {server.state.nunknowns} -> {nunknowns}')
+        if len( server.state.decompositions ) > 0:
+            server.state.decompositions = SuggestDecomposition(
+                Authentificator.get_cluster( server.state.selected_cluster_name ), nunknowns ).get_sd()
+        print( f'unknowns changed : {server.state.nunknowns} -> {nunknowns}' )
         server.state.nunknowns = nunknowns
 
-    
     @server.state.change( "simulation_xml_filename" )
     def on_simfiles_change( simulation_xml_filename: list, **_: Any ) -> None:
         import re
-        has_xml = list([True if file.get( "type", "" ) == 'text/xml' else False
-            for file in simulation_xml_filename ])
-        
-        has_external_mesh = list([True if file.get( "name", "" ).endswith((".vtu",".vtm",".vtp"))  else False
-            for file in simulation_xml_filename ])
-        
-        has_internal_mesh = False
-        for i,_ in enumerate(has_xml):
-            if has_xml[i]:
-                has_internal_mesh = _has_internalMesh(simulation_xml_filename[i])
+        has_xml = [ file.get( "type", "" ) == 'text/xml' for file in simulation_xml_filename ]
 
-        if any(has_xml):
-            uc = up = nc = np = None
+        has_external_mesh = [
+            bool( file.get( "name", "" ).endswith( ( ".vtu", ".vtm", ".vtp" ) ) ) for file in simulation_xml_filename
+        ]
+
+        has_internal_mesh = False
+        for i, _ in enumerate( has_xml ):
+            if has_xml[ i ]:
+                has_internal_mesh = _has_internalMesh( simulation_xml_filename[ i ] )
+
+        if any( has_xml ):
+            uc = up = nc = np = 0
             # compute unknowns and cells only for xml files, if external mesh do not take into account internal mesh info even if present, if no external mesh try to take into account internal mesh info if present
             # useful for decomposition suggestion
-            for i,_ in enumerate(has_xml):
-                if has_external_mesh[i]:
-                    nc, np = _how_many_cells(simulation_xml_filename[i])
-                elif has_xml[i]:
-                    uc, up = _what_solver(simulation_xml_filename[i]) 
+            for i, _ in enumerate( has_xml ):
+                if has_external_mesh[ i ]:
+                    nc, np = _how_many_cells( simulation_xml_filename[ i ] )
+                elif has_xml[ i ]:
+                    uc, up = _what_solver( simulation_xml_filename[ i ] )
                     if has_internal_mesh:
-                        nc,np = _what_internalMesh(simulation_xml_filename[i])
-            
-            if all(i is not None  for i in (uc,nc,up,np)):
-                server.state.nunknowns = uc*nc + up*np     
+                        nc, np = _what_internalMesh( simulation_xml_filename[ i ] )
 
-        if any(has_xml):
-            xml_pattern   = re.compile(r"\.xml$", re.IGNORECASE)
-            mesh_pattern  = re.compile(r"\.(vtu|vtm|pvtu|pvtm)$", re.IGNORECASE)
-            table_pattern = re.compile(r"\.(txt|dat|csv|geos)$", re.IGNORECASE)
+            if all( i is not None for i in ( uc, nc, up, np ) ):
+                server.state.nunknowns = uc * nc + up * np
+
+        if any( has_xml ):
+            xml_pattern = re.compile( r"\.xml$", re.IGNORECASE )
+            mesh_pattern = re.compile( r"\.(vtu|vtm|pvtu|pvtm)$", re.IGNORECASE )
+            table_pattern = re.compile( r"\.(txt|dat|csv|geos)$", re.IGNORECASE )
 
             xml_matches, mesh_matches, table_matches = [], [], []
 
             pattern_file = r"[\w\-.]+\.(?:vtu|pvtu|dat|txt|xml|geos)\b"
 
             # Fix: use enumerate instead of .index() to handle duplicates safely
-            for i, file in enumerate(simulation_xml_filename):
-                if not has_xml[i]:
+            for i, file in enumerate( simulation_xml_filename ):
+                if not has_xml[ i ]:
                     continue
-                name = file.get("name", "")
-                if xml_pattern.search(name):
-                    xml_matches.append(file)
-                elif mesh_pattern.search(name):
-                    mesh_matches.append(file)
-                elif table_pattern.search(name):
-                    table_matches.append(file)
+                name = file.get( "name", "" )
+                if xml_pattern.search( name ):
+                    xml_matches.append( file )
+                elif mesh_pattern.search( name ):
+                    mesh_matches.append( file )
+                elif table_pattern.search( name ):
+                    table_matches.append( file )
 
             if xml_matches:
-                already_have = {file.get("name", "") for file in simulation_xml_filename}
-                required = set(re.findall(pattern_file, xml_matches[0]['content'].decode("utf-8")))
+                already_have = { file.get( "name", "" ) for file in simulation_xml_filename }
+                required = set( re.findall( pattern_file, xml_matches[ 0 ][ 'content' ].decode( "utf-8" ) ) )
                 required -= already_have
                 # Fix: store as list of dicts so the UI can use {{ file.name }}
-                server.state.simulation_xml_required = [{"name": f} for f in sorted(required)]
+                server.state.simulation_xml_required = [ { "name": f } for f in sorted( required ) ]
             else:
                 server.state.simulation_xml_required = []
-        
-        server.state.is_valid_jobfiles = any(has_xml)
-        server.state.all_req_files = any(has_xml) and len(server.state.simulation_xml_required) == 0
-        
+
+        server.state.is_valid_jobfiles = any( has_xml )
+        server.state.all_req_files = any( has_xml ) and len( server.state.simulation_xml_required ) == 0
+
     def kill_job( index_to_remove: int ) -> None:
         # for now just check there is an xml
         jid = list( server.state.job_ids )
@@ -257,7 +269,7 @@ def define_simulation_view( server: Server ) -> None:
             server.state.selected_cluster_names = [ cluster.name for cluster in Authentificator.sim_constants ]
             # server.state.decompositions = []
 
-        # ---------------------------   auth block   -----------------------# 
+            # ---------------------------   auth block   -----------------------#
             vuetify.VDivider( vertical=True, thickness=5, classes="mx-4" )
             with vuetify.VCol( cols=1 ):
                 vuetify.VSelect( label="Cluster",
@@ -268,10 +280,9 @@ def define_simulation_view( server: Server ) -> None:
                 vuetify.VSelect( label="Decomposition",
                                  items=( "decompositions", [] ),
                                  v_model=( "decomposition", None ),
-                                item_title="label",
-                                item_value="id",
-                                return_object=True
-                                )
+                                 item_title="label",
+                                 item_value="id",
+                                 return_object=True )
 
         with vuetify.VRow():
             with vuetify.VCol( cols=8 ):
@@ -301,7 +312,7 @@ def define_simulation_view( server: Server ) -> None:
                     clearable=True,
                 )  # type: ignore
 
-        # ---------------------------  simulation block   -----------------------# 
+        # ---------------------------  simulation block   -----------------------#
         vuetify.VDivider( thickness=5, classes="my-4" )
 
         with vuetify.VRow():
@@ -325,16 +336,16 @@ def define_simulation_view( server: Server ) -> None:
                     vuetify.VListItemTitle( "{{ file.name }}" )
                     vuetify.VListItemSubtitle( "{{ file.size ? (file.size / 1024).toFixed(1) + ' KB' : 'URL' }}" )
                 vuetify.VDivider( thickness=2, classes="my-2" )
-                
-                with vuetify.VListItem( v_for=( "(file,i) in simulation_xml_required" ),
-                                        key="i",
-                                        value="file",   
-                                        classes="bg-red-lighten-4 text-red-darken-4",
-                                        # base_color="red-lighten-4", 
-                                        # style="background-color: rgb(var(--v-theme-error-lighten-4));",
-                                        prepend_icon="mdi-alert-circle-outline" ):
-                    vuetify.VListItemTitle( "{{ file.name }} (required)" )
 
+                with vuetify.VListItem(
+                        v_for=( "(file,i) in simulation_xml_required" ),
+                        key="i",
+                        value="file",
+                        classes="bg-red-lighten-4 text-red-darken-4",
+                        # base_color="red-lighten-4",
+                        # style="background-color: rgb(var(--v-theme-error-lighten-4));",
+                        prepend_icon="mdi-alert-circle-outline" ):
+                    vuetify.VListItemTitle( "{{ file.name }} (required)" )
 
         with vuetify.VRow(), vuetify.VCol():
             vuetify.VTextField( v_model=( "simulation_remote_path", None ),
