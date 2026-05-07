@@ -31,7 +31,6 @@ keywords = [
 
 dependencies = [
     "setuptools",
-    "typing-extensions==4.12.2",
     "trame==3.6.5",
     "trame-vuetify==3.1.0",
     "trame-code==1.0.1",

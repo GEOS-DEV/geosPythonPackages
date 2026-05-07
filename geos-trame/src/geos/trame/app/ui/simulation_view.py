@@ -90,6 +90,18 @@ def _what_internalMesh(bcontent) -> tuple[int,int]:
 def define_simulation_view( server: Server ) -> None:
     """Functional definition of UI elements."""
 
+    @server.state.change("other_widget_selected_file")
+    def on_other_widget_file_ready(other_widget_selected_file: dict, **_: Any) -> None:
+        if not other_widget_selected_file:
+            return
+
+        current = list(server.state.simulation_xml_filename)
+        existing_names = {f.get("name") for f in current}
+
+        if other_widget_selected_file.get("name") not in existing_names:
+            current.append(other_widget_selected_file)
+            server.state.simulation_xml_filename = current
+            
     @server.state.change( "selected_cluster_name" )
     def on_cluster_change( selected_cluster_name: str, **_: Any ) -> None:
         print( f"selecting {selected_cluster_name}" )
@@ -109,11 +121,12 @@ def define_simulation_view( server: Server ) -> None:
     #     except:
     #         server.state.sd = { 'nodes': 0, 'total_ranks': 0 }
 
-    @server.state.change( "simulation_xml_temp" )
-    def on_temp_change( simulation_xml_temp: list, **_: Any ) -> None:
+    @server.state.change("simulation_xml_temp")
+    def on_temp_change(simulation_xml_temp: list, **_: Any) -> None:
         current_list = server.state.simulation_xml_filename
-
         new_list = current_list + simulation_xml_temp
+    
+
         server.state.simulation_xml_filename = new_list
         server.state.simulation_xml_temp = []
 
@@ -143,6 +156,8 @@ def define_simulation_view( server: Server ) -> None:
 
         if any(has_xml):
             uc = up = nc = np = None
+            # compute unknowns and cells only for xml files, if external mesh do not take into account internal mesh info even if present, if no external mesh try to take into account internal mesh info if present
+            # useful for decomposition suggestion
             for i,_ in enumerate(has_xml):
                 if has_external_mesh[i]:
                     nc, np = _how_many_cells(simulation_xml_filename[i])
@@ -152,10 +167,40 @@ def define_simulation_view( server: Server ) -> None:
                         nc,np = _what_internalMesh(simulation_xml_filename[i])
             
             if all(i is not None  for i in (uc,nc,up,np)):
-                server.state.nunknowns = uc*nc + up*np      
+                server.state.nunknowns = uc*nc + up*np     
+
+        if any(has_xml):
+            xml_pattern   = re.compile(r"\.xml$", re.IGNORECASE)
+            mesh_pattern  = re.compile(r"\.(vtu|vtm|pvtu|pvtm)$", re.IGNORECASE)
+            table_pattern = re.compile(r"\.(txt|dat|csv|geos)$", re.IGNORECASE)
+
+            xml_matches, mesh_matches, table_matches = [], [], []
+
+            pattern_file = r"[\w\-.]+\.(?:vtu|pvtu|dat|txt|xml|geos)\b"
+
+            # Fix: use enumerate instead of .index() to handle duplicates safely
+            for i, file in enumerate(simulation_xml_filename):
+                if not has_xml[i]:
+                    continue
+                name = file.get("name", "")
+                if xml_pattern.search(name):
+                    xml_matches.append(file)
+                elif mesh_pattern.search(name):
+                    mesh_matches.append(file)
+                elif table_pattern.search(name):
+                    table_matches.append(file)
+
+            if xml_matches:
+                already_have = {file.get("name", "") for file in simulation_xml_filename}
+                required = set(re.findall(pattern_file, xml_matches[0]['content'].decode("utf-8")))
+                required -= already_have
+                # Fix: store as list of dicts so the UI can use {{ file.name }}
+                server.state.simulation_xml_required = [{"name": f} for f in sorted(required)]
+            else:
+                server.state.simulation_xml_required = []
         
         server.state.is_valid_jobfiles = any(has_xml)
-        server.state.all_req_files = all(req_files)
+        server.state.all_req_files = any(has_xml) and len(server.state.simulation_xml_required) == 0
         
     def kill_job( index_to_remove: int ) -> None:
         # for now just check there is an xml
@@ -208,9 +253,11 @@ def define_simulation_view( server: Server ) -> None:
             server.state.access_granted = False
             server.state.is_valid_jobfiles = False
             server.state.simulation_xml_filename = []
+            server.state.simulation_xml_required = []
             server.state.selected_cluster_names = [ cluster.name for cluster in Authentificator.sim_constants ]
             # server.state.decompositions = []
 
+        # ---------------------------   auth block   -----------------------# 
             vuetify.VDivider( vertical=True, thickness=5, classes="mx-4" )
             with vuetify.VCol( cols=1 ):
                 vuetify.VSelect( label="Cluster",
@@ -254,6 +301,7 @@ def define_simulation_view( server: Server ) -> None:
                     clearable=True,
                 )  # type: ignore
 
+        # ---------------------------  simulation block   -----------------------# 
         vuetify.VDivider( thickness=5, classes="my-4" )
 
         with vuetify.VRow():
@@ -276,6 +324,17 @@ def define_simulation_view( server: Server ) -> None:
                                         click=( run_remove_jobfile, "[i]" ) ):
                     vuetify.VListItemTitle( "{{ file.name }}" )
                     vuetify.VListItemSubtitle( "{{ file.size ? (file.size / 1024).toFixed(1) + ' KB' : 'URL' }}" )
+                vuetify.VDivider( thickness=2, classes="my-2" )
+                
+                with vuetify.VListItem( v_for=( "(file,i) in simulation_xml_required" ),
+                                        key="i",
+                                        value="file",   
+                                        classes="bg-red-lighten-4 text-red-darken-4",
+                                        # base_color="red-lighten-4", 
+                                        # style="background-color: rgb(var(--v-theme-error-lighten-4));",
+                                        prepend_icon="mdi-alert-circle-outline" ):
+                    vuetify.VListItemTitle( "{{ file.name }} (required)" )
+
 
         with vuetify.VRow(), vuetify.VCol():
             vuetify.VTextField( v_model=( "simulation_remote_path", None ),
@@ -311,9 +370,10 @@ def define_simulation_view( server: Server ) -> None:
             with vuetify.VCol( cols=1 ):
                 vuetify.VBtn( "Run",
                               click="trigger('run_simulation')",
-                              disabled=( "!is_valid_jobfiles && !all_req_files", ),
+                              disabled=( "!is_valid_jobfiles || !all_req_files", ),
                               classes="ml-auto" ),  # type: ignore
 
+        # -------------------------------  Status block  ----------------------------- #
         vuetify.VDivider( thickness=5, classes="my-4" )
 
         with vuetify.VRow():
