@@ -12,10 +12,17 @@ jobs:
     outputs:
       tag: ${{ steps.get_tag.outputs.tag }}
     steps:
+      - name: Checkout GEOS for devcontainer file
+        uses: actions/checkout@v4
+        with:
+          repository: GEOS-DEV/GEOS
+          ref: develop
+          path: GEOS
+
       - name: Extract TPL tag from devcontainer.json
         id: get_tag
         run: |
-          TPL_TAG=$(curl -s -H "Accept: application/vnd.github.raw+json" "https://api.github.com/repos/GEOS-DEV/GEOS/contents/.devcontainer/devcontainer.json" | jq -r '.build.args.GEOS_TPL_TAG')
+          TPL_TAG=$(jq -r '.build.args.GEOS_TPL_TAG' GEOS/.devcontainer/devcontainer.json)
           echo "tag=${TPL_TAG}" >> $GITHUB_OUTPUT
 
   test_geos_integration:
@@ -100,7 +107,7 @@ jobs:
           -DENABLE_YAPF=OFF \
           -DGEOS_ENABLE_TESTS=OFF \
           -DGEOS_ENABLE_CONTACT=OFF \
-          -DGEOS_ENABLE_FLUIDFLOW=ON \
+          -DGEOS_ENABLE_FLUIDFLOW=OFF \
           -DGEOS_ENABLE_INDUCEDSEISMICITY=OFF \
           -DGEOS_ENABLE_MULTIPHYSICS=OFF \
           -DGEOS_ENABLE_SIMPLEPDE=OFF \
@@ -252,6 +259,16 @@ jobs:
         # Ensure geosx_python_tools is built (provides format_xml)
         echo "Building geosx_python_tools dependency..."
         make geosx_python_tools -j8
+        
+        # The geosx_format_all_xml_files target has a bug - it depends on 'geosx_xml_tools' which doesn't exist
+        # It should depend on 'geosx_python_tools'. Since we can't modify the CMakeLists.txt,
+        # we'll run the formatting command directly instead
+        # To solve the bug in cmake, we would have to change:
+        # add_custom_target( geosx_format_all_xml_files
+        #           COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/formatXMLFiles.bash -g ${CMAKE_BINARY_DIR}/bin/format_xml ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/../examples
+        #           WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        #           DEPENDS geosx_python_tools  # ← Change this!
+        #         )
 
         echo "Running XML formatting directly (bypassing broken make target)..."
         if [ -f "bin/format_xml" ] && [ -f "$GEOS_ROOT/scripts/formatXMLFiles.bash" ]; then
