@@ -74,7 +74,8 @@ test = [
     "pixelmatch==0.3.0",
     "Pillow==11.0.0",
     "pytest-mypy==0.10.3",
-    "pytest-xprocess==1.0.2"
+    "pytest-xprocess==1.0.2",
+    "playwright==1.59.0"
 ]
 
 [project.readme]

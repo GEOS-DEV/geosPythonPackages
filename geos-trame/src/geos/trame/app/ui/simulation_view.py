@@ -119,14 +119,17 @@ def define_simulation_view( server: Server ) -> None:
     @server.state.change( "selected_cluster_name" )
     def on_cluster_change( selected_cluster_name: str, **_: Any ) -> None:
         print( f"selecting {selected_cluster_name}" )
-        server.state.decompositions = SuggestDecomposition( Authentificator.get_cluster( selected_cluster_name ),
+        cluster = Authentificator.get_cluster( selected_cluster_name )
+        if cluster is None:
+            print( f"Error: Cluster '{selected_cluster_name}' not found in configuration." )
+            return
+        
+        server.state.decompositions = SuggestDecomposition( cluster,
                                                             server.state.nunknowns ).get_sd()
 
-        server.state.simulation_remote_path = Authentificator.get_cluster(
-            server.state.selected_cluster_name ).simulation_remote_path
+        server.state.simulation_remote_path = cluster.simulation_remote_path
 
-        server.state.simulation_dl_path = Authentificator.get_cluster(
-            server.state.selected_cluster_name ).simulation_dl_default_path
+        server.state.simulation_dl_path = cluster.simulation_dl_default_path
 
     # @server.state.change( "decomposition" )
     # def on_decomposition_selected( decomposition: str, **_: Any ) -> None:
