@@ -74,7 +74,8 @@ class Simulation:
                 Authentificator.get_cluster( server.state.selected_cluster_name ).host,  #test
                 Authentificator.get_cluster( server.state.selected_cluster_name ).port,
                 server.state.login,
-                key=Authentificator.get_key( server.state.login, server.state.password, server.state.key_path, server.state.selected_cluster_name ) )
+                key=Authentificator.get_key( server.state.login, server.state.password, server.state.key_path,
+                                             server.state.selected_cluster_name ) )
 
             if Authentificator.ssh_client:
                 server.state.access_granted = True
@@ -92,30 +93,31 @@ class Simulation:
                     except FileNotFoundError:
                         import posixpath
                         jpart = '/'
-                        for part in server.state.simulation_remote_path.split('/')[1:]:
+                        for part in server.state.simulation_remote_path.split( '/' )[ 1: ]:
                             try:
-                                jpart = posixpath.join(jpart,part)
-                                sftp.stat( str(jpart) )  # exists?
+                                jpart = posixpath.join( jpart, part )
+                                sftp.stat( str( jpart ) )  # exists?
                             except FileNotFoundError:
-                                sftp.mkdir( str(jpart) )
+                                sftp.mkdir( str( jpart ) )
                             except PermissionError:
-                                print( f"Permission error creating root folder at {jpart}")
+                                print( f"Permission error creating root folder at {jpart}" )
                                 raise
                             except:
-                                print( f"Error creating root folder at {jpart}")
+                                print( f"Error creating root folder at {jpart}" )
                                 raise
 
                     # create local path
-                    os.makedirs(server.state.simulation_dl_path, exist_ok=True)
+                    os.makedirs( server.state.simulation_dl_path, exist_ok=True )
 
                     Authentificator._sftp_copy_tree( Authentificator.ssh_client,
                                                      Simulation.gen_tree( server.state.simulation_xml_filename ),
                                                      server.state.simulation_remote_path )
 
-                    cluster_name =  Authentificator.get_cluster( server.state.selected_cluster_name ).name
-                    cluster_part =  Authentificator.get_cluster( server.state.selected_cluster_name ).partition
-                    cluster_trans_part =  Authentificator.get_cluster( server.state.selected_cluster_name ).partition_transfert
-                    run_id: int = Simulation.render_and_run(
+                    cluster_name = Authentificator.get_cluster( server.state.selected_cluster_name ).name
+                    cluster_part = Authentificator.get_cluster( server.state.selected_cluster_name ).partition
+                    cluster_trans_part = Authentificator.get_cluster(
+                        server.state.selected_cluster_name ).partition_transfert
+                    run_id: str = Simulation.render_and_run(
                         f'{cluster_name}_slurm.jinja',
                         'job.slurm',
                         server,
@@ -124,7 +126,7 @@ class Simulation:
                             item for item in server.state.simulation_xml_filename if item.get( 'type' ) == 'text/xml'
                         ][ 0 ].get( 'name' ),
                         nodes=server.state.decomposition[ 'nodes' ],
-                        ntasks=server.state.decomposition[ 'nodes' ]*server.state.decomposition['ranks_per_node'],
+                        ntasks=server.state.decomposition[ 'nodes' ] * server.state.decomposition[ 'ranks_per_node' ],
                         geos_module=Authentificator.get_cluster( server.state.selected_cluster_name ).geos_module,
                         geos_load_list=" ".join(
                             Authentificator.get_cluster( server.state.selected_cluster_name ).geos_load_list ),
@@ -132,7 +134,7 @@ class Simulation:
                         mem="0",
                         comment_gr=server.state.slurm_comment,
                         partition=cluster_part,
-                        account=server.state.slurm_comment)
+                        account=server.state.slurm_comment )
 
                     Simulation.render_and_run( f'{cluster_name}_copyback.jinja',
                                                'copyback.slurm',

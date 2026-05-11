@@ -8,7 +8,7 @@ import paramiko
 import os
 import json
 from dataclasses import dataclass
-import trame_server.state as State
+
 
 @dataclass
 class SimulationConstant:
@@ -53,17 +53,15 @@ class Authentificator:
 
     ssh_client: Optional[ paramiko.SSHClient ] = None
 
-    sim_constants = []
-        # SimulationConstant( **item )
-        # for item in json.load( open( f'{os.getenv("ASSETS_DIR")}/cluster.json', 'r' ) )  # noqa: SIM115
-    # ]
+    sim_constants: list = []
 
     @staticmethod
-    def reload_simconstants():
+    def reload_simconstants() -> None:
+        """Reload the cluster configuration from cluster.json file."""
         Authentificator.sim_constants = [
-        SimulationConstant( **item )
-        for item in json.load( open( f'{os.getenv("ASSETS_DIR")}/cluster.json', 'r' ) )  # noqa: SIM115
-    ]
+            SimulationConstant( **item )
+            for item in json.load( open( f'{os.getenv("ASSETS_DIR")}/cluster.json', 'r' ) )  # noqa: SIM115
+        ]
 
     @staticmethod
     def get_cluster( name: str ) -> Optional[ SimulationConstant ]:
@@ -97,7 +95,7 @@ class Authentificator:
                     with sftp.file( str( rp / Path( file.get( 'name' ) ) ), 'w' ) as f:
                         f.write( file.get( 'content' ) )
                 except:
-                    print( f"Error copying {lp/Path(file.get('name'))} to {rp/Path(file.get('name'))}")
+                    print( f"Error copying {lp/Path(file.get('name'))} to {rp/Path(file.get('name'))}" )
                     raise
         elif isinstance( node, dict ):
             if "files" in node:
@@ -108,7 +106,7 @@ class Authentificator:
                         with sftp.file( str( rp / Path( file.get( 'name' ) ) ), 'w' ) as f:
                             f.write( file.get( 'content' ) )
                     except:
-                        print( f"Error copying {lp/Path(file.get('name'))} to {rp/Path(file.get('name'))}")
+                        print( f"Error copying {lp/Path(file.get('name'))} to {rp/Path(file.get('name'))}" )
                         raise
             if "subfolders" in node:
                 for subfolder, content in node[ "subfolders" ].items():
@@ -119,7 +117,7 @@ class Authentificator:
                             print( f"creating {rp/Path(subfolder)}" )
                             sftp.mkdir( str( rp / Path( subfolder ) ) )
                         except:
-                            print( f"Error creating {rp/Path(subfolder)} on remote.")
+                            print( f"Error creating {rp/Path(subfolder)} on remote." )
                             raise
                     Authentificator.dfs_tree( content, str( lp / Path( subfolder ) ), sftp, remote_root )
 
@@ -132,7 +130,7 @@ class Authentificator:
                         try:
                             sftp.mkdir( str( rp / Path( folder ) ) )
                         except:
-                            print( f"Error creating {rp/Path(subfolder)} on remote.")
+                            print( f"Error creating {rp/Path(subfolder)} on remote." )
                             raise
                     Authentificator.dfs_tree( content, str( lp / Path( folder ) ), sftp, remote_root )
 
@@ -144,40 +142,40 @@ class Authentificator:
         return None
 
     @staticmethod
-    def get_key( id: str, pword: str, key_path : str, cluster_name: str) -> paramiko.RSAKey:
+    def get_key( id: str, pword: str, key_path: str, cluster_name: str ) -> paramiko.RSAKey:
         """Return the ssh key if found or create and dispatch one."""
         try:
-            import os
-            # home = os.environ.get( "HOME" )
-            # PRIVATE_KEY = paramiko.RSAKey.from_private_key_file( f"{home}/.ssh/id_trame" )
             PRIVATE_KEY = paramiko.RSAKey.from_private_key_file( key_path )
             return PRIVATE_KEY
         except paramiko.SSHException as e:
             print( f"Error loading private key: {e}\n" )
+            raise paramiko.SSHException( f"Error loading private key: {e}\n" ) from e
         except FileNotFoundError as e:
             print( f"Private key not found: {e}\n Generating key at ... {key_path}" )
-            PRIVATE_KEY = Authentificator.gen_key(key_path)
+            PRIVATE_KEY = Authentificator.gen_key( key_path )
             temp_client = paramiko.SSHClient()
             temp_client.set_missing_host_key_policy( paramiko.AutoAddPolicy() )
-            temp_client.connect( Authentificator.get_cluster(cluster_name).host,
-                                 Authentificator.get_cluster(cluster_name).port,
-                                 username=id,
-                                 password=pword,
-                                 timeout=10 )
+
+            clusterByName = Authentificator.get_cluster( cluster_name )
+            if clusterByName is None:
+                raise ValueError( f"Cluster '{cluster_name}' not found in configuration." ) from e
+
+            host = clusterByName.host
+            port = clusterByName.port
+            temp_client.connect( host, port, username=id, password=pword, timeout=10 )
+            remote_base = clusterByName.remote_home_base
             Authentificator._transfer_file_sftp( temp_client, f"{key_path.split('/')[-1]}.pub",
-                                                 f"{Authentificator.get_cluster(cluster_name).remote_home_base}/{id}/.ssh/{key_path.split('/')[-1]}.pub" )
+                                                 f"{remote_base}/{id}/.ssh/{key_path.split('/')[-1]}.pub" )
             Authentificator._execute_remote_command(
                 temp_client,
-                f" cat {Authentificator.get_cluster(cluster_name).remote_home_base}/.ssh/{key_path.split('/')[-1]}.pub | tee -a {Authentificator.get_cluster(cluster_name).remote_home_base}/.ssh/authorized_keys"
+                f" cat {remote_base}/.ssh/{key_path.split('/')[-1]}.pub | tee -a {clusterByName.remote_home_base}/.ssh/authorized_keys"
             )
 
             return PRIVATE_KEY
 
     @staticmethod
-    def gen_key(key_path : str ) -> paramiko.RSAKey:
+    def gen_key( key_path: str ) -> paramiko.RSAKey:
         """Generate RSAKey for SSH protocol."""
-        import os
-
         # home = os.environ.get( "HOME" )
         # file_path = f"{home}/.ssh/id_trame"
         key = paramiko.RSAKey.generate( bits=4096 )
@@ -188,7 +186,7 @@ class Authentificator:
         with open( key_path + ".pub", "w" ) as pub_file:
             pub_file.write( public_key )
 
-        suffix = key_path.split('/')[-1]
+        suffix = key_path.split( '/' )[ -1 ]
         print( f"SSH key pair generated: {suffix} (private), {suffix}.pub (public)" )
 
         return key
@@ -198,7 +196,7 @@ class Authentificator:
                             port: int,
                             username: str,
                             password: str | None = None,
-                            key: paramiko.RSAKey = None ) -> paramiko.SSHClient:
+                            key: paramiko.RSAKey | None = None ) -> paramiko.SSHClient | None:
         """Initializes and returns an SSH client connection.
 
         Uses context manager for automatic cleanup.
@@ -226,7 +224,7 @@ class Authentificator:
     def _execute_remote_command( client: paramiko.SSHClient, command: str ) -> tuple[ int, str, str ]:
         """Executes a single command on the remote server and prints the output."""
         if not client:
-            return
+            return ( -1, "", "" )
 
         print( f"\n--- Executing Command: '{command}' ---" )
         try:
@@ -251,7 +249,7 @@ class Authentificator:
 
             print( f"Command exited with status: {exit_status}" )
             return ( exit_status, stdout_data, stderr_data )
-        
+
         except PermissionError as e:
             print( f"Permission error: {e}" )
             return ( -1, "", "" )
@@ -272,7 +270,7 @@ class Authentificator:
         Direction can be 'put' (upload) or 'get' (download).
         """
         if not client:
-            return
+            return None
 
         print( f"\n--- Starting SFTP Transfer ({direction.upper()}) ---" )
 
