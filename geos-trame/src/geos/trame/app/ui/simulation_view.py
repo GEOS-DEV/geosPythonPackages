@@ -123,9 +123,8 @@ def define_simulation_view( server: Server ) -> None:
         if cluster is None:
             print( f"Error: Cluster '{selected_cluster_name}' not found in configuration." )
             return
-        
-        server.state.decompositions = SuggestDecomposition( cluster,
-                                                            server.state.nunknowns ).get_sd()
+
+        server.state.decompositions = SuggestDecomposition( cluster, server.state.nunknowns ).get_sd()
 
         server.state.simulation_remote_path = cluster.simulation_remote_path
 
