@@ -4,6 +4,7 @@
 import pyvista as pv
 
 from geos.trame.schema_generated.schema_mod import Box
+from typing import Any
 
 import re
 
@@ -102,7 +103,7 @@ class BoxViewer:
         if len( saved_ids ) > 0:
             self._extracted_cells = self._mesh.extract_cells( saved_ids )
 
-    def _check_cell_inside_box( self, cell: pv.Cell, box_bounds: list[ float ] ) -> bool:
+    def _check_cell_inside_box( self, cell: pv.Cell, box_bounds: Any ) -> bool:
         """Check if the cell is inside the box bounds.
 
         A cell is considered inside the box if his bounds are completely
