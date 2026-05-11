@@ -37,7 +37,7 @@ MANIFEST
 *.manifest
 *.spec
 
-#env
+#env (do not port user-specs)
 .env
 
 # Installer logs
