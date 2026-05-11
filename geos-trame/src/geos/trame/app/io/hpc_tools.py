@@ -54,14 +54,14 @@ class SuggestDecomposition:
 
         return [
             {
-                'id':1,
+                'id': 1,
                 'nodes': n_nodes,
                 'ranks_per_node': ranks_per_node,
                 'total_ranks': n_nodes * ranks_per_node,
                 'unknowns_per_rank': n_unknowns // ( n_nodes * ranks_per_node )
             },
             {
-                'id':2,
+                'id': 2,
                 'nodes': n_nodes * 2,
                 'ranks_per_node': ranks_per_node // 2,
                 'total_ranks': n_nodes * ranks_per_node,
@@ -74,12 +74,14 @@ class SuggestDecomposition:
         if self.job_type == 'cpu' and self.selected_cluster:  #make it an enum
             self.sd = SuggestDecomposition.compute( self.n_unknowns, 64, self.selected_cluster.mem_per_node,
                                                     self.selected_cluster.cores_per_node )
-            self.sd = [{**item,'label': f"{self.selected_cluster.name} : {item['nodes']} x {item['ranks_per_node']}"} for item in self.sd ]
+            self.sd = [ {
+                **item, 'label': f"{self.selected_cluster.name} : {item['nodes']} x {item['ranks_per_node']}"
+            } for item in self.sd ]
         else:
             self.sd = [
                 {
                     'id': -1,
-                    'label':'No: 0x0',
+                    'label': 'No: 0x0',
                     'nodes': 0,
                     'ranks_per_node': 0,
                     'total_ranks': 0,
