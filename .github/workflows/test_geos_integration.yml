@@ -25,7 +25,7 @@ jobs:
     
     container:
       # using this image to get access to python 3.10+
-      image: geosx/ubuntu22.04-gcc12:${{ needs.setup.outputs.tag }}
+      image: geosx/ubuntu24.04-gcc13:${{ needs.setup.outputs.tag }}
 
     steps:
     - name: Checkout geosPythonPackages
