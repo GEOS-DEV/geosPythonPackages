@@ -138,7 +138,7 @@ jobs:
         sed -i '/^declare -a MOD_SEARCH_PATH=.*PYTHON_TARGET)"/a\                            "'"$(pwd)/venv/bin"'"\
                             "/usr/local/bin"' "$TEMP_SETUP_SCRIPT"
         
-
+        export PIP_NO_BUILD_ISOLATION=1\
         bash "$TEMP_SETUP_SCRIPT" \
           -p $(which python) \
           -b "$(pwd)/bin_direct" \
