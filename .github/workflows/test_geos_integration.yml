@@ -59,7 +59,7 @@ jobs:
       run: |
         echo "Setting up test environment..."
         GEOS_ROOT="$(pwd)/GEOS"
-        SETUP_PYTHON_ENVIRONMENT_SCRIPT="$GEOS_ROOT/scripts/setupPythonEnvironment.bash"
+        SETUP_PYTHON_ENVIRONMENT_SCRIPT="${GEOS_ROOT}/scripts/setupPythonEnvironment.bash"
 
         if [ -n "${{ github.head_ref }}" ]; then
           CURRENT_GEOSPYTHONPACKAGES_BRANCH_NAME="${{ github.head_ref }}"
@@ -135,9 +135,8 @@ jobs:
         
         # Add /usr/local/bin to the MOD_SEARCH_PATH array right after the python bin directory
         # We insert /usr/local/bin as the second entry
-        sed -i '/^declare -a MOD_SEARCH_PATH=.*PYTHON_TARGET)"/a\                            "'"$(pwd)/venv/bin"'"\
-                            "/usr/local/bin"' "$TEMP_SETUP_SCRIPT"
-        
+        sed -i '/^declare -a MOD_SEARCH_PATH=.*PYTHON_TARGET)"/a\                            "/usr/local/bin"' "$TEMP_SETUP_SCRIPT"
+        cat "$TEMP_SETUP_SCRIPT"\
         export PIP_NO_BUILD_ISOLATION=1\
         bash "$TEMP_SETUP_SCRIPT" \
           -p $(which python) \
