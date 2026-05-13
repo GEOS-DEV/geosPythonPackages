@@ -139,7 +139,7 @@ jobs:
         cat "$TEMP_SETUP_SCRIPT"
         export PIP_NO_BUILD_ISOLATION=1
         bash "$TEMP_SETUP_SCRIPT" \
-          -p $(which python) \
+          -p $(which python3) \
           -b "$(pwd)/bin_direct" \
           --python-pkg-branch "$CURRENT_GEOSPYTHONPACKAGES_BRANCH_NAME" \
           --verbose
