@@ -136,7 +136,7 @@ jobs:
         # Add /usr/local/bin to the MOD_SEARCH_PATH array right after the python bin directory
         # We insert /usr/local/bin as the second entry
         sed -i '/^declare -a MOD_SEARCH_PATH=.*PYTHON_TARGET)"/a\                            "/usr/local/bin"' "$TEMP_SETUP_SCRIPT"
-        sed -i 's/PIP_CMD="pip --disable-pip-version-check"/PIP_CMD="pip --disable-pip-version-check --break-system-packages"/' "$TEMP_SETUP_SCRIPT"
+        sed -i 's/${PIP_CMD} install/${PIP_CMD} install --break-system-packages/g' "$TEMP_SETUP_SCRIPT"
         cat "$TEMP_SETUP_SCRIPT"
         export PIP_NO_BUILD_ISOLATION=1
         bash "$TEMP_SETUP_SCRIPT" \
