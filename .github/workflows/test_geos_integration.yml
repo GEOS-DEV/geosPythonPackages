@@ -242,10 +242,6 @@ jobs:
           echo 'sys.exit(0)' >> python/geosx/bin/test_geosx_xml_tools
           chmod +x python/geosx/bin/test_geosx_xml_tools
         fi
-          echo 'print("Test completed successfully (placeholder)")' >> python/geosx/bin/test_geosx_xml_tools
-          echo 'sys.exit(0)' >> python/geosx/bin/test_geosx_xml_tools
-          chmod +x python/geosx/bin/test_geosx_xml_tools
-        fi
         
         echo "Running geosx_python_tools_test..."
         
