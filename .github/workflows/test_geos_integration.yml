@@ -52,7 +52,7 @@ jobs:
         
         # For Ubuntu 24.04 with Python 3.12+, setuptools is required (distutils was removed)
         # Upgrade pip, setuptools, and wheel to latest versions
-        python3 -m pip install --break-system-packages --upgrade pip setuptools wheel
+        python3 -m pip install --break-system-packages --upgrade pip setuptools
         
         # Set environment variables to handle setuptools/distutils issues
         echo "PIP_DISABLE_PIP_VERSION_CHECK=1" >> $GITHUB_ENV
