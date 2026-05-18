@@ -175,7 +175,7 @@ jobs:
           fi
           echo "has_label=$LABEL_FOUND" >> $GITHUB_OUTPUT
 
-  Step 3: Check if GEOS integration is required based on changed files
+  # Step 3: Check if GEOS integration is required based on changed files
   check_geos_integration_required:
     name: Check GEOS Integration Required
     runs-on: ubuntu-latest
