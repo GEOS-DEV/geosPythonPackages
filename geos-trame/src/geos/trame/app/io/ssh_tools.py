@@ -92,10 +92,12 @@ class Authentificator:
             for file in node:
                 print( f"copying {lp/Path(file.get('name'))} to {rp/Path(file.get('name'))}" )
                 try:
-                    with sftp.file( str( rp / Path( file.get( 'name' ) ) ), 'w' ) as f:
-                        f.write( file.get( 'content' ) )
-                except:
-                    print( f"Error copying {lp/Path(file.get('name'))} to {rp/Path(file.get('name'))}" )
+                    content = file.get( 'content' )
+                    mode = "wb" if isinstance( content, ( bytes, bytearray ) ) else "w"
+                    with sftp.file( str( rp / Path( file.get( 'name' ) ) ), mode ) as f:
+                        f.write( content )
+                except Exception as e:
+                    print( f"Error copying {lp/Path(file.get('name'))} to {rp/Path(file.get('name'))}: {e}" )
                     raise
         elif isinstance( node, dict ):
             if "files" in node:
@@ -103,10 +105,12 @@ class Authentificator:
                 for file in files:
                     print( f"copying {lp/Path(file.get('name'))} to {rp/Path(file.get('name'))}" )
                     try:
-                        with sftp.file( str( rp / Path( file.get( 'name' ) ) ), 'w' ) as f:
-                            f.write( file.get( 'content' ) )
-                    except:
-                        print( f"Error copying {lp/Path(file.get('name'))} to {rp/Path(file.get('name'))}" )
+                        content = file.get( 'content' )
+                        mode = "wb" if isinstance( content, ( bytes, bytearray ) ) else "w"
+                        with sftp.file( str( rp / Path( file.get( 'name' ) ) ), mode ) as f:
+                            f.write( content )
+                    except Exception as e:
+                        print( f"Error copying {lp/Path(file.get('name'))} to {rp/Path(file.get('name'))}: {e}" )
                         raise
             if "subfolders" in node:
                 for subfolder, content in node[ "subfolders" ].items():

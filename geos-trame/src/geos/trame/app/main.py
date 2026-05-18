@@ -34,9 +34,12 @@ def main( server: Server = None, **kwargs: Any ) -> None:
     ( args, _unknown ) = parser.parse_known_args()
 
     if args.env:
-        assert load_dotenv( dotenv_path=Path( args.env ) )
+        if not load_dotenv( dotenv_path=Path( args.env ) ):
+            raise SystemExit( f"Failed to load environment file: {args.env}" )
     else:
-        assert load_dotenv( dotenv_path=Path( __file__ ).parent.parent / "assets/.env" )
+        env_path = Path( __file__ ).parent.parent / "assets/.env"
+        if not load_dotenv( dotenv_path=env_path ):
+            raise SystemExit( f"Failed to load environment file: {env_path}" )
 
     Authentificator.reload_simconstants()
 
