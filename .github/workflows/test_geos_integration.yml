@@ -140,10 +140,11 @@ jobs:
         # We insert /usr/local/bin as the second entry
         sed -i '/^declare -a MOD_SEARCH_PATH=.*PYTHON_TARGET)"/a\                            "/usr/local/bin"' "$TEMP_SETUP_SCRIPT"
         # Only add --break-system-packages for Python >= 3.12
-        PYTHON_VERSION=$($(which python3) -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
-        if [[ "$PYTHON_VERSION" == "3.12" || "$PYTHON_VERSION" > "3.12" ]]; then
-          sed -i 's/${PIP_CMD} install/${PIP_CMD} install --break-system-packages/g' "$TEMP_SETUP_SCRIPT"
-        fi
+        # PYTHON_VERSION=$($(which python3) -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
+        # if [[ "$PYTHON_VERSION" == "3.12" || "$PYTHON_VERSION" > "3.12" ]]; then
+        sed -i 's/${PIP_CMD} install/${PIP_CMD} install --break-system-packages/g' "$TEMP_SETUP_SCRIPT"
+        sed -i 's/$PYTHON_TARGET -m pip install --upgrade pip setuptools wheel/$PYTHON_TARGET -m pip install --upgrade setuptools/' "$TEMP_SETUP_SCRIPT"
+        # fi
         cat "$TEMP_SETUP_SCRIPT"
         export PIP_NO_BUILD_ISOLATION=1
         bash "$TEMP_SETUP_SCRIPT" \
