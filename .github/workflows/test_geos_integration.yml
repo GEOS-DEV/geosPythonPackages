@@ -124,9 +124,9 @@ jobs:
         mkdir -p bin_direct
 
         # # encapsulate env
-        # python3 -m venv venv
-        # . venv/bin/activate
-        # pip install --upgrade pip
+        python3 -m venv geos-venv
+        source geos-venv/bin/activate
+        python -m pip install --upgrade pip setuptools wheel
         
         # The setup script searches specific paths but pip installs to /usr/local/bin
         # We need to patch the setup script to also search /usr/local/bin
@@ -138,17 +138,17 @@ jobs:
         
         # Add /usr/local/bin to the MOD_SEARCH_PATH array right after the python bin directory
         # We insert /usr/local/bin as the second entry
-        sed -i '/^declare -a MOD_SEARCH_PATH=.*PYTHON_TARGET)"/a\                            "/usr/local/bin"' "$TEMP_SETUP_SCRIPT"
+        # sed -i '/^declare -a MOD_SEARCH_PATH=.*PYTHON_TARGET)"/a\                            "/usr/local/bin"' "$TEMP_SETUP_SCRIPT"
         # Only add --break-system-packages for Python >= 3.12
         # PYTHON_VERSION=$($(which python3) -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
         # if [[ "$PYTHON_VERSION" == "3.12" || "$PYTHON_VERSION" > "3.12" ]]; then
-        sed -i 's/${PIP_CMD} install/${PIP_CMD} install --break-system-packages/g' "$TEMP_SETUP_SCRIPT"
-        sed -i 's/$PYTHON_TARGET -m pip install --upgrade pip setuptools wheel/$PYTHON_TARGET -m pip install --upgrade setuptools/' "$TEMP_SETUP_SCRIPT"
+        # sed -i 's/${PIP_CMD} install/${PIP_CMD} install --break-system-packages/g' "$TEMP_SETUP_SCRIPT"
+        # sed -i 's/$PYTHON_TARGET -m pip install --upgrade pip setuptools wheel/$PYTHON_TARGET -m pip install --upgrade setuptools/' "$TEMP_SETUP_SCRIPT"
         # fi
         cat "$TEMP_SETUP_SCRIPT"
         export PIP_NO_BUILD_ISOLATION=1
         bash "$TEMP_SETUP_SCRIPT" \
-          -p $(which python3) \
+          -p $(which python) \
           -b "$(pwd)/bin_direct" \
           --python-pkg-branch "$CURRENT_GEOSPYTHONPACKAGES_BRANCH_NAME" \
           --verbose
