@@ -324,5 +324,3 @@ jobs:
             echo "Integration tests ended with unknown status: ${{ needs.test_geos_integration.result }}" >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
-            exit 1
-          fi
