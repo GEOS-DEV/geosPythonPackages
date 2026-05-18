@@ -125,7 +125,7 @@ jobs:
 
         # # encapsulate env
         python3 -m venv geos-venv
-        source geos-venv/bin/activate
+        . geos-venv/bin/activate
         python -m pip install --upgrade pip setuptools wheel
         
         # The setup script searches specific paths but pip installs to /usr/local/bin
