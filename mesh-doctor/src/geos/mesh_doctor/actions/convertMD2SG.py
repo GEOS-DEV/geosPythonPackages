@@ -3,9 +3,9 @@
 # SPDX-FileContributor: GitHub Copilot, Jacques Franc
 import os
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Union
 
-from vtkmodules.vtkCommonDataModel import VTK_TRIANGLE, VTK_TRIANGLE_STRIP, VTK_QUAD, VTK_POLYGON, vtkPolyData, vtkKdTree 
+from vtkmodules.vtkCommonDataModel import VTK_TRIANGLE, VTK_TRIANGLE_STRIP, VTK_QUAD, VTK_POLYGON, vtkPolyData, vtkKdTree, vtkCell
 from vtkmodules.vtkCommonCore import vtkIdTypeArray, vtkPoints, reference, vtkUnsignedIntArray, vtkDataArray
 from vtkmodules.vtkCommonDataModel import vtkSelection, vtkSelectionNode, vtkUnstructuredGrid, vtkMultiBlockDataSet
 from vtkmodules.vtkFiltersCore import vtkAppendPolyData, vtkCleanPolyData
@@ -19,7 +19,7 @@ from geos.mesh.io.vtkIO import readUnstructuredGrid
 
 @dataclass( frozen=True )
 class Options:
-    attrs: tuple[ int, ... ] = ()
+    attrs: tuple[ int, ...] = ()
     skipCleanCollocated: bool = False
     skipFilterVolumeCells: bool = False
     outputFile: Optional[ str ] = None
@@ -31,15 +31,18 @@ class Result:
     bounds: tuple[ float, float, float, float, float, float ]
     numPoints: int
     numCells: int
-    attrs: tuple[ int, ... ]
+    attrs: tuple[ int, ...]
     skipCleanCollocated: bool
+    nCleanCollocated: int
     skipFilterVolumeCells: bool
+    nFilterVolumeCells: int
 
 
 TOLERANCE = 1e-6
 
 
 def is_surface_cell_type( t: int ) -> bool:
+    """Checks if the given VTK cell type is a surface cell type (2D)."""
     surface_types = {
         VTK_TRIANGLE,
         VTK_QUAD,
@@ -49,10 +52,13 @@ def is_surface_cell_type( t: int ) -> bool:
     return t in surface_types
 
 
-def __process_block( block, append_filter: vtkAppendPolyData, attrs: list[ int ] ) -> None:
+def __process_block( block: Union[ vtkMultiBlockDataSet, vtkUnstructuredGrid, vtkPolyData ],
+                     append_filter: vtkAppendPolyData, attrs: list[ int ] ) -> None:
+    """Recursively processes a block of the multi-block dataset, extracting surface cells that match the given attributes and adding them to the append filter."""
     if isinstance( block, vtkMultiBlockDataSet ):
         for i in range( block.GetNumberOfBlocks() ):
-            child = block.GetBlock( i )
+            child: Union[ vtkMultiBlockDataSet, vtkUnstructuredGrid,
+                          vtkPolyData ] = block.GetBlock( i )  # type: ignore[assignment]
             if child is not None:
                 __process_block( child, append_filter, attrs )
         return
@@ -75,12 +81,13 @@ def __process_block( block, append_filter: vtkAppendPolyData, attrs: list[ int ]
                 append_filter.AddInputData( gf.GetOutput() )
 
 
-def __extract_vol( block ):
+def __extract_first_vol( block: Union[ vtkMultiBlockDataSet, vtkUnstructuredGrid ] ) -> Optional[ vtkUnstructuredGrid ]:
+    """Recursively searches for the first volumetric block in the multi-block dataset."""
     if isinstance( block, vtkMultiBlockDataSet ):
         for i in range( block.GetNumberOfBlocks() ):
-            child = block.GetBlock( i )
+            child: Union[ vtkMultiBlockDataSet, vtkUnstructuredGrid ] = block.GetBlock( i )  # type: ignore[assignment]
             if child is not None:
-                found = __extract_vol( child )
+                found = __extract_first_vol( child )
                 if found is not None:
                     return found
         return None
@@ -99,7 +106,9 @@ def __extract_vol( block ):
     return block if is_vol else None
 
 
-def _filterVolumeCells( mesh: vtkUnstructuredGrid, attrs: list[ int ] ) -> tuple[ vtkUnstructuredGrid, vtkUnstructuredGrid ]:
+def _filterVolumeCells( mesh: vtkUnstructuredGrid,
+                        attrs: list[ int ] ) -> tuple[ vtkUnstructuredGrid, vtkUnstructuredGrid, int ]:
+    """Filters out volume cells from the input mesh, keeping only surface cells that match the given attributes. Returns the filtered volume mesh, the extracted surface mesh, and the number of cells removed."""
     volumeIds = vtkIdTypeArray()
     surfaceIds = vtkIdTypeArray()
     nVolume = nSurface = nOther = 0
@@ -121,7 +130,7 @@ def _filterVolumeCells( mesh: vtkUnstructuredGrid, attrs: list[ int ] ) -> tuple
 
     if nSurface == 0 and nOther == 0:
         setupLogger.info( "No filtering needed (all cells are 3D)" )
-        return mesh, mesh.NewInstance()
+        return mesh, mesh.NewInstance(), nSurface + nOther
 
     sn = vtkSelectionNode()
     sn.SetFieldType( vtkSelectionNode.CELL )
@@ -150,22 +159,23 @@ def _filterVolumeCells( mesh: vtkUnstructuredGrid, attrs: list[ int ] ) -> tuple
 
     if nVolume > 0:
         if nSurface > 0:
-            return ext.GetOutput(), Eext.GetOutput()
-        return ext.GetOutput(), mesh.NewInstance()
+            return ext.GetOutput(), Eext.GetOutput(), nSurface + nOther
+        return ext.GetOutput(), mesh.NewInstance(), nSurface + nOther
 
-    return mesh.NewInstance(), mesh.NewInstance()
+    return mesh.NewInstance(), mesh.NewInstance(), nSurface + nOther
 
 
-def __clean_collocated( main: vtkUnstructuredGrid ) -> vtkUnstructuredGrid:
-    clean_point_set = {}
-    reverse_map = {}
+def __clean_collocated( main: vtkUnstructuredGrid ) -> tuple[ vtkUnstructuredGrid, int ]:
+    """Cleans collocated points in the input mesh, returning a new mesh with unique points and updated cell connectivity, as well as the number of points cleaned."""
+    clean_point_set: dict[ tuple[ float, float, float ], int ] = {}
+    reverse_map: dict[ int, int ] = {}
 
     for pid in range( main.GetNumberOfPoints() ):
         pt = main.GetPoints().GetPoint( pid )
         reverse_map[ pid ] = clean_point_set.get( pt, pid )
         clean_point_set.setdefault( pt, pid )
 
-    old_to_new = {}
+    old_to_new: dict[ int, int ] = {}
     clean_points = vtkPoints()
     for pt, new_id in clean_point_set.items():
         old_to_new[ new_id ] = clean_points.InsertNextPoint( pt )
@@ -174,7 +184,7 @@ def __clean_collocated( main: vtkUnstructuredGrid ) -> vtkUnstructuredGrid:
     rewrite_mesh.SetPoints( clean_points )
 
     for cell_id in range( main.GetNumberOfCells() ):
-        cell = main.GetCell( cell_id )
+        cell: vtkCell = main.GetCell( cell_id )
         new_ids = []
         for i in range( cell.GetNumberOfPoints() ):
             pid = cell.GetPointId( i )
@@ -193,10 +203,14 @@ def __clean_collocated( main: vtkUnstructuredGrid ) -> vtkUnstructuredGrid:
             new_arr.SetTuple( new_id, arr.GetTuple( old_id ) )
         rewrite_mesh.GetPointData().AddArray( new_arr )
 
-    return rewrite_mesh
+    nCleanCollocated = main.GetNumberOfPoints() - rewrite_mesh.GetNumberOfPoints()
+    return rewrite_mesh, nCleanCollocated
 
 
-def __paintNodes( main: vtkUnstructuredGrid, frac_polys: list[ vtkUnstructuredGrid ] ) -> tuple[ vtkUnstructuredGrid, list[ vtkUnstructuredGrid ] ]:
+def __paintNodes(
+        main: vtkUnstructuredGrid,
+        frac_polys: list[ vtkUnstructuredGrid ] ) -> tuple[ vtkUnstructuredGrid, list[ vtkUnstructuredGrid ] ]:
+    """Paints the nodes of the main mesh that are close to the fracture polygons, returning the modified main mesh and the list of fracture polygons."""
     kd = vtkKdTree()
     kd.BuildLocatorFromPoints( main )
 
@@ -210,8 +224,8 @@ def __paintNodes( main: vtkUnstructuredGrid, frac_polys: list[ vtkUnstructuredGr
     for poly in frac_polys:
         for i in range( poly.GetNumberOfPoints() ):
             dist = reference( 0.0 )
-            id_source = kd.FindClosestPoint( poly.GetPoint( i ), dist )
-            if dist > TOLERANCE:
+            id_source = kd.FindClosestPoint( poly.GetPoint( i ), dist )  # type: ignore[call-overload]
+            if dist > TOLERANCE:  # type: ignore[operator]
                 setupLogger.warning(
                     f"[too far point] main point ({id_source}) is too far from frac point ({i}) = ({dist} > {TOLERANCE})"
                 )
@@ -223,6 +237,7 @@ def __paintNodes( main: vtkUnstructuredGrid, frac_polys: list[ vtkUnstructuredGr
 
 
 def polydata_to_ugrid( poly: vtkUnstructuredGrid ) -> vtkUnstructuredGrid:
+    """Converts a vtkPolyData to a vtkUnstructuredGrid by copying points, cells, and data."""
     ugrid = vtkUnstructuredGrid()
     ugrid.SetPoints( poly.GetPoints() )
     for cid in range( poly.GetNumberOfCells() ):
@@ -233,16 +248,27 @@ def polydata_to_ugrid( poly: vtkUnstructuredGrid ) -> vtkUnstructuredGrid:
     return ugrid
 
 
-def meshDoctor_to_surfaceGen( hierachical_mesh: vtkMultiBlockDataSet, attrs: tuple[ int, ... ], skip_clean_collocated: bool ) -> vtkUnstructuredGrid:
+def meshDoctor_to_surfaceGen( hierachical_mesh: vtkMultiBlockDataSet, attrs: tuple[ int, ...],
+                              skip_clean_collocated: bool ) -> tuple[ vtkUnstructuredGrid, int ]:
+    """Converts a mesh-doctor multi-block dataset to a surface mesh compatible with SurfaceGen by extracting surface cells that match the given attributes, optionally cleaning collocated points, and returning the resulting unstructured grid along with the number of points cleaned.
+
+    Args:
+        hierachical_mesh: The input multi-block dataset containing the mesh.
+        attrs: A tuple of attribute values to filter surface cells. If empty, all surface cells are included.
+        skip_clean_collocated: If True, skips the step of cleaning collocated points. If False, collocated points will be cleaned and the number of points cleaned will be returned.
+
+    Returns:
+        A tuple containing the converted surface mesh as a vtkUnstructuredGrid and the number of points cleaned from collocated points (if skip_clean_collocated is False) or 0 (if skip
+    """
     append_filter = vtkAppendPolyData()
     __process_block( hierachical_mesh, append_filter, list( attrs ) )
 
-    main = __extract_vol( hierachical_mesh )
+    main = __extract_first_vol( hierachical_mesh )
     if main is None:
         raise ValueError( "No volumetric block found in the multi-block mesh." )
 
     if not skip_clean_collocated:
-        main = __clean_collocated( main )
+        main, nCleanCollocated = __clean_collocated( main )
 
     append_filter.Update()
     clean = vtkCleanPolyData()
@@ -250,23 +276,34 @@ def meshDoctor_to_surfaceGen( hierachical_mesh: vtkMultiBlockDataSet, attrs: tup
     clean.Update()
 
     painted_main, _ = __paintNodes( main, [ clean.GetOutput() ] )
-    return polydata_to_ugrid( painted_main )
+    return polydata_to_ugrid( painted_main ), nCleanCollocated
 
 
-def toSurfaceGen( hierachical_mesh: vtkUnstructuredGrid, attrs: tuple[ int, ... ], skip_clean_collocated: bool,
-                  skip_filter_volume_cells: bool ) -> vtkUnstructuredGrid:
+def toSurfaceGen( hierachical_mesh: vtkUnstructuredGrid, attrs: tuple[ int, ...], skip_clean_collocated: bool,
+                  skip_filter_volume_cells: bool ) -> tuple[ vtkUnstructuredGrid, int, int ]:
+    """Converts a single unstructured grid mesh to a surface mesh compatible with SurfaceGen by optionally filtering out volume cells, extracting surface cells that match the given attributes, optionally cleaning collocated points, and returning the resulting unstructured grid along with the number of points cleaned and cells filtered.
+
+    Args:
+        hierachical_mesh: The input unstructured grid mesh.
+        attrs: A tuple of attribute values to filter surface cells. If empty, all surface cells are included.
+        skip_clean_collocated: If True, skips the step of cleaning collocated points. If False, collocated points will be cleaned and the number of points cleaned will be returned.
+        skip_filter_volume_cells: If True, skips the step of filtering out volume cells and extracting surface cells. If False, volume cells will be filtered out and surface cells matching the attributes will be extracted, and the number of cells filtered will be returned.
+
+    Returns:
+        A tuple containing the converted surface mesh as a vtkUnstructuredGrid, the number of points cleaned from collocated points (if skip_clean_collocated is False) or 0 (if skip clean_collocated is True), and the number of cells filtered out as volume cells (if skip_filter_volume_cells is False) or 0 (if skip_filter_volume_cells is True).
+    """
     if skip_filter_volume_cells:
         main = hierachical_mesh
         surfaces: list[ vtkUnstructuredGrid ] = []
     else:
-        main, surfs = _filterVolumeCells( hierachical_mesh, list( attrs ) )
+        main, surfs, nFilteredVolumeCells = _filterVolumeCells( hierachical_mesh, list( attrs ) )
         surfaces = [ surfs ]
 
     if not skip_clean_collocated:
-        main = __clean_collocated( main )
+        main, nCleanCollocated = __clean_collocated( main )
 
     painted_main, _ = __paintNodes( main, surfaces )
-    return polydata_to_ugrid( painted_main )
+    return polydata_to_ugrid( painted_main ), nCleanCollocated, nFilteredVolumeCells
 
 
 def __read_input_mesh( input_file: str ):
@@ -286,11 +323,25 @@ def __write_output_mesh( mesh: vtkUnstructuredGrid, output_file: str ) -> None:
     writer.Write()
 
 
-def meshAction( mesh, options: Options, output_file: str ) -> Result:
+def meshAction( mesh: Union[ vtkMultiBlockDataSet, vtkUnstructuredGrid ], options: Options,
+                output_file: str ) -> Result:
+    """Performs the conversion of the input mesh to a surface mesh compatible with SurfaceGen using the specified options, and returns the result containing the output file path, bounds, number of points and cells, and details about the cleaning and filtering steps.
+
+    Args:
+        mesh: The input mesh to be converted, which can be either a vtkMultiBlockDataSet or a vtkUnstructuredGrid.
+        options: The options for the conversion, including attributes to filter, whether to skip cleaning collocated points, and whether to skip filtering volume cells.
+        output_file: The path to the output VTU file where the converted mesh will be saved.
+
+    Returns:
+        A Result object containing the output file path, bounds, number of points and cells in the converted mesh, the attributes used for filtering, whether cleaning collocated points was skipped, whether filtering volume cells was skipped, and the number of points cleaned and cells filtered if those steps were performed.
+
+    """
     if isinstance( mesh, vtkMultiBlockDataSet ):
-        converted = meshDoctor_to_surfaceGen( mesh, options.attrs, options.skipCleanCollocated )
+        converted, nCleanCollocated = meshDoctor_to_surfaceGen( mesh, options.attrs, options.skipCleanCollocated )
     elif isinstance( mesh, vtkUnstructuredGrid ):
-        converted = toSurfaceGen( mesh, options.attrs, options.skipCleanCollocated, options.skipFilterVolumeCells )
+        converted, nCleanCollocated, nFilteredVolumeCells = toSurfaceGen( mesh, options.attrs,
+                                                                          options.skipCleanCollocated,
+                                                                          options.skipFilterVolumeCells )
     else:
         raise TypeError( f"Unsupported mesh type {type( mesh )}." )
 
@@ -301,10 +352,21 @@ def meshAction( mesh, options: Options, output_file: str ) -> Result:
                    numCells=converted.GetNumberOfCells(),
                    attrs=options.attrs,
                    skipCleanCollocated=options.skipCleanCollocated,
-                   skipFilterVolumeCells=options.skipFilterVolumeCells )
+                   skipFilterVolumeCells=options.skipFilterVolumeCells,
+                   nCleanCollocated=nCleanCollocated,
+                   nFilterVolumeCells=nFilteredVolumeCells )
 
 
 def action( vtuInputFile: str, options: Options ) -> Result:
+    """Reads a mesh from the input file, converts it to a surface mesh compatible with SurfaceGen using the specified options, and returns the result containing the output file path, bounds, number of points and cells, and details about the cleaning and filtering steps.
+
+    Args:
+        vtuInputFile: The path to the input VTU file containing the mesh to be converted.
+        options: The options for the conversion, including attributes to filter, whether to skip cleaning collocated points, and whether to skip filtering volume cells.
+
+    Returns:
+        A Result object containing the output file path, bounds, number of points and cells in the converted mesh, the attributes used for filtering, whether cleaning collocated points was skipped, whether filtering volume cells was skipped, and the number of points cleaned and cells filtered if those steps were performed.
+    """
     if vtuInputFile is None:
         raise ValueError( "An input file must be provided." )
 
