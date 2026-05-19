@@ -16,8 +16,11 @@ __OUTPUT_CSV = "outputCsv"
 __NULL_TAG_VALUE = "nullTagValue"
 __FIXED_OUTPUT = "fixedOutput"
 __VERBOSE = "verbose"
+__BOUNDARY_DISTANCE = "boundaryDistance"
+__BOUNDARY_MODE = "boundaryMode"
 
 __TAG_ARRAY_DEFAULT = "tags"
+__BOUNDARY_MODE_DEFAULT = "all"
 
 
 def convert( parsedOptions: dict[ str, Any ] ) -> Options:
@@ -40,7 +43,9 @@ def convert( parsedOptions: dict[ str, Any ] ) -> Options:
                     outputCsv=parsedOptions.get( __OUTPUT_CSV ),
                     nullTagValue=parsedOptions.get( __NULL_TAG_VALUE ),
                     fixedVtkOutput=fixedVtkOutput,
-                    verbose=parsedOptions.get( __VERBOSE, False ) )
+                    verbose=parsedOptions.get( __VERBOSE, False ),
+                    boundaryDistance=parsedOptions.get( __BOUNDARY_DISTANCE ),
+                    boundaryMode=parsedOptions.get( __BOUNDARY_MODE, __BOUNDARY_MODE_DEFAULT ) )
 
 
 def fillSubparser( subparsers: argparse._SubParsersAction[ Any ] ) -> None:
@@ -58,6 +63,10 @@ on the mesh boundary or other geometric issues.
 
 This check helps ensure that tagged internal surfaces (e.g., fractures) are properly embedded
 in the volume mesh and not inadvertently placed on external boundaries.
+
+Optionally, elements within a specified distance from the mesh boundary can be automatically
+untagged to handle edge effects. The distance is measured to the outer surface of the 3D
+volume mesh. Use --boundaryMode to control which boundaries are considered.
 """ )
 
     addVtuInputFileArgument( p )
@@ -93,6 +102,22 @@ in the volume mesh and not inadvertently placed on external boundaries.
                     metavar='FILE',
                     help="[string]: Output VTU file with faulty cells retagged to nullTagValue (optional)" )
 
+    p.add_argument( '--' + __BOUNDARY_DISTANCE,
+                    type=float,
+                    default=None,
+                    metavar='DISTANCE',
+                    help="[float]: Safety distance from mesh boundary. Tagged cells within this distance will be "
+                    "untagged (set to nullTagValue). Distance is measured to the outer surface of the 3D "
+                    "volume mesh. Use with --boundaryMode to specify which boundaries (optional)" )
+
+    p.add_argument( '--' + __BOUNDARY_MODE,
+                    type=str,
+                    default=__BOUNDARY_MODE_DEFAULT,
+                    choices=[ 'all', 'bottom', 'top' ],
+                    metavar='MODE',
+                    help=f"[string]: Which boundaries to consider: 'all' (default), 'bottom', 'top'. "
+                    f"Only used with --boundaryDistance. Defaults to '{__BOUNDARY_MODE_DEFAULT}'" )
+
     p.add_argument( '--' + __VERBOSE,
                     '-v',
                     action='store_true',
@@ -120,5 +145,11 @@ def displayResults( options: Options, result: Result ) -> None:
             setupLogger.results(
                 f"Fixed mesh written to {options.fixedVtkOutput.output} (faulty cells retagged to {options.nullTagValue})"
             )
+        if options.boundaryDistance is not None:
+            setupLogger.results(
+                f"Cells within {options.boundaryDistance} of boundary ({options.boundaryMode}) were also untagged" )
     else:
         setupLogger.results( "Validation PASSED: All tagged elements are internal" )
+        if options.boundaryDistance is not None:
+            setupLogger.results(
+                f"No cells found within {options.boundaryDistance} of mesh boundary ({options.boundaryMode})" )
