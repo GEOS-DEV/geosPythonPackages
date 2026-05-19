@@ -5,8 +5,8 @@ import os
 from dataclasses import dataclass
 from typing import Optional
 
-import vtk
-from vtkmodules.vtkCommonCore import vtkIdTypeArray, vtkPoints, reference
+from vtkmodules.vtkCommonDataModel import VTK_TRIANGLE, VTK_TRIANGLE_STRIP, VTK_QUAD, VTK_POLYGON, vtkPolyData, vtkKdTree 
+from vtkmodules.vtkCommonCore import vtkIdTypeArray, vtkPoints, reference, vtkUnsignedIntArray, vtkDataArray
 from vtkmodules.vtkCommonDataModel import vtkSelection, vtkSelectionNode, vtkUnstructuredGrid, vtkMultiBlockDataSet
 from vtkmodules.vtkFiltersCore import vtkAppendPolyData, vtkCleanPolyData
 from vtkmodules.vtkFiltersExtraction import vtkExtractSelection
@@ -41,10 +41,10 @@ TOLERANCE = 1e-6
 
 def is_surface_cell_type( t: int ) -> bool:
     surface_types = {
-        vtk.VTK_TRIANGLE,
-        vtk.VTK_QUAD,
-        vtk.VTK_POLYGON,
-        vtk.VTK_TRIANGLE_STRIP,
+        VTK_TRIANGLE,
+        VTK_QUAD,
+        VTK_POLYGON,
+        VTK_TRIANGLE_STRIP,
     }
     return t in surface_types
 
@@ -66,7 +66,7 @@ def __process_block( block, append_filter: vtkAppendPolyData, attrs: list[ int ]
     if is_surface_cell_type( cell_type ):
         cell_attributes = block.GetCellData().GetArray( "attribute" )
         if len( attrs ) == 0 or ( cell_attributes is not None and cell_attributes.GetTuple1( 0 ) in attrs ):
-            if isinstance( block, vtk.vtkPolyData ):
+            if isinstance( block, vtkPolyData ):
                 append_filter.AddInputData( block )
             else:
                 gf = vtkGeometryFilter()
@@ -185,7 +185,7 @@ def __clean_collocated( main: vtkUnstructuredGrid ) -> vtkUnstructuredGrid:
 
     for array_i in range( main.GetPointData().GetNumberOfArrays() ):
         arr = main.GetPointData().GetArray( array_i )
-        new_arr = vtk.vtkDataArray.CreateDataArray( arr.GetDataType() )
+        new_arr = vtkDataArray.CreateDataArray( arr.GetDataType() )
         new_arr.SetName( arr.GetName() )
         new_arr.SetNumberOfComponents( arr.GetNumberOfComponents() )
         new_arr.SetNumberOfTuples( clean_points.GetNumberOfPoints() )
@@ -197,10 +197,10 @@ def __clean_collocated( main: vtkUnstructuredGrid ) -> vtkUnstructuredGrid:
 
 
 def __paintNodes( main: vtkUnstructuredGrid, frac_polys: list[ vtkUnstructuredGrid ] ) -> tuple[ vtkUnstructuredGrid, list[ vtkUnstructuredGrid ] ]:
-    kd = vtk.vtkKdTree()
+    kd = vtkKdTree()
     kd.BuildLocatorFromPoints( main )
 
-    narray = vtk.vtkUnsignedIntArray()
+    narray = vtkUnsignedIntArray()
     narray.SetNumberOfComponents( 1 )
     narray.SetNumberOfTuples( main.GetNumberOfPoints() )
 
