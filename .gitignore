@@ -37,6 +37,9 @@ MANIFEST
 *.manifest
 *.spec
 
+#env (do not port user-specs)
+.env
+
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt

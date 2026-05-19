@@ -401,8 +401,8 @@ class DeckViewer( vuetify.VCard ):
             return
 
         if self.box_engine is not None and active_block.name in self.box_engine:
-            box_polydata_actor: pv.Actor = self.box_engine[ active_block.name ].get_box_polydata_actor()
-            extracted_cell_actor: pv.Actor = self.box_engine[ active_block.name ].get_extracted_cells_actor()
+            box_polydata_actor: pv.BasePlotter = self.box_engine[ active_block.name ].get_box_polydata_actor()
+            extracted_cell_actor: pv.BasePlotter = self.box_engine[ active_block.name ].get_extracted_cells_actor()
             self.plotter.remove_actor( box_polydata_actor )
             self.plotter.remove_actor( extracted_cell_actor )
             del self.box_engine[ active_block.name ]
