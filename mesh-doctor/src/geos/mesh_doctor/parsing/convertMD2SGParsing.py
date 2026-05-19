@@ -29,7 +29,7 @@ def convert( parsedOptions: dict[ str, Any ] ) -> Options:
     return Options( attrs=tuple( parsedOptions.get( __ATTRS, [] ) ),
                     skipCleanCollocated=parsedOptions.get( __SKIP_CLEAN, False ),
                     skipFilterVolumeCells=parsedOptions.get( __SKIP_FILTER, False ),
-                    meshVtkOutput=VtkOutput( output=parsedOptions.get( __OUTPUT_FILE, "converted.vtu" ),
+                    meshVtkOutput=VtkOutput( output=parsedOptions.get( __OUTPUT_FILE ),
                                              isDataModeBinary=True ) )
 
 
@@ -48,7 +48,7 @@ def fillSubparser( subparsers: _SubParsersAction[ Any ] ) -> None:
                     nargs='+',
                     default=[],
                     help="[int ...]: Attributes to include when filtering surface cells." )
-    p.add_argument( '--' + __OUTPUT_FILE, type=str, default=None, help="[string]: Optional output VTU file path." )
+    p.add_argument( '--' + __OUTPUT_FILE, type=str, default="converted.vtu", help="[string]: Optional output VTU file path." )
     p.add_argument( '--' + __SKIP_CLEAN, action='store_true', help="Skip the collocated node cleanup step." )
     p.add_argument( '--' + __SKIP_FILTER,
                     action='store_true',

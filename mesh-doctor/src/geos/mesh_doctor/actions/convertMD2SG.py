@@ -12,7 +12,7 @@ from vtkmodules.vtkFiltersExtraction import vtkExtractSelection
 from vtkmodules.vtkFiltersGeometry import vtkGeometryFilter
 
 from geos.mesh_doctor.parsing.cliParsing import setupLogger
-from geos.mesh.io.vtkIO import readUnstructuredGrid, VtkOutput, writeMesh
+from geos.mesh.io.vtkIO import readMesh, VtkOutput, writeMesh
 
 
 @dataclass( frozen=True )
@@ -348,7 +348,7 @@ def action( vtuInputFile: str, options: Options ) -> Result:
     if vtuInputFile is None:
         raise ValueError( "An input file must be provided." )
 
-    mesh = readUnstructuredGrid( vtuInputFile )
+    mesh = readMesh( vtuInputFile )
     result = meshAction( mesh, options )
 
     setupLogger.info( f"Writing converted mesh to {options.meshVtkOutput.output}" )

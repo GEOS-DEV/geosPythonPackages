@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<VTKFile type="vtkMultiBlockDataSet" version="1.0" byte_order="LittleEndian" header_type="UInt32" compressor="vtkZLibDataCompressor">
+  <vtkMultiBlockDataSet>
+    <DataSet index="0" name="main" file="base_tetra_shift/domain_ids.vtu"/>
+    <DataSet index="1" name="fault" file="base_tetra_shift/domain_fracture_2_ids.vtu"/>
+  </vtkMultiBlockDataSet>
+</VTKFile>
