@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: GitHub Copilot, Jacques Franc
-import os
 from dataclasses import dataclass
 from typing import Optional, Union
 
@@ -11,23 +10,22 @@ from vtkmodules.vtkCommonDataModel import vtkSelection, vtkSelectionNode, vtkUns
 from vtkmodules.vtkFiltersCore import vtkAppendPolyData, vtkCleanPolyData
 from vtkmodules.vtkFiltersExtraction import vtkExtractSelection
 from vtkmodules.vtkFiltersGeometry import vtkGeometryFilter
-from vtkmodules.vtkIOXML import vtkXMLMultiBlockDataReader, vtkXMLUnstructuredGridWriter
 
 from geos.mesh_doctor.parsing.cliParsing import setupLogger
-from geos.mesh.io.vtkIO import readUnstructuredGrid
+from geos.mesh.io.vtkIO import readUnstructuredGrid, VtkOutput, writeMesh
 
 
 @dataclass( frozen=True )
 class Options:
+    meshVtkOutput: VtkOutput
     attrs: tuple[ int, ...] = ()
     skipCleanCollocated: bool = False
     skipFilterVolumeCells: bool = False
-    outputFile: Optional[ str ] = None
 
 
 @dataclass( frozen=True )
 class Result:
-    outputFile: str
+    outputMesh: Optional[ vtkUnstructuredGrid ]
     bounds: tuple[ float, float, float, float, float, float ]
     numPoints: int
     numCells: int
@@ -306,31 +304,12 @@ def toSurfaceGen( hierachical_mesh: vtkUnstructuredGrid, attrs: tuple[ int, ...]
     return polydata_to_ugrid( painted_main ), nCleanCollocated, nFilteredVolumeCells
 
 
-def __read_input_mesh( input_file: str ):
-    reader = vtkXMLMultiBlockDataReader()
-    reader.SetFileName( input_file )
-    reader.Update()
-    output = reader.GetOutput()
-    if isinstance( output, vtkMultiBlockDataSet ) and output.GetNumberOfBlocks() > 0:
-        return output
-    return readUnstructuredGrid( input_file )
-
-
-def __write_output_mesh( mesh: vtkUnstructuredGrid, output_file: str ) -> None:
-    writer = vtkXMLUnstructuredGridWriter()
-    writer.SetFileName( output_file )
-    writer.SetInputData( mesh )
-    writer.Write()
-
-
-def meshAction( mesh: Union[ vtkMultiBlockDataSet, vtkUnstructuredGrid ], options: Options,
-                output_file: str ) -> Result:
+def meshAction( mesh: Union[ vtkMultiBlockDataSet, vtkUnstructuredGrid ], options: Options ) -> Result:
     """Performs the conversion of the input mesh to a surface mesh compatible with SurfaceGen using the specified options, and returns the result containing the output file path, bounds, number of points and cells, and details about the cleaning and filtering steps.
 
     Args:
         mesh: The input mesh to be converted, which can be either a vtkMultiBlockDataSet or a vtkUnstructuredGrid.
         options: The options for the conversion, including attributes to filter, whether to skip cleaning collocated points, and whether to skip filtering volume cells.
-        output_file: The path to the output VTU file where the converted mesh will be saved.
 
     Returns:
         A Result object containing the output file path, bounds, number of points and cells in the converted mesh, the attributes used for filtering, whether cleaning collocated points was skipped, whether filtering volume cells was skipped, and the number of points cleaned and cells filtered if those steps were performed.
@@ -345,8 +324,7 @@ def meshAction( mesh: Union[ vtkMultiBlockDataSet, vtkUnstructuredGrid ], option
     else:
         raise TypeError( f"Unsupported mesh type {type( mesh )}." )
 
-    __write_output_mesh( converted, output_file )
-    return Result( outputFile=output_file,
+    return Result( outputMesh=converted,
                    bounds=converted.GetBounds(),
                    numPoints=converted.GetNumberOfPoints(),
                    numCells=converted.GetNumberOfCells(),
@@ -370,6 +348,10 @@ def action( vtuInputFile: str, options: Options ) -> Result:
     if vtuInputFile is None:
         raise ValueError( "An input file must be provided." )
 
-    mesh = __read_input_mesh( vtuInputFile )
-    output_file = options.outputFile if options.outputFile else f"{os.path.splitext( vtuInputFile )[0]}_converted.vtu"
-    return meshAction( mesh, options, output_file )
+    mesh = readUnstructuredGrid( vtuInputFile )
+    result = meshAction( mesh, options )
+
+    setupLogger.info( f"Writing converted mesh to {options.meshVtkOutput.output}" )
+    writeMesh( result.outputMesh, options.meshVtkOutput )
+
+    return result

@@ -9,6 +9,7 @@ from geos.mesh_doctor.actions.convertMD2SG import Options, Result
 from geos.mesh_doctor.parsing import CONVERT_MD2SG
 from geos.mesh_doctor.parsing._sharedChecksParsingLogic import getOptionsUsedMessage
 from geos.mesh_doctor.parsing.cliParsing import setupLogger, addVtuInputFileArgument
+from geos.mesh.io.vtkIO import VtkOutput
 
 __ATTRS = "attrs"
 __OUTPUT_FILE = "outputFile"
@@ -28,7 +29,8 @@ def convert( parsedOptions: dict[ str, Any ] ) -> Options:
     return Options( attrs=tuple( parsedOptions.get( __ATTRS, [] ) ),
                     skipCleanCollocated=parsedOptions.get( __SKIP_CLEAN, False ),
                     skipFilterVolumeCells=parsedOptions.get( __SKIP_FILTER, False ),
-                    outputFile=parsedOptions.get( __OUTPUT_FILE ) )
+                    meshVtkOutput=VtkOutput( output=parsedOptions.get( __OUTPUT_FILE, "converted.vtu" ),
+                                             isDataModeBinary=True ) )
 
 
 def fillSubparser( subparsers: _SubParsersAction[ Any ] ) -> None:
