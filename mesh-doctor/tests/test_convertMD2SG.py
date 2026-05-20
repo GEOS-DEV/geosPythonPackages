@@ -13,7 +13,7 @@ def test_convert_md2sg_parser() -> None:
     subparsers = parser.add_subparsers()
     fillSubparser( subparsers )
 
-    args = parser.parse_args( [ 'convertMD2SG', '-i', 'data/base_tetra_shift.vtm', '-z', '2' ] )
+    args = parser.parse_args( [ 'convertMD2SG', '-i', 'mesh-doctor/tests/data/base_tetra_shift.vtm', '-z', '2' ] )
 
     options = convert( vars( args ) )
     assert options.attrs == ( 2, )
@@ -29,7 +29,7 @@ def test_convertion() -> None:
     fillSubparser( subparsers )
 
     args = parser.parse_args(
-        [ 'convertMD2SG', '-i', 'data/base_tetra_shift.vtm', '-z', '2', '--outputFile', 'my_converted_mesh.vtu' ] )
+        [ 'convertMD2SG', '-i', 'mesh-doctor/tests/data/base_tetra_shift.vtm', '-z', '2', '--outputFile', 'my_converted_mesh.vtu' ] )
 
     options = convert( vars( args ) )
     actionsResult = action( vars( args )[ 'vtuInputFile' ], options )
