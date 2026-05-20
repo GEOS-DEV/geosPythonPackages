@@ -175,18 +175,18 @@ def __clean_collocated( main: vtkUnstructuredGrid ) -> tuple[ vtkUnstructuredGri
 
     old_to_new: dict[ int, int ] = {}
     clean_points = vtkPoints()
-    for pt, new_id in clean_point_set.items():
-        old_to_new[ new_id ] = clean_points.InsertNextPoint( pt )
+    for pt, ids in clean_point_set.items():
+        old_to_new[ ids ] = clean_points.InsertNextPoint( pt )
 
     rewrite_mesh = vtkUnstructuredGrid()
     rewrite_mesh.SetPoints( clean_points )
 
     for cell_id in range( main.GetNumberOfCells() ):
         cell: vtkCell = main.GetCell( cell_id )
-        new_ids = []
+        new_ids: list[ int ] = []
         for i in range( cell.GetNumberOfPoints() ):
             pid = cell.GetPointId( i )
-            new_ids.append( old_to_new.get( reverse_map.get( pid, pid ), old_to_new[ pid ] ) )
+            new_ids.append( old_to_new.get( reverse_map.get( pid, pid ), pid ) )
         rewrite_mesh.InsertNextCell( cell.GetCellType(), len( new_ids ), new_ids )
 
     rewrite_mesh.GetCellData().ShallowCopy( main.GetCellData() )
@@ -317,6 +317,7 @@ def meshAction( mesh: Union[ vtkMultiBlockDataSet, vtkUnstructuredGrid ], option
     """
     if isinstance( mesh, vtkMultiBlockDataSet ):
         converted, nCleanCollocated = meshDoctor_to_surfaceGen( mesh, options.attrs, options.skipCleanCollocated )
+        nFilteredVolumeCells = 0
     elif isinstance( mesh, vtkUnstructuredGrid ):
         converted, nCleanCollocated, nFilteredVolumeCells = toSurfaceGen( mesh, options.attrs,
                                                                           options.skipCleanCollocated,
