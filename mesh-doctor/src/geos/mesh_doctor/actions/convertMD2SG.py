@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import Optional, Union
 
 from vtkmodules.vtkCommonDataModel import VTK_TRIANGLE, VTK_TRIANGLE_STRIP, VTK_QUAD, VTK_POLYGON, vtkPolyData, vtkKdTree, vtkCell
-from vtkmodules.vtkCommonCore import vtkIdTypeArray, vtkPoints, reference, vtkUnsignedIntArray, vtkDataArray
+from vtkmodules.vtkCommonCore import vtkIdTypeArray, vtkPoints, reference, vtkUnsignedIntArray, vtkDataArray, vtkIdList
 from vtkmodules.vtkCommonDataModel import vtkSelection, vtkSelectionNode, vtkUnstructuredGrid, vtkMultiBlockDataSet
 from vtkmodules.vtkFiltersCore import vtkAppendPolyData, vtkCleanPolyData
 from vtkmodules.vtkFiltersExtraction import vtkExtractSelection
@@ -34,6 +34,7 @@ class Result:
     nCleanCollocated: int
     skipFilterVolumeCells: bool
     nFilterVolumeCells: int
+    nColors: int
 
 
 TOLERANCE = 1e-6
@@ -233,6 +234,57 @@ def __paintNodes(
     main.GetPointData().AddArray( narray )
     return main, frac_polys
 
+#TODO refactor with other coloring function to avoid code duplication
+def __coloringNodes(main: vtkUnstructuredGrid) -> tuple[vtkUnstructuredGrid, int]:
+    """Colors the nodes of the main mesh based on their point-connectivity,
+    one array per connected component of faultNodes==1 points.
+    Returns the modified mesh and the number of connected components found."""
+
+    fault_array = main.GetPointData().GetArray("faultNodes")
+    n_pts = main.GetNumberOfPoints()
+
+    # Collect only the fault-node ids up front
+    fault_pids = {
+        pid for pid in range(n_pts)
+        if fault_array.GetTuple1(pid) == 1
+    }
+
+    visited: set[int] = set()
+    color = 0
+
+    for seed in fault_pids:
+        if seed in visited:
+            continue
+
+        # One fresh, zero-filled array per connected component
+        color_array = vtkUnsignedIntArray()
+        color_array.SetNumberOfComponents(1)
+        color_array.SetNumberOfTuples(n_pts)
+        color_array.Fill(0)
+
+        # Iterative DFS — avoids Python recursion-depth limit
+        stack = [seed]
+        while stack:
+            pid = stack.pop()
+            if pid in visited:
+                continue
+            visited.add(pid)
+            color_array.SetTuple1(pid, 1)       # mark this point as belonging to component
+
+            cells = vtkIdList()
+            main.GetPointCells(pid, cells)
+            for ci in range(cells.GetNumberOfIds()):
+                cell = main.GetCell(cells.GetId(ci))
+                for vi in range(cell.GetNumberOfPoints()):
+                    nbr = cell.GetPointId(vi)
+                    if nbr not in visited and nbr in fault_pids:
+                        stack.append(nbr)
+
+        color_array.SetName(f"faultNodes_{color}")
+        main.GetPointData().AddArray(color_array)
+        color += 1
+
+    return main, color
 
 def polydata_to_ugrid( poly: vtkUnstructuredGrid ) -> vtkUnstructuredGrid:
     """Converts a vtkPolyData to a vtkUnstructuredGrid by copying points, cells, and data."""
@@ -247,7 +299,7 @@ def polydata_to_ugrid( poly: vtkUnstructuredGrid ) -> vtkUnstructuredGrid:
 
 
 def meshDoctor_to_surfaceGen( hierachical_mesh: vtkMultiBlockDataSet, attrs: tuple[ int, ...],
-                              skip_clean_collocated: bool ) -> tuple[ vtkUnstructuredGrid, int ]:
+                              skip_clean_collocated: bool ) -> tuple[ vtkUnstructuredGrid, int, int ]:
     """Converts a mesh-doctor multi-block dataset to a surface mesh compatible with SurfaceGen by extracting surface cells that match the given attributes, optionally cleaning collocated points, and returning the resulting unstructured grid along with the number of points cleaned.
 
     Args:
@@ -274,11 +326,12 @@ def meshDoctor_to_surfaceGen( hierachical_mesh: vtkMultiBlockDataSet, attrs: tup
     clean.Update()
 
     painted_main, _ = __paintNodes( main, [ clean.GetOutput() ] )
-    return polydata_to_ugrid( painted_main ), nCleanCollocated
+    colored_main, nColors  = __coloringNodes( painted_main )
+    return polydata_to_ugrid( colored_main ), nCleanCollocated, nColors
 
 
 def toSurfaceGen( hierachical_mesh: vtkUnstructuredGrid, attrs: tuple[ int, ...], skip_clean_collocated: bool,
-                  skip_filter_volume_cells: bool ) -> tuple[ vtkUnstructuredGrid, int, int ]:
+                  skip_filter_volume_cells: bool ) -> tuple[ vtkUnstructuredGrid, int, int, int ]:
     """Converts a single unstructured grid mesh to a surface mesh compatible with SurfaceGen by optionally filtering out volume cells, extracting surface cells that match the given attributes, optionally cleaning collocated points, and returning the resulting unstructured grid along with the number of points cleaned and cells filtered.
 
     Args:
@@ -301,7 +354,8 @@ def toSurfaceGen( hierachical_mesh: vtkUnstructuredGrid, attrs: tuple[ int, ...]
         main, nCleanCollocated = __clean_collocated( main )
 
     painted_main, _ = __paintNodes( main, surfaces )
-    return polydata_to_ugrid( painted_main ), nCleanCollocated, nFilteredVolumeCells
+    colored_main, nColors  = __coloringNodes( painted_main )
+    return polydata_to_ugrid( colored_main ), nCleanCollocated, nFilteredVolumeCells, nColors
 
 
 def meshAction( mesh: Union[ vtkMultiBlockDataSet, vtkUnstructuredGrid ], options: Options ) -> Result:
@@ -316,10 +370,10 @@ def meshAction( mesh: Union[ vtkMultiBlockDataSet, vtkUnstructuredGrid ], option
 
     """
     if isinstance( mesh, vtkMultiBlockDataSet ):
-        converted, nCleanCollocated = meshDoctor_to_surfaceGen( mesh, options.attrs, options.skipCleanCollocated )
+        converted, nCleanCollocated, nColors = meshDoctor_to_surfaceGen( mesh, options.attrs, options.skipCleanCollocated )
         nFilteredVolumeCells = 0
     elif isinstance( mesh, vtkUnstructuredGrid ):
-        converted, nCleanCollocated, nFilteredVolumeCells = toSurfaceGen( mesh, options.attrs,
+        converted, nCleanCollocated, nFilteredVolumeCells, nColors = toSurfaceGen( mesh, options.attrs,
                                                                           options.skipCleanCollocated,
                                                                           options.skipFilterVolumeCells )
     else:
@@ -333,7 +387,8 @@ def meshAction( mesh: Union[ vtkMultiBlockDataSet, vtkUnstructuredGrid ], option
                    skipCleanCollocated=options.skipCleanCollocated,
                    skipFilterVolumeCells=options.skipFilterVolumeCells,
                    nCleanCollocated=nCleanCollocated,
-                   nFilterVolumeCells=nFilteredVolumeCells )
+                   nFilterVolumeCells=nFilteredVolumeCells
+                   nColors=nColors )
 
 
 def action( vtuInputFile: str, options: Options ) -> Result:

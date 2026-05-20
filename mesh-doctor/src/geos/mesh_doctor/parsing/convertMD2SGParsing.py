@@ -73,3 +73,4 @@ def displayResults( options: Options, result: Result ) -> None:
         f"  Skip clean collocated(npoints cleaned): {result.skipCleanCollocated} ({result.nCleanCollocated})" )
     setupLogger.results(
         f"  Skip filter volume cells(ncells removed): {result.skipFilterVolumeCells} ({result.nFilterVolumeCells})" )
+    setupLogger.results( f"  Number of connected components for faultNodes: {result.nColors}" )
