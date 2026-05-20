@@ -387,7 +387,7 @@ def meshAction( mesh: Union[ vtkMultiBlockDataSet, vtkUnstructuredGrid ], option
                    skipCleanCollocated=options.skipCleanCollocated,
                    skipFilterVolumeCells=options.skipFilterVolumeCells,
                    nCleanCollocated=nCleanCollocated,
-                   nFilterVolumeCells=nFilteredVolumeCells
+                   nFilterVolumeCells=nFilteredVolumeCells,
                    nColors=nColors )
 
 
