@@ -35,3 +35,7 @@ def test_convertion() -> None:
     actionsResult = action( vars( args )[ 'vtuInputFile' ], options )
     assert isinstance( actionsResult, Result )
     assert actionsResult.outputMesh is not None
+    assert actionsResult.nCleanCollocated != 0
+    assert actionsResult.outputMesh.GetNumberOfCells() > 0
+    assert actionsResult.outputMesh.GetPointData().HasArray( "faultNodes" )
+    assert actionsResult.outputMesh.GetPointData().GetArray( "faultNodes" ).GetRange() == ( 0.0, 1.0 )
