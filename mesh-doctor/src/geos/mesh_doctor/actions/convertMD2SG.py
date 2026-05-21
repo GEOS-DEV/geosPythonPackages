@@ -37,7 +37,7 @@ class Result:
     nColors: int
 
 
-TOLERANCE = 1e-6
+TOLERANCE = 1
 
 
 def is_surface_cell_type( t: int ) -> bool:
@@ -112,20 +112,24 @@ def _filterVolumeCells( mesh: vtkUnstructuredGrid,
     surfaceIds = vtkIdTypeArray()
     nVolume = nSurface = nOther = 0
 
+    cell_attributes = mesh.GetCellData().GetArray( "attribute" )
     for i in range( mesh.GetNumberOfCells() ):
         dim = mesh.GetCell( i ).GetCellDimension()
         if dim == 3:
             volumeIds.InsertNextValue( i )
             nVolume += 1
         elif dim == 2:
-            cell_attributes = mesh.GetCellData().GetArray( "attribute" )
-            if cell_attributes is not None and cell_attributes.GetTuple1( 0 ) in attrs:
+            assert cell_attributes is not None, "Input mesh must have a 'attribute' cell data array for filtering."
+            if cell_attributes.GetTuple1( i ) in attrs:
                 surfaceIds.InsertNextValue( i )
                 nSurface += 1
         else:
             nOther += 1
 
-    setupLogger.info( f"  Cell types: {nVolume} volume (3D) | {nSurface} surface (filtered 2D) | {nOther} other" )
+    if cell_attributes is not None:
+        setupLogger.info( f"Mesh contains {nVolume} volume cells, {nSurface} surface cells matching attributes {attrs}, and {nOther} other cells." )
+    else:
+        setupLogger.info( f"Mesh contains {nVolume} volume cells, {nSurface} surface cells, and {nOther} other cells (no 'attribute' array for filtering)." )
 
     if nSurface == 0 and nOther == 0:
         setupLogger.info( "No filtering needed (all cells are 3D)" )
@@ -220,7 +224,10 @@ def __paintNodes(
     for i in range( main.GetNumberOfPoints() ):
         narray.SetTuple1( i, 0 )
 
+    count = 0
+    setupLogger.info( f"Number of fracpolys: {len(frac_polys)}" )
     for poly in frac_polys:
+        setupLogger.info( f"Processing fracpoly with {poly.GetNumberOfPoints()} points and {poly.GetNumberOfCells()} cells." )
         for i in range( poly.GetNumberOfPoints() ):
             dist = reference( 0.0 )
             id_source = kd.FindClosestPoint( poly.GetPoint( i ), dist )  # type: ignore[call-overload]
@@ -229,7 +236,9 @@ def __paintNodes(
                     f"[too far point] main point ({id_source}) is too far from frac point ({i}) = ({dist} > {TOLERANCE})"
                 )
             narray.SetTuple1( id_source, 1 )
+            count += 1
 
+    setupLogger.info( f"Painted {count}/{narray.GetNumberOfTuples()} nodes based on proximity to fracture polygons." )
     narray.SetName( "faultNodes" )
     main.GetPointData().AddArray( narray )
     return main, frac_polys
@@ -238,7 +247,8 @@ def __paintNodes(
 def __coloringNodes(main: vtkUnstructuredGrid) -> tuple[vtkUnstructuredGrid, int]:
     """Colors the nodes of the main mesh based on their point-connectivity,
     one array per connected component of faultNodes==1 points.
-    Returns the modified mesh and the number of connected components found."""
+    Returns the modified mesh and the number of connected components found.
+    """
 
     fault_array = main.GetPointData().GetArray("faultNodes")
     n_pts = main.GetNumberOfPoints()
@@ -248,6 +258,7 @@ def __coloringNodes(main: vtkUnstructuredGrid) -> tuple[vtkUnstructuredGrid, int
         pid for pid in range(n_pts)
         if fault_array.GetTuple1(pid) == 1
     }
+    setupLogger.info(f"Found {len(fault_pids)} fault nodes to color based on connectivity.")
 
     visited: set[int] = set()
     color = 0
@@ -264,12 +275,14 @@ def __coloringNodes(main: vtkUnstructuredGrid) -> tuple[vtkUnstructuredGrid, int
 
         # Iterative DFS — avoids Python recursion-depth limit
         stack = [seed]
+        count = 0
         while stack:
             pid = stack.pop()
             if pid in visited:
                 continue
             visited.add(pid)
             color_array.SetTuple1(pid, 1)       # mark this point as belonging to component
+            count += 1
 
             cells = vtkIdList()
             main.GetPointCells(pid, cells)
@@ -281,6 +294,8 @@ def __coloringNodes(main: vtkUnstructuredGrid) -> tuple[vtkUnstructuredGrid, int
                         stack.append(nbr)
 
         color_array.SetName(f"faultNodes_{color}")
+        setupLogger.info(f"Connected component {color}: {count} points")
+        
         main.GetPointData().AddArray(color_array)
         color += 1
 
@@ -343,6 +358,7 @@ def toSurfaceGen( hierachical_mesh: vtkUnstructuredGrid, attrs: tuple[ int, ...]
     Returns:
         A tuple containing the converted surface mesh as a vtkUnstructuredGrid, the number of points cleaned from collocated points (if skip_clean_collocated is False) or 0 (if skip clean_collocated is True), and the number of cells filtered out as volume cells (if skip_filter_volume_cells is False) or 0 (if skip_filter_volume_cells is True).
     """
+    nCleanCollocated, nFilteredVolumeCells, nColors = 0, 0, 0
     if skip_filter_volume_cells:
         main = hierachical_mesh
         surfaces: list[ vtkUnstructuredGrid ] = []
@@ -354,6 +370,8 @@ def toSurfaceGen( hierachical_mesh: vtkUnstructuredGrid, attrs: tuple[ int, ...]
         main, nCleanCollocated = __clean_collocated( main )
 
     painted_main, _ = __paintNodes( main, surfaces )
+    setupLogger.info( f"Has Array faultNodes: {painted_main.GetPointData().HasArray('faultNodes')}" )
+    setupLogger.info( f"Range of faultNodes: {painted_main.GetPointData().GetArray('faultNodes').GetRange() if painted_main.GetPointData().HasArray('faultNodes') else 'N/A'}" )
     colored_main, nColors  = __coloringNodes( painted_main )
     return polydata_to_ugrid( colored_main ), nCleanCollocated, nFilteredVolumeCells, nColors
 
