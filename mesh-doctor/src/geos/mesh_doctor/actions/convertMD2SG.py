@@ -37,7 +37,7 @@ class Result:
     nColors: int
 
 
-TOLERANCE = 1
+TOLERANCE = 1e-6
 
 
 def is_surface_cell_type( t: int ) -> bool:
