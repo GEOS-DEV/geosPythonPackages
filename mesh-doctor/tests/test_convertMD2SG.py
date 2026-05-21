@@ -28,8 +28,9 @@ def test_convertion() -> None:
     subparsers = parser.add_subparsers()
     fillSubparser( subparsers )
 
-    args = parser.parse_args(
-        [ 'convertMD2SG', '-i', 'mesh-doctor/tests/data/base_tetra_shift.vtm', '-z', '2', '--outputFile', 'converted.vtu' ] )
+    args = parser.parse_args( [
+        'convertMD2SG', '-i', 'mesh-doctor/tests/data/base_tetra_shift.vtm', '-z', '2', '--outputFile', 'converted.vtu'
+    ] )
 
     options = convert( vars( args ) )
     actionsResult = action( vars( args )[ 'vtuInputFile' ], options )
@@ -40,14 +41,17 @@ def test_convertion() -> None:
     assert actionsResult.outputMesh.GetPointData().HasArray( "faultNodes_0" )
     assert actionsResult.outputMesh.GetPointData().GetArray( "faultNodes_0" ).GetRange() == ( 0.0, 1.0 )
 
+
 def test_convertion_cc() -> None:
     """Test the convertMD2SG action from vtu file with multiple connected components."""
     parser = argparse.ArgumentParser( description='Testing.' )
     subparsers = parser.add_subparsers()
     fillSubparser( subparsers )
 
-    args = parser.parse_args(
-        [ 'convertMD2SG', '-i', 'mesh-doctor/tests/data/base_hexa_shift_2.vtu', '-z', '2','3', '--outputFile', 'converted_cc.vtu', '--skipCleanCollocated' ] )
+    args = parser.parse_args( [
+        'convertMD2SG', '-i', 'mesh-doctor/tests/data/base_hexa_shift_2.vtu', '-z', '2', '3', '--outputFile',
+        'converted_cc.vtu', '--skipCleanCollocated'
+    ] )
 
     options = convert( vars( args ) )
     actionsResult = action( vars( args )[ 'vtuInputFile' ], options )
@@ -59,4 +63,3 @@ def test_convertion_cc() -> None:
     assert actionsResult.outputMesh.GetPointData().GetArray( "faultNodes_0" ).GetRange() == ( 0.0, 1.0 )
     assert actionsResult.outputMesh.GetPointData().HasArray( "faultNodes_1" )
     assert actionsResult.outputMesh.GetPointData().GetArray( "faultNodes_1" ).GetRange() == ( 0.0, 1.0 )
-
