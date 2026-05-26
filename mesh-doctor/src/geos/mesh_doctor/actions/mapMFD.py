@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
-# SPDX-FileContributor: Your Name
+# SPDX-FileContributor: Jacques Franc, Copilot
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import Any, Dict, List, Tuple
@@ -11,15 +11,14 @@ import vtk
 from geos.mesh.io.vtkIO import writeMesh, VtkOutput, readUnstructuredGrid
 from geos.mesh_doctor.parsing.cliParsing import setupLogger
 
-
 class IPType(StrEnum):
-    TPFA = "TPFA"
+    """Interface Pressure" type for MFD indicators."""
+    # TPFA = "TPFA"
     QTPFA = "QTPFA"
     BdLVM = "BdLVM"
-
-
 @dataclass(frozen=True)
 class Face:
+    """Represents a face of a cell in the mesh, defined by its vertex indexes, center, normal vector, and area."""
     indexes: List[int]
     center: List[float]
     normal: List[float]
@@ -77,6 +76,7 @@ _FACE_TABLE: Dict[int, List[List[int]]] = {
 
 
 def get_cell_faces(cell: vtk.vtkCell) -> List[List[int]]:
+    """Returns the list of faces for a given cell, where each face is represented by a list of vertex indexes."""
     cell_type = cell.GetCellType()
     if cell_type not in _FACE_TABLE:
         unknown_name = vtk.vtkCellTypes.GetClassNameFromTypeId(cell_type) or str(cell_type)
@@ -85,7 +85,9 @@ def get_cell_faces(cell: vtk.vtkCell) -> List[List[int]]:
     return [[local_to_global[local_idx] for local_idx in face] for face in _FACE_TABLE[cell_type]]
 
 
-def _filterVolumeCells(mesh: vtk.vtkDataSet) -> vtk.vtkDataSet:
+# TODO: Refactor the ComputeMFD class to separate the computation of indicators from the mesh processing logic, and to allow for more flexible input parameters (e.g., different permeability fields, additional indicators, etc.).
+def __filterVolumeCells(mesh: vtk.vtkDataSet) -> vtk.vtkDataSet:
+    """Filters the input mesh to retain only volume cells (3D cells) and returns the resulting mesh."""
     volumeIds = vtk.vtkIdTypeArray()
     for i in range(mesh.GetNumberOfCells()):
         dim = mesh.GetCell(i).GetCellDimension()
@@ -106,97 +108,107 @@ def _filterVolumeCells(mesh: vtk.vtkDataSet) -> vtk.vtkDataSet:
     ext.Update()
     return ext.GetOutput()
 
-
-def attach_matrix_as_multicomponent(mesh: vtk.vtkDataSet, matrices: List[np.ndarray], field_name: str = "MatrixField", on_points: bool = False) -> vtk.vtkDataSet:
-    NF = matrices[0].shape[0]
-    flat = np.array([m.flatten() for m in matrices], dtype=np.float64)
-    vtk_arr = numpy_to_vtk(flat, deep=True, array_type=vtk.VTK_DOUBLE)
-    vtk_arr.SetName(field_name)
-    vtk_arr.SetNumberOfComponents(NF * NF)
-    for i in range(1, NF + 1):
-        for j in range(1, NF + 1):
-            comp_idx = (i - 1) * NF + (j - 1)
-            vtk_arr.SetComponentName(comp_idx, f"{i}/{j}")
-    data_store = mesh.GetPointData() if on_points else mesh.GetCellData()
-    data_store.AddArray(vtk_arr)
-    return mesh
-
-
-def attach_results(mesh: vtk.vtkDataSet, matrices: List[Tuple[float, float, float, float]], field_name: str = "MatrixField") -> vtk.vtkDataSet:
+def __attach_results(mesh: vtk.vtkDataSet, matrices: List[Tuple[float, float, float, float, float, float]], field_name: str = "MatrixField") -> vtk.vtkDataSet:
+    """Attaches the computed MFD indicators to the mesh as a new cell data array with the specified field name."""
     flat = np.array([np.asarray(m, dtype=np.float64) for m in matrices])
     vtk_arr = numpy_to_vtk(flat, deep=True, array_type=vtk.VTK_DOUBLE)
     vtk_arr.SetName(field_name)
-    vtk_arr.SetNumberOfComponents(4)
+    vtk_arr.SetNumberOfComponents(6)
     vtk_arr.SetComponentName(0, "condM")
-    vtk_arr.SetComponentName(1, "condMr")
+    vtk_arr.SetComponentName(1, "consistency")
     vtk_arr.SetComponentName(2, "lambda_m")
     vtk_arr.SetComponentName(3, "lambda_M")
+    vtk_arr.SetComponentName(4, "idempotence")
+    vtk_arr.SetComponentName(5, "orthogonality")
     mesh.GetCellData().AddArray(vtk_arr)
     return mesh
 
-
 class ComputeMFD:
-    def __init__(self, mesh):
+    """Class responsible for computing MFD indicators for a given mesh and permeability field, based on the specified interface pressure type (TPFA, QTPFA, or BdLVM)."""
+    def __init__(self, mesh, permeability_field: str = "Permeability"):
+        """Initializes the ComputeMFD instance by computing the faces, cell centers, and permeability field from the input mesh."""
         self.faces, self.face2cell = ComputeMFD.compute_newell(mesh)
-        self.cell_centers = ComputeMFD.compute_cell_centroids(mesh)
+        self.cell_centers = ComputeMFD.__compute_cell_centroids(mesh)
+        # make sure that we have always Volume and don't act on surfaces or lines
+        mesh = __filterVolumeCells(mesh)
+        mesh = __add_cell_volumes(mesh)
+        self.permeability_field = permeability_field
 
     def set_IP(self, ip_type: IPType):
+        """Sets the interface pressure type for the MFD computation.
+        
+        Args:            
+            ip_type (IPType): The interface pressure type to use for the MFD computation (TPFA, QTPFA, or BdLVM).
+        """
         self.ip_type = ip_type
 
     def compute(self, mesh):
-        if self.ip_type == IPType.TPFA:
-            return self.compute_tpfa(mesh)
-        elif self.ip_type == IPType.QTPFA:
+        """Computes the MFD indicators for the input mesh based on the specified interface pressure type and returns the results as a list of tuples containing the indicators for each cell.
+        
+        Args:            
+            mesh (vtk.vtkDataSet): The input mesh for which to compute the MFD indicators. 
+        """
+        # if self.ip_type == IPType.TPFA:
+            # return self.compute_tpfa(mesh)
+        if self.ip_type == IPType.QTPFA:
             return self.compute_quasitpfa(mesh)
         elif self.ip_type == IPType.BdLVM:
             return self.compute_bdlvm(mesh)
         else:
             raise ValueError(f"Unsupported IP type: {self.ip_type}")
 
-    def compute_tpfa(self, mesh) -> list[np.ndarray]:
-        perm = vtk_to_numpy(mesh.GetCellData().GetArray("Permeability"))
-        cell2face = {}
-        [cell2face.setdefault(cell, []).append(k) for k, v in self.face2cell.items() for cell in v]
-        ncells = len(self.cell_centers)
-        M = [None] * ncells
-        face_centers = np.array([self.faces[k].center for k in self.face2cell])
-        face_normals = np.array([self.faces[k].normal for k in self.face2cell])
-        face_area = np.array([self.faces[k].area for k in self.face2cell])
+    # def compute_tpfa(self, mesh) -> list[np.ndarray]:
+    #     """Computes the MFD indicators using the TPFA method for the input mesh and returns the results as a list of tuples containing the indicators for each cell.
+    #         Args:
+    #           mesh (vtk.vtkDataSet): The input mesh for which to compute the MFD indicators using the TPFA method.
+    #     """
+    #     perm = vtk_to_numpy(mesh.GetCellData().GetArray(self.permeability_field))
+    #     cell2face = {}
+    #     [cell2face.setdefault(cell, []).append(k) for k, v in self.face2cell.items() for cell in v]
+    #     ncells = len(self.cell_centers)
+    #     M = [None] * ncells
+    #     face_centers = np.array([self.faces[k].center for k in self.face2cell])
+    #     face_normals = np.array([self.faces[k].normal for k in self.face2cell])
+    #     face_area = np.array([self.faces[k].area for k in self.face2cell])
 
-        def process_cell(cell):
-            face_indices = cell2face.get(cell)
-            nfacesPerCell = len(face_indices)
-            Mloc = np.zeros((nfacesPerCell, nfacesPerCell))
-            face_cell_vec = np.ndarray((ncells, nfacesPerCell, 3))
-            face_cell_dist = np.ndarray((ncells, nfacesPerCell))
-            face_cell_vec[cell, :, :] = face_centers[face_indices, :] - self.cell_centers[cell, :]
-            face_cell_dist[cell, :] = np.linalg.norm(face_cell_vec[cell, :, :], axis=1)
-            face_cell_vec[cell, :, :] /= face_cell_dist[cell, :].reshape(nfacesPerCell, 1)
+    #     def process_cell(cell):
+    #         face_indices = cell2face.get(cell)
+    #         nfacesPerCell = len(face_indices)
+    #         Mloc = np.zeros((nfacesPerCell, nfacesPerCell))
+    #         face_cell_vec = np.ndarray((ncells, nfacesPerCell, 3))
+    #         face_cell_dist = np.ndarray((ncells, nfacesPerCell))
+    #         face_cell_vec[cell, :, :] = face_centers[face_indices, :] - self.cell_centers[cell, :]
+    #         face_cell_dist[cell, :] = np.linalg.norm(face_cell_vec[cell, :, :], axis=1)
+    #         face_cell_vec[cell, :, :] /= face_cell_dist[cell, :].reshape(nfacesPerCell, 1)
 
-            face_normals[face_indices, :] = ComputeMFD.reorient_normal(face_normals[face_indices, :], face_cell_vec[cell, :, :])
-            T = np.einsum('ni,ni,ni->n', face_cell_vec[cell, :, :], np.tile(perm[cell, :], (nfacesPerCell, 1)), face_normals[face_indices, :])
-            T *= face_area[face_indices] / face_cell_dist[cell, :]
-            Mloc[range(nfacesPerCell), range(nfacesPerCell)] = 1 / T
-            return cell, Mloc
+    #         face_normals[face_indices, :] = ComputeMFD.__reorient_normal(face_normals[face_indices, :], face_cell_vec[cell, :, :])
+    #         T = np.einsum('ni,ni,ni->n', face_cell_vec[cell, :, :], np.tile(perm[cell, :], (nfacesPerCell, 1)), face_normals[face_indices, :])
+    #         T *= face_area[face_indices] / face_cell_dist[cell, :]
+    #         Mloc[range(nfacesPerCell), range(nfacesPerCell)] = 1 / T
+    #         return cell, Mloc
 
-        from concurrent.futures import ThreadPoolExecutor, as_completed
-        total = len(cell2face)
-        with ThreadPoolExecutor(max_workers=8) as executor:
-            futures = [executor.submit(process_cell, i) for i in range(total)]
-            results = [future.result() for future in as_completed(futures)]
+    #     from concurrent.futures import ThreadPoolExecutor, as_completed
+    #     total = len(cell2face)
+    #     with ThreadPoolExecutor(max_workers=8) as executor:
+    #         futures = [executor.submit(process_cell, i) for i in range(total)]
+    #         results = [future.result() for future in as_completed(futures)]
 
-        for cell, Mloc in results:
-            M[cell] = Mloc
-        return M
+    #     for cell, Mloc in results:
+    #         M[cell] = Mloc
+    #     return M
 
     def compute_quasitpfa(self, mesh):
-        perm = vtk_to_numpy(mesh.GetCellData().GetArray("Permeability"))
+        """Computes the MFD indicators using the QTPFA method for the input mesh and returns the results as a list of tuples containing the indicators for each cell.
+            Args:
+              mesh (vtk.vtkDataSet): The input mesh for which to compute the MFD indicators using the QTPFA method.
+        """
+        perm = vtk_to_numpy(mesh.GetCellData().GetArray(self.permeability_field))
         invperm = 1.0 / perm
         vol = vtk_to_numpy(mesh.GetCellData().GetArray("Volume"))
         faces, self.face2cell = ComputeMFD.compute_newell(mesh)
         cell2face = {}
         [cell2face.setdefault(cell, []).append(k) for k, v in self.face2cell.items() for cell in v]
-        cell_centers = ComputeMFD.compute_cell_centroids(mesh)
+        cell_centers = ComputeMFD.__compute_cell_centroids(mesh)
         ncells = len(cell_centers)
         M = [None] * ncells
         face_centers = np.array([faces[k].center for k in self.face2cell])
@@ -208,7 +220,7 @@ class ComputeMFD:
             nf = len(face_indices)
             fc_vec = face_centers[face_indices] - cell_centers[cell]
             c = fc_vec
-            loc_normals = ComputeMFD.reorient_normal(face_normals[face_indices], c)
+            loc_normals = ComputeMFD.__reorient_normal(face_normals[face_indices], c)
             n = loc_normals * face_area[face_indices, None]
             K = np.tile(perm[cell], (nf, 1))
             Kinv = np.tile(invperm[cell], (nf, 1))
@@ -218,7 +230,7 @@ class ComputeMFD:
             proj = np.eye(nf) - np.einsum('ni,mi->nm', Q, Q)
             S = np.einsum('ij,j,jk->ik', proj, w, proj)
             S = (vol[cell] / 2.0) * S
-            indicators = ComputeMFD._get_indicators(proj, Mloc, S)
+            indicators = ComputeMFD.__get_indicators(proj, Mloc, S)
             return (cell, *indicators)
 
         from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -227,12 +239,16 @@ class ComputeMFD:
             futures = [executor.submit(process_cell, i) for i in range(total)]
             results = [future.result() for future in as_completed(futures)]
 
-        for cell, c, cr, lm, lM in results:
-            M[cell] = (c, cr, lm, lM)
+        for cell, c, cr, lm, lM, idem, ortho in results:
+            M[cell] = (c, cr, lm, lM, idem, ortho)
         return M
 
     def compute_bdlvm(self, mesh):
-        perm = vtk_to_numpy(mesh.GetCellData().GetArray("Permeability"))
+        """Computes the MFD indicators using the BDLVM method for the input mesh and returns the results as a list of tuples containing the indicators for each cell.
+            Args:
+              mesh (vtk.vtkDataSet): The input mesh for which to compute the MFD indicators using the BDLVM method.
+        """
+        perm = vtk_to_numpy(mesh.GetCellData().GetArray(self.permeability_field))
         cell2face = {}
         [cell2face.setdefault(cell, []).append(k) for k, v in self.face2cell.items() for cell in v]
         ncells = len(self.cell_centers)
@@ -259,7 +275,7 @@ class ComputeMFD:
             S = gamma * proj
             Mloc = np.einsum('ij,i,j->ij', Mloc, 1.0 / area, 1.0 / area)
             S = np.einsum('ij,i,j->ij', S, 1.0 / area, 1.0 / area)
-            indicators = ComputeMFD._get_indicators(proj, Mloc, S)
+            indicators = ComputeMFD.__get_indicators(proj, Mloc, S)
             return (cell, *indicators)
 
         from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -268,25 +284,38 @@ class ComputeMFD:
             futures = [executor.submit(process_cell, i) for i in range(total)]
             results = [future.result() for future in as_completed(futures)]
 
-        for cell, c, cr, lm, lM in results:
-            M[cell] = (c, cr, lm, lM)
+        for cell, c, cr, lm, lM, idem, ortho in results:
+            M[cell] = (c, cr, lm, lM, idem, ortho)
         return M
 
     @staticmethod
-    def _get_indicators(K, M, S, compute_eigs=True):
+    def __get_indicators(K, M, S, compute_eigs=True):
+        """Computes the MFD indicators (condition number, consistency, eigenvalues, idempotence, and orthogonality) based on the local MFD matrices K, M, and S for a given cell."""
         Sr = K.T @ S @ K
         Mr = K.T @ M @ K
-        if compute_eigs:
-            try:
-                lambdas = np.linalg.eigvals(np.linalg.solve(Mr, Sr))
-            except Exception:
-                lambdas = np.linalg.eigvals(np.linalg.pinv(Mr) @ Sr)
-        else:
+
+        def get_eigs(Mx, Sx):
             lambdas = []
-        return np.linalg.cond(M + S), np.linalg.cond(Mr + Sr), np.min(lambdas.real), np.max(lambdas.real)
+            if compute_eigs:
+                try:
+                    lambdas = np.linalg.eigvals(Mx + Sx)
+                except Exception:
+                    lambdas = np.linalg.eigvals(np.linalg.pinv(Mx) @ Sx)
+            return lambdas
+
+        lambdas = get_eigs(M, S)
+        return (
+            np.linalg.cond(M + S),
+            np.linalg.matrix_norm(Sr),
+            np.min(lambdas.real),
+            np.max(lambdas.real),
+            np.linalg.matrix_norm(K - K @ K),
+            np.linalg.matrix_norm(K @ S),
+        )
 
     @staticmethod
     def centroid_3d_polygon(mesh, point_indices: List[int], area_tolerance: float = 0.0):
+        """Computes the centroid, normal vector, and area of a 3D polygon defined by the given point indices in the input mesh, using Newell's method."""
         n = len(point_indices)
         if n < 2:
             raise ValueError(f"Polygon must have at least 2 points, got {n}.")
@@ -313,6 +342,9 @@ class ComputeMFD:
 
     @staticmethod
     def compute_newell(mesh):
+        """Computes the faces of the mesh using Newell's method and returns a dictionary of faces and a mapping from face indices to cell indices.
+        Args:
+            mesh (vtk.vtkDataSet): The input mesh for which to compute the faces using Newell's method."""
         faces = {}
         face2cell = {}
 
@@ -348,59 +380,22 @@ class ComputeMFD:
         return faces, face2cell
 
     @staticmethod
-    def reorient_normal(normals, cell2vec):
+    def __reorient_normal(normals, cell2vec):
+        """Reorients the normal vectors of the faces based on the direction of the vector from the cell center to the face center, ensuring that the normals point outward from the cell."""
         flag = np.einsum('ni,ni->n', normals, cell2vec) < 0
         normals[flag] = -normals[flag]
         return normals
 
     @staticmethod
-    def compute_cell_centroids(mesh) -> np.ndarray:
+    def __compute_cell_centroids(mesh) -> np.ndarray:
+        """Computes the centroids of the cells in the input mesh and returns them as a NumPy array."""
         vtkCellCenters = vtk.vtkCellCenters()
         vtkCellCenters.SetInputData(mesh)
         vtkCellCenters.Update()
         return vtk_to_numpy(vtkCellCenters.GetOutput().GetPoints().GetData())
 
-
-def create_hex_grid(nx=2, ny=2, nz=2) -> vtk.vtkUnstructuredGrid:
-    mesh = vtk.vtkUnstructuredGrid()
-    points = vtk.vtkPoints()
-    for k in range(nz + 1):
-        for j in range(ny + 1):
-            for i in range(nx + 1):
-                points.InsertNextPoint(i / nx, j / ny, k / nz)
-    mesh.SetPoints(points)
-
-    def pid(i, j, k):
-        return k * (ny + 1) * (nx + 1) + j * (nx + 1) + i
-
-    for k in range(nz):
-        for j in range(ny):
-            for i in range(nx):
-                ids = vtk.vtkIdList()
-                for node in [
-                    pid(i, j, k),
-                    pid(i + 1, j, k),
-                    pid(i + 1, j + 1, k),
-                    pid(i, j + 1, k),
-                    pid(i, j, k + 1),
-                    pid(i + 1, j, k + 1),
-                    pid(i + 1, j + 1, k + 1),
-                    pid(i, j + 1, k + 1),
-                ]:
-                    ids.InsertNextId(node)
-                mesh.InsertNextCell(vtk.VTK_HEXAHEDRON, ids)
-    return add_permeability(mesh)
-
-
-def add_permeability(mesh):
-    perm = np.ones((mesh.GetNumberOfCells(), 3))
-    vtk_perm = numpy_to_vtk(perm, array_type=vtk.VTK_UNSIGNED_INT)
-    vtk_perm.SetName("Permeability")
-    mesh.GetCellData().AddArray(vtk_perm)
-    return mesh
-
-
-def add_cell_volumes(mesh: vtk.vtkUnstructuredGrid) -> vtk.vtkUnstructuredGrid:
+def __add_cell_volumes(mesh: vtk.vtkUnstructuredGrid) -> vtk.vtkUnstructuredGrid:
+    """Computes the volumes of the cells in the input mesh and adds them as a new cell data array named 'Volume', returning the modified mesh."""
     quality = vtk.vtkMeshQuality()
     quality.SetInputData(mesh)
     quality.SetHexQualityMeasureToVolume()
@@ -417,32 +412,44 @@ def add_cell_volumes(mesh: vtk.vtkUnstructuredGrid) -> vtk.vtkUnstructuredGrid:
 
 @dataclass(frozen=True)
 class Options:
+    """Configuration options for MFD computation, including the output settings, interface pressure type, and permeability field name."""
     vtkOutput: VtkOutput
     ip: str
+    permeability: str = "Permeability"
 
 
 @dataclass(frozen=True)
 class Result:
+    """Result of the MFD computation."""
     info: str
 
 
 def meshAction(mesh, options: Options) -> Result:
-    mfd = ComputeMFD(mesh)
+    """Performs the MFD computation on the input mesh using the specified options and returns the results as a Result object containing information about the computation.
+    Args:
+        mesh (vtk.vtkDataSet): The input mesh for which to compute the MFD indicators.
+        options (Options): The configuration options for the MFD computation, including the output settings, interface pressure type, and permeability field name.
+    Returns:
+        Result: An object containing information about the MFD computation, including the output file path and the interface pressure type used for the computation."""
+    mfd = ComputeMFD(mesh, permeability_field=options.permeability)
     try:
         mfd.set_IP(IPType[options.ip])
     except Exception:
         raise ValueError(f"Unsupported IP type: {options.ip}")
 
     res = mfd.compute(mesh)
-    try:
-        mesh = attach_results(mesh, res, f"{options.ip}_Results")
-    except Exception:
-        mesh = attach_matrix_as_multicomponent(mesh, res, f"{options.ip}_Results")
+    mesh = __attach_results(mesh, res, f"{options.ip}_Results")
 
     writeMesh(mesh, options.vtkOutput, canOverwrite=True, logger=setupLogger)
     return Result(info=f"MFD {options.ip} computed and written to {options.vtkOutput.output}")
 
 
 def action(vtuInputFile: str, options: Options) -> Result:
+    """Main entry point for the MFD computation action, which reads the input mesh from the specified VTU file, performs the MFD computation using the provided options, and returns the results as a Result object containing information about the computation.
+    Args:           
+        vtuInputFile (str): The file path to the input VTU mesh for which to compute the MFD indicators.        
+        options (Options): The configuration options for the MFD computation, including the output settings, interface pressure type, and permeability field name.    
+    Returns:
+        Result: An object containing information about the MFD computation, including the output file path and the interface pressure type used for the computation."""
     mesh = readUnstructuredGrid(vtuInputFile)
     return meshAction(mesh, options)
