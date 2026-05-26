@@ -5,6 +5,7 @@ from __future__ import annotations
 from argparse import _SubParsersAction
 from typing import Any
 
+from geos.mesh_doctor.parsing import MAPMFD
 from geos.mesh_doctor.parsing.cliParsing import setupLogger, addVtuInputFileArgument
 from geos.mesh_doctor.parsing import vtkOutputParsing
 from geos.mesh_doctor.actions.mapMFD import Options, Result
@@ -34,7 +35,7 @@ def fillSubparser( subparsers: _SubParsersAction[ Any ] ) -> None:
     Args:
         subparsers: Subparsers from the main argument parser.
     """
-    p = subparsers.add_parser( "map-mfd", help="Compute MFD indicators and attach results to a VTU" )
+    p = subparsers.add_parser( MAPMFD, help="Compute MFD indicators and attach results to a VTU" )
     addVtuInputFileArgument( p, required=False )
     p.add_argument( "--" + __IP, type=str, choices=( "QTPFA", "BdLVM" ), required=True )
     p.add_argument( "--" + __PERMEABILITY,

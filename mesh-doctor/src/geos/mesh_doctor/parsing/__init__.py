@@ -19,6 +19,7 @@ SUPPORTED_ELEMENTS = "supportedElements"
 ORPHAN_2D = "orphan2d"
 CHECK_INTERNAL_TAGS = "checkInternalTags"
 EULER = "euler"
+MAPMFD = "mapMFD"
 
 
 @dataclass( frozen=True )

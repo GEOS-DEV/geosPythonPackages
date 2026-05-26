@@ -15,7 +15,6 @@ from geos.mesh_doctor.parsing.cliParsing import setupLogger
 if sys.version_info >= ( 3, 11 ):
     from enum import StrEnum
 else:
-
     class StrEnum( str, Enum ):
         """String enumeration base class for Python versions < 3.11."""
         pass
