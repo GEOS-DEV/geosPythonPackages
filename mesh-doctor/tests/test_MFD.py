@@ -3,7 +3,7 @@ import vtk
 from vtkmodules.util.numpy_support import vtk_to_numpy, numpy_to_vtk
 
 from geos.mesh.io.vtkIO import VtkOutput
-from geos.mesh_doctor.actions.mapMFD import __add_cell_volumes, meshAction, Options
+from geos.mesh_doctor.actions.mapMFD import add_cell_volumes, meshAction, Options
 
 def __create_hex_grid(nx=2, ny=2, nz=2) -> vtk.vtkUnstructuredGrid:
     """Creates a simple hexagonal grid with the specified number of cells in each direction."""
@@ -40,14 +40,14 @@ def __create_hex_grid(nx=2, ny=2, nz=2) -> vtk.vtkUnstructuredGrid:
 def __add_permeability(mesh, permeability_value=1.0) -> vtk.vtkUnstructuredGrid:
     """Adds a simple permeability field to the mesh."""
     perm = np.ones((mesh.GetNumberOfCells(), 3)) * permeability_value
-    vtk_perm = numpy_to_vtk(perm, array_type=vtk.VTK_UNSIGNED_INT)
+    vtk_perm = numpy_to_vtk(perm, array_type=vtk.VTK_DOUBLE)
     vtk_perm.SetName("Permeability")
     mesh.GetCellData().AddArray(vtk_perm)
     return mesh
 
 def test_mfd_indicators_hex_grid(tmp_path):
     mesh = __create_hex_grid(1, 1, 1)
-    mesh = __add_cell_volumes(mesh)
+    mesh = add_cell_volumes(mesh)
     mesh = __add_permeability(mesh)
 
     for ip in ["QTPFA", "BdLVM"]:
@@ -59,3 +59,16 @@ def test_mfd_indicators_hex_grid(tmp_path):
         assert arr is not None
         assert arr.GetNumberOfTuples() == mesh.GetNumberOfCells()
         assert out.exists()
+
+        if ip == "QTPFA":
+            varr = vtk_to_numpy(arr)[0]
+            assert np.isclose(varr[0], 1) #conditioning
+            assert np.isclose(varr[2:3], 0.5) #spectrum
+            assert np.isclose(varr[4], 0, atol=1e-15) #orthogonality
+            assert np.isclose(varr[5], 0, atol=1e-15) #consistency
+        elif ip == "BdLVM":
+            varr = vtk_to_numpy(arr)[0]
+            assert np.isclose(varr[0], 3) #conditioning
+            assert np.allclose(varr[2:4], np.array([1/6, 1/2]), atol=1e-15) #spectrum
+            assert np.isclose(varr[4], 0, atol=1e-15) #orthogonality
+            assert np.isclose(varr[5], 0, atol=1e-15) #consistency

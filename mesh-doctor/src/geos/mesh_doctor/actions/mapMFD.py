@@ -76,7 +76,11 @@ _FACE_TABLE: Dict[int, List[List[int]]] = {
 
 
 def get_cell_faces(cell: vtk.vtkCell) -> List[List[int]]:
-    """Returns the list of faces for a given cell, where each face is represented by a list of vertex indexes."""
+    """Returns the list of faces for a given cell, where each face is represented by a list of vertex indexes.
+    Args:
+        cell: The input cell for which to retrieve the faces.
+    Returns:
+        List[List[int]]: The list of faces for the given cell. Each face is represented as a list of vertex indexes."""
     cell_type = cell.GetCellType()
     if cell_type not in _FACE_TABLE:
         unknown_name = vtk.vtkCellTypes.GetClassNameFromTypeId(cell_type) or str(cell_type)
@@ -86,8 +90,13 @@ def get_cell_faces(cell: vtk.vtkCell) -> List[List[int]]:
 
 
 # TODO: Refactor the ComputeMFD class to separate the computation of indicators from the mesh processing logic, and to allow for more flexible input parameters (e.g., different permeability fields, additional indicators, etc.).
-def __filterVolumeCells(mesh: vtk.vtkDataSet) -> vtk.vtkDataSet:
-    """Filters the input mesh to retain only volume cells (3D cells) and returns the resulting mesh."""
+def filterVolumeCells(mesh: vtk.vtkDataSet) -> vtk.vtkDataSet:
+    """Filters the input mesh to retain only volume cells (3D cells) and returns the resulting mesh.
+    Args:
+        mesh: The input mesh to filter.
+    Returns:
+        vtk.vtkDataSet: The filtered mesh containing only volume cells (3D cells)."""
+
     volumeIds = vtk.vtkIdTypeArray()
     for i in range(mesh.GetNumberOfCells()):
         dim = mesh.GetCell(i).GetCellDimension()
@@ -130,8 +139,8 @@ class ComputeMFD:
         self.faces, self.face2cell = ComputeMFD.compute_newell(mesh)
         self.cell_centers = ComputeMFD.__compute_cell_centroids(mesh)
         # make sure that we have always Volume and don't act on surfaces or lines
-        mesh = __filterVolumeCells(mesh)
-        mesh = __add_cell_volumes(mesh)
+        mesh = filterVolumeCells(mesh)
+        mesh = add_cell_volumes(mesh)
         self.permeability_field = permeability_field
 
     def set_IP(self, ip_type: IPType):
@@ -297,10 +306,8 @@ class ComputeMFD:
         def get_eigs(Mx, Sx):
             lambdas = []
             if compute_eigs:
-                try:
-                    lambdas = np.linalg.eigvals(Mx + Sx)
-                except Exception:
-                    lambdas = np.linalg.eigvals(np.linalg.pinv(Mx) @ Sx)
+                lambdas = np.linalg.eigvals(Mx + Sx)
+
             return lambdas
 
         lambdas = get_eigs(M, S)
@@ -310,7 +317,7 @@ class ComputeMFD:
             np.min(lambdas.real),
             np.max(lambdas.real),
             np.linalg.matrix_norm(K - K @ K),
-            np.linalg.matrix_norm(K @ S),
+            np.linalg.matrix_norm((S-Sr)),
         )
 
     @staticmethod
@@ -394,8 +401,12 @@ class ComputeMFD:
         vtkCellCenters.Update()
         return vtk_to_numpy(vtkCellCenters.GetOutput().GetPoints().GetData())
 
-def __add_cell_volumes(mesh: vtk.vtkUnstructuredGrid) -> vtk.vtkUnstructuredGrid:
-    """Computes the volumes of the cells in the input mesh and adds them as a new cell data array named 'Volume', returning the modified mesh."""
+def add_cell_volumes(mesh: vtk.vtkUnstructuredGrid) -> vtk.vtkUnstructuredGrid:
+    """Computes the volumes of the cells in the input mesh and adds them as a new cell data array named 'Volume', returning the modified mesh.
+    Args:
+        mesh (vtk.vtkUnstructuredGrid): The input mesh for which to compute and add the cell volumes. 
+    Returns:
+        vtk.vtkUnstructuredGrid: The modified mesh with the computed cell volumes added as a new cell data array named 'Volume'."""
     quality = vtk.vtkMeshQuality()
     quality.SetInputData(mesh)
     quality.SetHexQualityMeasureToVolume()
