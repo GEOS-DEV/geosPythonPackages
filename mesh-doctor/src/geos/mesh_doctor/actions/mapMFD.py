@@ -12,6 +12,8 @@ import sys
 from geos.mesh.io.vtkIO import writeMesh, VtkOutput, readUnstructuredGrid
 from geos.mesh_doctor.parsing.cliParsing import setupLogger
 
+MAX_WORKER = 16
+
 if sys.version_info >= ( 3, 11 ):
     from enum import StrEnum
 else:
@@ -276,9 +278,15 @@ class ComputeMFD:
 
         from concurrent.futures import ThreadPoolExecutor, as_completed
         total = len( cell2face )
-        with ThreadPoolExecutor( max_workers=8 ) as executor:
+        done = 0
+        with ThreadPoolExecutor( max_workers=MAX_WORKER ) as executor:
             futures = [ executor.submit( process_cell, i ) for i in range( total ) ]
-            results = [ future.result() for future in as_completed( futures ) ]
+            # results = [ future.result() for future in as_completed( futures ) ]
+            results = []
+            for future in as_completed( futures ):
+                results.append( future.result() )
+                done += 1
+                print( f"\rDone: {done}/{total} ({100*done/total:.1f}%)", end="" )
 
         for cell, c, cr, lm, lM, idem, ortho in results:
             M[ cell ] = ( c, cr, lm, lM, idem, ortho )
@@ -326,9 +334,15 @@ class ComputeMFD:
 
         from concurrent.futures import ThreadPoolExecutor, as_completed
         total = len( cell2face )
-        with ThreadPoolExecutor( max_workers=8 ) as executor:
+        done = 0
+        with ThreadPoolExecutor( max_workers=MAX_WORKER ) as executor:
             futures = [ executor.submit( process_cell, i ) for i in range( total ) ]
-            results = [ future.result() for future in as_completed( futures ) ]
+            # results = [ future.result() for future in as_completed( futures ) ]
+            results = []
+            for future in as_completed( futures ):
+                results.append( future.result() )
+                done += 1
+                print( f"\rDone: {done}/{total} ({100*done/total:.1f}%)", end="" )
 
         for cell, c, cr, lm, lM, idem, ortho in results:
             M[ cell ] = ( c, cr, lm, lM, idem, ortho )
@@ -500,9 +514,9 @@ def meshAction( mesh: vtk.vtkDataSet, options: Options ) -> Result:
         raise ValueError( f"Unsupported IP type: {options.ip}" ) from e
 
     res = mfd.compute()
-    mesh = __attach_results( mesh, res, f"{options.ip}_Results" )
+    mfd.mesh = __attach_results( mfd.mesh, res, f"{options.ip}_Results" )
 
-    writeMesh( mesh, options.vtkOutput, canOverwrite=True, logger=setupLogger )
+    writeMesh( mfd.mesh, options.vtkOutput, canOverwrite=True, logger=setupLogger )
     return Result( info=f"MFD {options.ip} computed and written to {options.vtkOutput.output}" )
 
 
