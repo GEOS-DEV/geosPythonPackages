@@ -15,6 +15,7 @@ from geos.mesh_doctor.parsing.cliParsing import setupLogger
 if sys.version_info >= ( 3, 11 ):
     from enum import StrEnum
 else:
+
     class StrEnum( str, Enum ):
         """String enumeration base class for Python versions < 3.11."""
         pass
@@ -131,6 +132,9 @@ def filterVolumeCells( mesh: vtk.vtkDataSet ) -> vtk.vtkDataSet:
     ext.SetInputData( 0, mesh )
     ext.SetInputData( 1, sel )
     ext.Update()
+
+    setupLogger.info(
+        f"Filtered {ext.GetOutput().GetNumberOfCells()}/{mesh.GetNumberOfCells()} volume cells from the input mesh." )
     return ext.GetOutput()
 
 
@@ -157,12 +161,14 @@ class ComputeMFD:
 
     def __init__( self, mesh: vtk.vtkDataSet, permeability_field: str = "Permeability" ) -> None:
         """Initializes the ComputeMFD instance by computing the faces, cell centers, and permeability field from the input mesh."""
-        self.faces, self.face2cell = ComputeMFD.compute_newell( mesh )
-        self.cell_centers = ComputeMFD.__compute_cell_centroids( mesh )
         # make sure that we have always Volume and don't act on surfaces or lines
-        mesh = filterVolumeCells( mesh )
-        mesh = add_cell_volumes( mesh )
+        self.mesh = filterVolumeCells( mesh )
+        self.mesh = add_cell_volumes( self.mesh )
+        # compute faces and cell centers after filtering to ensure we only process volume cells
+        self.faces, self.face2cell = ComputeMFD.compute_newell( self.mesh )
+        self.cell_centers = ComputeMFD.__compute_cell_centroids( self.mesh )
         self.permeability_field = permeability_field
+        self.ip_type = IPType.QTPFA
 
     def set_IP( self, ip_type: IPType ) -> None:
         """Sets the interface pressure type for the MFD computation.
@@ -172,7 +178,7 @@ class ComputeMFD:
         """
         self.ip_type = ip_type
 
-    def compute( self, mesh: vtk.vtkDataSet ) -> List[ Tuple[ float, float, float, float, float, float ] ]:
+    def compute( self ) -> List[ Tuple[ float, float, float, float, float, float ] ]:
         """Computes the MFD indicators for the input mesh based on the specified interface pressure type and returns the results as a list of tuples containing the indicators for each cell.
 
         Args:
@@ -180,10 +186,11 @@ class ComputeMFD:
         """
         # if self.ip_type == IPType.TPFA:
         # return self.compute_tpfa(mesh)
+
         if self.ip_type == IPType.QTPFA:
-            return self.compute_quasitpfa( mesh )
+            return self.compute_quasitpfa( self.mesh )
         elif self.ip_type == IPType.BdLVM:
-            return self.compute_bdlvm( mesh )
+            return self.compute_bdlvm( self.mesh )
         else:
             raise ValueError( f"Unsupported IP type: {self.ip_type}" )
 
@@ -236,7 +243,6 @@ class ComputeMFD:
         perm = vtk_to_numpy( mesh.GetCellData().GetArray( self.permeability_field ) )
         invperm = 1.0 / perm
         vol = vtk_to_numpy( mesh.GetCellData().GetArray( "Volume" ) )
-        faces, self.face2cell = ComputeMFD.compute_newell( mesh )
         cell2face: Dict[ int, List[ int ] ] = {}
 
         for k, v in self.face2cell.items():
@@ -246,9 +252,9 @@ class ComputeMFD:
         cell_centers = ComputeMFD.__compute_cell_centroids( mesh )
         ncells = len( cell_centers )
         M = [ ( 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ) ] * ncells
-        face_centers = np.array( [ faces[ k ].center for k in self.face2cell ] )
-        face_normals = np.array( [ faces[ k ].normal for k in self.face2cell ] )
-        face_area = np.array( [ faces[ k ].area for k in self.face2cell ] )
+        face_centers = np.array( [ self.faces[ k ].center for k in self.face2cell ] )
+        face_normals = np.array( [ self.faces[ k ].normal for k in self.face2cell ] )
+        face_area = np.array( [ self.faces[ k ].area for k in self.face2cell ] )
 
         def process_cell( cell: int ) -> Tuple[ int, float, float, float, float, float, float ]:
             face_indices = cell2face.get( cell, [] )
@@ -340,7 +346,7 @@ class ComputeMFD:
         def get_eigs( Mx: np.ndarray, Sx: np.ndarray ) -> np.ndarray:
             lambdas: np.ndarray = np.array( [] )
             if compute_eigs:
-                lambdas, _ = np.linalg.eigvals( Mx + Sx )
+                lambdas = np.linalg.eigvals( Mx + Sx )
 
             return lambdas
 
@@ -493,7 +499,7 @@ def meshAction( mesh: vtk.vtkDataSet, options: Options ) -> Result:
     except Exception as e:
         raise ValueError( f"Unsupported IP type: {options.ip}" ) from e
 
-    res = mfd.compute( mesh )
+    res = mfd.compute()
     mesh = __attach_results( mesh, res, f"{options.ip}_Results" )
 
     writeMesh( mesh, options.vtkOutput, canOverwrite=True, logger=setupLogger )
