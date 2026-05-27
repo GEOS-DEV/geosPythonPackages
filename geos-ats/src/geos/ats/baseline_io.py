@@ -2,6 +2,7 @@ import os
 import logging
 import tempfile
 import shutil
+import subprocess
 import yaml
 import time
 import requests
@@ -161,6 +162,51 @@ def collect_baselines( bucket_name: str,
         raise Exception( f'Could not find baseline files to unpack: expected={archive_name}' )
 
 
+def _available_cpu_count() -> int:
+    if hasattr( os, 'sched_getaffinity' ):
+        return len( os.sched_getaffinity( 0 ) )
+    return os.cpu_count() or 1
+
+def _pack_baselines_with_parallel_gzip( archive_name: str, baseline_path: str ) -> bool:
+    tar_bin = shutil.which( 'tar' )
+    pigz_bin = shutil.which( 'pigz' )
+    if not tar_bin or not pigz_bin:
+        logger.info( 'tar and pigz were not both found; using Python gztar archiver' )
+        return False
+
+    archive_path = f'{archive_name}.tar.gz'
+    threads = str( _available_cpu_count() )
+    logger.info( f'Archiving baseline files with tar and pigz -9 ({threads} threads)...' )
+
+    try:
+        with open( archive_path, 'wb' ) as output:
+            tar_process = subprocess.Popen( [ tar_bin, '-C', baseline_path, '-cf', '-', '.' ],
+                                            stdout=subprocess.PIPE )
+            if tar_process.stdout is None:
+                raise RuntimeError( 'failed to capture tar output' )
+            pigz_process = subprocess.Popen( [ pigz_bin, '-9', '-p', threads ],
+                                             stdin=tar_process.stdout,
+                                             stdout=output )
+            tar_process.stdout.close()
+
+            pigz_status = pigz_process.wait()
+            tar_status = tar_process.wait()
+
+        if tar_status != 0 or pigz_status != 0:
+            try:
+                os.remove( archive_path )
+            except FileNotFoundError:
+                pass
+            raise RuntimeError( f'tar exited with {tar_status}; pigz exited with {pigz_status}' )
+
+    except Exception as e:
+        logger.warning( 'Parallel baseline archive creation failed; using Python gztar archiver' )
+        logger.warning( repr( e ) )
+        return False
+
+    return True
+
+
 def pack_baselines( archive_name: str, baseline_path: str, log_path: str = '' ):
     """
     Pack and upload baselines to GCP
@@ -201,7 +247,8 @@ def pack_baselines( archive_name: str, baseline_path: str, log_path: str = '' ):
 
     try:
         logger.info( 'Archiving baseline files...' )
-        shutil.make_archive( archive_name, format='gztar', root_dir=baseline_path )
+        if not _pack_baselines_with_parallel_gzip( archive_name, baseline_path ):
+            shutil.make_archive( archive_name, format='gztar', root_dir=baseline_path )
         logger.info( f'Created {archive_name}.tar.gz' )
     except Exception as e:
         logger.error( 'Failed to create baseline archive' )
