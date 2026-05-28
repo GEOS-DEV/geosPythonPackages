@@ -71,7 +71,7 @@ def __process_block( block: Union[ vtkMultiBlockDataSet, vtkUnstructuredGrid, vt
     for i in range( block.GetNumberOfCells() ):
         cell_types.add( block.GetCellType( i ) )
 
-    if all([is_surface_cell_type( ct ) for ct in cell_types]):
+    if all( is_surface_cell_type( ct ) for ct in cell_types ):
         cell_attributes = block.GetCellData().GetArray( "attribute" )
         if len( attrs ) == 0 or ( cell_attributes is not None and cell_attributes.GetTuple1( 0 ) in attrs ):
             if isinstance( block, vtkPolyData ):
