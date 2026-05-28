@@ -116,13 +116,13 @@ def _filterVolumeCells( mesh: vtkUnstructuredGrid,
     nVolume = nSurface = nOther = 0
 
     cell_attributes = mesh.GetCellData().GetArray( "attribute" )
+    assert cell_attributes is not None, "Input mesh must have a 'attribute' cell data array."
     for i in range( mesh.GetNumberOfCells() ):
         dim = mesh.GetCell( i ).GetCellDimension()
         if dim == 3:
             volumeIds.InsertNextValue( i )
             nVolume += 1
         elif dim == 2:
-            assert cell_attributes is not None, "Input mesh must have a 'attribute' cell data array for filtering."
             if cell_attributes.GetTuple1( i ) in attrs or len( attrs ) == 0:
                 surfaceIds.InsertNextValue( i )
                 nSurface += 1
