@@ -67,8 +67,11 @@ def __process_block( block: Union[ vtkMultiBlockDataSet, vtkUnstructuredGrid, vt
     if block.GetNumberOfCells() == 0:
         return
 
-    cell_type = block.GetCellType( 0 )
-    if is_surface_cell_type( cell_type ):
+    cell_types = set()
+    for i in range( block.GetNumberOfCells() ):
+        cell_types.add( block.GetCellType( i ) )
+
+    if all([is_surface_cell_type( ct ) for ct in cell_types]):
         cell_attributes = block.GetCellData().GetArray( "attribute" )
         if len( attrs ) == 0 or ( cell_attributes is not None and cell_attributes.GetTuple1( 0 ) in attrs ):
             if isinstance( block, vtkPolyData ):
@@ -120,7 +123,7 @@ def _filterVolumeCells( mesh: vtkUnstructuredGrid,
             nVolume += 1
         elif dim == 2:
             assert cell_attributes is not None, "Input mesh must have a 'attribute' cell data array for filtering."
-            if cell_attributes.GetTuple1( i ) in attrs:
+            if cell_attributes.GetTuple1( i ) in attrs or len( attrs ) == 0:
                 surfaceIds.InsertNextValue( i )
                 nSurface += 1
         else:
@@ -332,6 +335,7 @@ def meshDoctor_to_surfaceGen( hierachical_mesh: vtkMultiBlockDataSet, attrs: tup
     if main is None:
         raise ValueError( "No volumetric block found in the multi-block mesh." )
 
+    nCleanCollocated, nColors = 0, 0
     if not skip_clean_collocated:
         main, nCleanCollocated = __clean_collocated( main )
 

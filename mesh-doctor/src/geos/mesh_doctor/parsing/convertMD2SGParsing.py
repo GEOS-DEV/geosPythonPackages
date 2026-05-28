@@ -65,7 +65,7 @@ def displayResults( options: Options, result: Result ) -> None:
         result: The results of the conversion.
     """
     setupLogger.results( getOptionsUsedMessage( options ) )
-    setupLogger.results( "Converted mesh saved to: {0}".format( result.outputFile ) )
+    setupLogger.results( "Converted mesh saved to: {0}".format( options.meshVtkOutput.output ) )
     setupLogger.results( f"  Points: {result.numPoints:,}" )
     setupLogger.results( f"  Cells: {result.numCells:,}" )
     setupLogger.results( f"  Bounds: {result.bounds}" )
