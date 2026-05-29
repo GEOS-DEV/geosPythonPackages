@@ -131,6 +131,13 @@ def __displaySurfaceGroup( g: SurfaceGroup ) -> None:
         setupLogger.results( "  " + f"{c.componentId:>5} {c.numCells:>9,} {c.numVertices:>8,} {c.numEdges:>8,} "
                              f"{c.numFaces:>8,} {c.eulerCharacteristic:>5} {c.numBoundaryEdges:>6,} "
                              f"{c.numNonManifoldEdges:>4,}  {c.interpretation}" )
+        if c.nonManifoldEdgeEndpoints:
+            _MAX_DISPLAY = 10
+            shown = c.nonManifoldEdgeEndpoints[ :_MAX_DISPLAY ]
+            setupLogger.results( "    non-manifold edge endpoints (point id pairs): "
+                                 + ", ".join( f"({a},{b})" for a, b in shown )
+                                 + ( f" … (+{len(c.nonManifoldEdgeEndpoints)-_MAX_DISPLAY} more)"
+                                     if len( c.nonManifoldEdgeEndpoints ) > _MAX_DISPLAY else "" ) )
     if len( g.components ) > 1:
         setupLogger.results( f"  WARNING: {len(g.components)} components — verify isolated cells" )
 

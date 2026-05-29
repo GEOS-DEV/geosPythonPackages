@@ -52,6 +52,7 @@ class SurfaceComponent:
     numBoundaryEdges: int
     numNonManifoldEdges: int
     interpretation: str
+    nonManifoldEdgeEndpoints: tuple[ tuple[ int, int ], ...] = field( default_factory=tuple )
 
 
 @dataclass( frozen=True )
@@ -152,6 +153,7 @@ def __countConnectedComponents( mesh: vtk.vtkUnstructuredGrid ) -> int:
     cf = vtk.vtkConnectivityFilter()
     cf.SetInputData( mesh )
     cf.SetExtractionModeToAllRegions()
+    cf.SetRegionIdAssignmentMode( vtk.vtkConnectivityFilter.CELL_COUNT_DESCENDING )
     cf.ColorRegionsOn()
     cf.Update()
     return cf.GetNumberOfExtractedRegions()
@@ -229,6 +231,7 @@ def __surfaceComponentsFromColored( colored: vtk.vtkUnstructuredGrid ) -> list[ 
     """Compute (V, E, F, chi, boundary, non-manifold) per RegionId of a colored 2D mesh."""
     rid = vtk_to_numpy( colored.GetCellData().GetArray( "RegionId" ) ).astype( np.int64 )
     cells = colored.GetCells()
+    # GetConnectivityArray / GetOffsetsArray require VTK 9+
     conn = vtk_to_numpy( cells.GetConnectivityArray() ).astype( np.int64, copy=False )
     off = vtk_to_numpy( cells.GetOffsetsArray() ).astype( np.int64, copy=False )
 
@@ -251,7 +254,8 @@ def __surfaceComponentsFromColored( colored: vtk.vtkUnstructuredGrid ) -> list[ 
         E = len( edgeCount )
         F = int( len( sel ) )
         bE = sum( 1 for c in edgeCount.values() if c == 1 )
-        nm = sum( 1 for c in edgeCount.values() if c > 2 )
+        nmEdges = tuple( ek for ek, c in edgeCount.items() if c > 2 )
+        nm = len( nmEdges )
         chi = V - E + F
         components.append(
             SurfaceComponent( componentId=int( regionId ),
@@ -262,7 +266,8 @@ def __surfaceComponentsFromColored( colored: vtk.vtkUnstructuredGrid ) -> list[ 
                               eulerCharacteristic=chi,
                               numBoundaryEdges=bE,
                               numNonManifoldEdges=nm,
-                              interpretation=__interpretSurface( chi, bE, nm ) ) )
+                              interpretation=__interpretSurface( chi, bE, nm ),
+                              nonManifoldEdgeEndpoints=nmEdges ) )
     return components
 
 
