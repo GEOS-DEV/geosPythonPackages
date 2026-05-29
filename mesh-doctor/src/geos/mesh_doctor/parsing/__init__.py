@@ -16,6 +16,10 @@ GENERATE_GLOBAL_IDS = "generateGlobalIds"
 NON_CONFORMAL = "nonConformal"
 SELF_INTERSECTING_ELEMENTS = "selfIntersectingElements"
 SUPPORTED_ELEMENTS = "supportedElements"
+ORPHAN_2D = "orphan2d"
+CHECK_INTERNAL_TAGS = "checkInternalTags"
+EULER = "euler"
+CONVERT_MD2SG = "convertMD2SG"
 
 
 @dataclass( frozen=True )

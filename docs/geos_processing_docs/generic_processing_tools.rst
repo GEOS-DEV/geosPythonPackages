@@ -4,17 +4,34 @@ Generic processing filters
 The `generic_processing_tools` module of `geos-processing` package contains filters to process meshes.
 
 
-geos.processing.generic_processing_tools.AttributeMapping filter
-----------------------------------------------------------------
+AttributeMapping
+---------------------
 
 .. automodule:: geos.processing.generic_processing_tools.AttributeMapping
    :members:
    :undoc-members:
    :show-inheritance:
 
+AttributesDiff
+--------------------------------
 
-geos.processing.generic_processing_tools.CreateConstantAttributePerRegion filter
---------------------------------------------------------------------------------
+.. automodule:: geos.processing.generic_processing_tools.AttributesDiff
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
+ClipToMainFrame
+------------------------------
+
+.. automodule:: geos.processing.generic_processing_tools.ClipToMainFrame
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+CreateConstantAttributePerRegion
+--------------------------------------
 
 .. automodule:: geos.processing.generic_processing_tools.CreateConstantAttributePerRegion
     :members:
@@ -22,8 +39,8 @@ geos.processing.generic_processing_tools.CreateConstantAttributePerRegion filter
     :show-inheritance:
 
 
-geos.processing.generic_processing_tools.FillPartialArrays filter
------------------------------------------------------------------
+FillPartialArrays
+------------------------
 
 .. automodule:: geos.processing.generic_processing_tools.FillPartialArrays
     :members:
@@ -31,17 +48,8 @@ geos.processing.generic_processing_tools.FillPartialArrays filter
     :show-inheritance:
 
 
-geos.processing.generic_processing_tools.SplitMesh filter
----------------------------------------------------------
-
-.. automodule:: geos.processing.generic_processing_tools.SplitMesh
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-
-geos.processing.generic_processing_tools.MergeBlockEnhanced filter
-------------------------------------------------------------------
+MergeBlockEnhanced
+----------------------------------
 
 .. automodule:: geos.processing.generic_processing_tools.MergeBlockEnhanced
     :members:
@@ -49,10 +57,10 @@ geos.processing.generic_processing_tools.MergeBlockEnhanced filter
     :show-inheritance:
 
 
-geos.processing.generic_processing_tools.ClipToMainFrame filter
----------------------------------------------------------------
+SplitMesh
+-------------------------
 
-.. automodule:: geos.processing.generic_processing_tools.ClipToMainFrame
+.. automodule:: geos.processing.generic_processing_tools.SplitMesh
     :members:
     :undoc-members:
     :show-inheritance:

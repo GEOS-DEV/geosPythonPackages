@@ -14,5 +14,7 @@ python -m pip install --upgrade ./geos-pv
 cd ./geos-trame/vue-components
 npm i
 npm run build
-cd ../../
+cd ..
+sh configure.sh
+cd ..
 python -m pip install ./geos-trame

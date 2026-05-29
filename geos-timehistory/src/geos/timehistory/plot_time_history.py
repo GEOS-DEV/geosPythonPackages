@@ -26,7 +26,7 @@ def getHistorySeries( database: h5w,
     Args:
         database (geos.hdf5_wrapper.hdf5_wrapper): database to retrieve time history data from
         variable (str): the name of the time history variable for which to retrieve time-series data
-        setname (str): the name of the index set as specified in the geosx input xml for which to query time-series data
+        setname (str): the name of the index set as specified in the geos input xml for which to query time-series data
         indices (Optional[int | list[ int ]]): the indices in the named set to query for, if None, defaults to all
         components (Optional[int | list[ int ]]): the components in the flattened data types to retrieve, defaults to all
 
@@ -104,7 +104,7 @@ def getHistorySeries( database: h5w,
 
 
 def commandLinePlotGen() -> int:
-    """Parse commande line."""
+    """Parse command line."""
     parser = argparse.ArgumentParser(
         description="A script that parses geosx HDF5 time-history files and produces time-history plots using matplotlib"
     )
@@ -123,7 +123,7 @@ def commandLinePlotGen() -> int:
         default=[ None ],
         nargs="+",
         help=
-        "Which index set of time-history data collected by GEOSX to generate a plot file for, may be specified multiple times with different indices/components for each set."
+        "Which index set of time-history data collected by GEOS to generate a plot file for, may be specified multiple times with different indices/components for each set."
     )
 
     parser.add_argument( "--indices",

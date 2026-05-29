@@ -26,8 +26,8 @@ def test_box_intersection( trame_server_layout: tuple[ Server, VAppLayout ] ) ->
     app.deckInspector.state.object_state = [ "Problem/Geometry/0/Box/0", True ]
     app.deckInspector.state.flush()
 
-    box = app.deckViewer.box_engine._box
-    cells = app.deckViewer.box_engine._extracted_cells
+    box = app.deckViewer.box_engine[ "box_1" ]._box
+    cells = app.deckViewer.box_engine[ "box_1" ]._extracted_cells
 
     assert box is not None
     assert box.x_min == '{ 3509, 4117, -596 }'

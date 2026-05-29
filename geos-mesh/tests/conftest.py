@@ -3,35 +3,19 @@
 # SPDX-FileContributor: Paloma Martinez, Romain Baville
 # SPDX-License-Identifier: Apache 2.0
 # ruff: noqa: E402 # disable Module level import not at top of file
-import os
 import pytest
-from typing import Union, Any, Tuple, Dict
 import numpy as np
 import numpy.typing as npt
 
-from vtkmodules.vtkCommonDataModel import vtkDataSet, vtkMultiBlockDataSet, vtkPolyData
+from pathlib import Path
+from typing import Any
+
+from vtkmodules.vtkCommonDataModel import ( vtkDataSet, vtkMultiBlockDataSet, vtkPolyData, vtkUnstructuredGrid,
+                                            VTK_LINE, VTK_QUAD, VTK_HEXAHEDRON )
 from vtkmodules.vtkIOXML import vtkXMLGenericDataObjectReader
 
-
-@pytest.fixture
-def arrayExpected( request: pytest.FixtureRequest ) -> npt.NDArray[ np.float64 ]:
-    """Get an array from a file."""
-    reference_data = "data/data.npz"
-    reference_data_path = os.path.join( os.path.dirname( os.path.realpath( __file__ ) ), reference_data )
-    data = np.load( reference_data_path )
-
-    return data[ request.param ]
-
-
-@pytest.fixture
-def arrayTest( request: pytest.FixtureRequest ) -> npt.NDArray[ np.float64 ]:
-    """Get a random array of float64."""
-    np.random.seed( 42 )
-    array: npt.NDArray[ np.float64 ] = np.random.rand(
-        request.param,
-        3,
-    )
-    return array
+from geos.utils.pieceEnum import Piece
+from geos.mesh.utils.genericHelpers import createMultiCellMesh
 
 
 @pytest.fixture
@@ -149,7 +133,7 @@ def dataSetTest() -> Any:
         (vtkMultiBlockDataSet, vtkPolyData, vtkDataSet): The vtk object.
     """
 
-    def _get_dataset( datasetType: str ) -> Union[ vtkMultiBlockDataSet, vtkPolyData, vtkDataSet ]:
+    def _get_dataset( datasetType: str ) -> vtkMultiBlockDataSet | vtkPolyData | vtkDataSet:
         """Get a vtkObject from a file.
 
         Args:
@@ -159,30 +143,27 @@ def dataSetTest() -> Any:
             (vtkMultiBlockDataSet, vtkPolyData, vtkDataSet): The vtk object.
         """
         reader: vtkXMLGenericDataObjectReader = vtkXMLGenericDataObjectReader()
-        if datasetType == "multiblock":
-            vtkFilename = "data/displacedFault.vtm"
-        elif datasetType == "emptymultiblock":
-            vtkFilename = "data/displacedFaultempty.vtm"
-        elif datasetType == "multiblockGeosOutput":
-            # adapted from example GEOS/inputFiles/compositionalMultiphaseWell/simpleCo2InjTutorial_smoke.xml
-            vtkFilename = "data/simpleReservoirViz_small_000478.vtm"
-        elif datasetType == "fracture":
-            vtkFilename = "data/fracture_res5_id.vtu"
-        elif datasetType == "emptyFracture":
-            vtkFilename = "data/fracture_res5_id_empty.vtu"
-        elif datasetType == "dataset":
-            vtkFilename = "data/domain_res5_id.vtu"
-        elif datasetType == "emptydataset":
-            vtkFilename = "data/domain_res5_id_empty.vtu"
-        elif datasetType == "polydata":
-            vtkFilename = "data/fracture_res5_id.vtp"
-        elif datasetType == "emptypolydata":
-            vtkFilename = "data/fracture_res5_id_empty.vtp"
-        elif datasetType == "meshGeosExtractBlockTmp":
-            vtkFilename = "data/meshGeosExtractBlockTmp.vtm"
-        elif datasetType == "well":
-            vtkFilename = "data/well.vtu"
-        datapath: str = os.path.join( os.path.dirname( os.path.realpath( __file__ ) ), vtkFilename )
+        # Meshes from the GEOS integrated test singlePhasePoromechanics_FaultModel_well_seq
+        if datasetType == "2Ranks":
+            vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/cellElementRegion2Ranks.vtm"
+        elif datasetType == "4Ranks":
+            vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/cellElementRegion4Ranks.vtm"
+        elif datasetType == "geosOutput2Ranks":
+            vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/geosOutput2Ranks.vtm"
+        elif datasetType == "extractAndMergeVolume4Ranks":
+            vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/extractAndMergeVolume4Ranks.vtu"
+        elif datasetType == "extractAndMergeVolume":
+            vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/extractAndMergeVolume.vtu"
+        elif datasetType == "extractAndMergeFault":
+            vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/extractAndMergeFault.vtu"
+        elif datasetType == "extractAndMergeFaultVtp":
+            vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/extractAndMergeFault.vtp"
+        elif datasetType == "extractAndMergeWell1":
+            vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/extractAndMergeWell1.vtu"
+        elif datasetType == "extractAndMergeVolumeWell1":
+            vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/extractAndMergeVolumeWell1.vtm"
+
+        datapath: str = str( Path( __file__ ).parent / vtkFilename )
         reader.SetFileName( datapath )
         reader.Update()
 
@@ -192,80 +173,233 @@ def dataSetTest() -> Any:
 
 
 @pytest.fixture
+def internMeshTest() -> Any:
+    """Get an intern mesh.
+
+    Returns:
+        mesh (vtkUnstructuredGrid | vtkMultiBlockDataSet): An internal mesh.
+    """
+    ## mesh 3D
+    coordPts3D: list[ list[ float ] ] = [ [ -1., 0., 0. ], [ 0., 0., 0. ], [ 0., 1., 0. ], [ -1., 1., 0. ],
+                                          [ -1., 0., 1. ], [ 0., 0., 1. ], [ 0., 1., 1. ], [ -1., 1., 1. ],
+                                          [ 1., 0., 0. ], [ 1., 1., 0. ], [ 1., 0., 1. ], [ 1., 1., 1. ],
+                                          [ 2., 0., 0. ], [ 2., 1., 0. ], [ 2., 0., 1. ], [ 2., 1., 1. ] ]
+    cellsMesh3D: list[ tuple[ int, ...] ] = [ ( 0, 1, 2, 3, 4, 5, 6, 7 ), ( 1, 8, 9, 2, 5, 10, 11, 6 ),
+                                              ( 8, 12, 13, 9, 10, 14, 15, 11 ) ]
+    coordCells3D: list[ npt.NDArray[ np.float64 ] ] = [
+        np.array( [ coordPts3D[ i ] for i in cellMesh3D ] ) for cellMesh3D in cellsMesh3D
+    ]
+    list3DCellType: list[ int ] = [ VTK_HEXAHEDRON, VTK_HEXAHEDRON, VTK_HEXAHEDRON ]
+
+    ## mesh 2D
+    coordPts2D: list[ list[ float ] ] = [ [ 0., 0., 0. ], [ 1., 0., 0. ], [ 1., 0., 1. ], [ 0., 0., 1. ],
+                                          [ 2., 0., 0. ], [ 2., 0., 1. ], [ 3., 0., 0. ], [ 3., 0., 1. ] ]
+    cellsMesh2D: list[ tuple[ int, ...] ] = [ ( 0, 1, 2, 3 ), ( 1, 4, 5, 2 ), ( 4, 6, 7, 5 ) ]
+    coordCells2D: list[ npt.NDArray[ np.float64 ] ] = [
+        np.array( [ coordPts2D[ i ] for i in cellMesh2D ] ) for cellMesh2D in cellsMesh2D
+    ]
+    list2DCellType: list[ int ] = [ VTK_QUAD, VTK_QUAD, VTK_QUAD ]
+
+    ## mesh 1D
+    coordPts1D: list[ list[ float ] ] = [ [ 1., 0., 0. ], [ 1., 0., 1. ], [ 1.5, 0., 0. ], [ 1.5, 0., 1. ] ]
+    cellsMesh1D: list[ tuple[ int, ...] ] = [ ( 0, 1 ), ( 2, 3 ) ]
+    coordCells1D: list[ npt.NDArray[ np.float64 ] ] = [
+        np.array( [ coordPts1D[ i ] for i in cellMesh1D ] ) for cellMesh1D in cellsMesh1D
+    ]
+    list1DCellType: list[ int ] = [ VTK_LINE, VTK_LINE ]
+
+    testCase: dict[ str, tuple[ list[ npt.NDArray[ np.float64 ] ], list[ int ] ] ] = {
+        "vtu1D": ( coordCells1D, list1DCellType ),
+        "vtu2D": ( coordCells2D, list2DCellType ),
+        "vtu3D": ( coordCells3D, list3DCellType )
+    }
+
+    def _get_mesh( meshType: str ) -> vtkUnstructuredGrid | vtkMultiBlockDataSet:
+        """Create and return a mesh with the right type.
+
+        Args:
+            meshType (str): The type of mesh wanted.
+
+        Returns:
+            (vtkUnstructuredGrid | vtkMultiBlockDataSet): The mesh created.
+        """
+        cellType: list[ int ]
+        cellPtsCoord: list[ npt.NDArray[ np.float64 ] ]
+        if meshType == 'vtm':
+            mesh = vtkMultiBlockDataSet()
+            mesh.SetNumberOfBlocks( 3 )
+            for i, key in enumerate( testCase ):
+                cellPtsCoord, cellType = testCase[ key ]
+                mesh.SetBlock( i, createMultiCellMesh( cellType, cellPtsCoord ) )
+        else:
+            cellPtsCoord, cellType = testCase[ meshType ]
+            mesh = createMultiCellMesh( cellType, cellPtsCoord )
+
+        return mesh
+
+    return _get_mesh
+
+
+@pytest.fixture
 def getElementMap() -> Any:
     """Get the element indexes mapping dictionary using the function _get_elementMap() between two meshes.
 
     Returns:
-        elementMap (Dict[int, npt.NDArray[np.int64]]): The cell mapping dictionary.
+        elementMap (dict[int, npt.NDArray[np.int64]]): The cell mapping dictionary.
     """
 
-    def _get_elementMap( meshFromName: str, meshToName: str, points: bool ) -> Dict[ int, npt.NDArray[ np.int64 ] ]:
+    def _get_elementMap( meshFromName: str, meshToName: str, piece: Piece ) -> dict[ int, npt.NDArray[ np.int64 ] ]:
         """Get the element indexes mapping dictionary between two meshes.
 
         Args:
             meshFromName (str): The name of the meshFrom.
             meshToName (str): The name of the meshTo.
-            points (bool): True if elements to map is points, False if it is cells.
+            piece (Piece): The element to map.
 
         Returns:
-            elementMap (Dict[int, npt.NDArray[np.int64]]): The element mapping dictionary.
+            elementMap (dict[int, npt.NDArray[np.int64]]): The element mapping dictionary.
         """
-        elementMap: Dict[ int, npt.NDArray[ np.int64 ] ] = {}
-        nbElements: Tuple[ int, int ] = ( 4092, 212 ) if points else ( 1740, 156 )
-        if meshFromName == "multiblock":
-            if meshToName == "emptymultiblock":
-                elementMap[ 1 ] = np.array( [ [ 1, element ] for element in range( nbElements[ 0 ] ) ] )
-                elementMap[ 3 ] = np.array( [ [ 3, element ] for element in range( nbElements[ 1 ] ) ] )
-            elif meshToName == "emptyFracture":
-                elementMap[ 0 ] = np.array( [ [ 3, element ] for element in range( nbElements[ 1 ] ) ] )
-        elif meshFromName == "dataset":
-            if meshToName == "emptydataset":
-                elementMap[ 0 ] = np.array( [ [ 0, element ] for element in range( nbElements[ 0 ] ) ] )
-            elif meshToName == "emptyFracture":
+        sharedElem2D3DIds: dict[ Piece, npt.NDArray[ np.int64 ] ] = {
+            Piece.CELLS: np.array( [ [ 0, 1 ], [ 1, 2 ] ], dtype=np.int64 ),
+            Piece.POINTS: np.array( [ [ 0, 1 ], [ 1, 8 ], [ 2, 10 ], [ 3, 5 ], [ 4, 12 ], [ 5, 14 ] ], dtype=np.int64 )
+        }
+
+        sharedElem1D2DIds: dict[ Piece, npt.NDArray[ np.int64 ] ] = {
+            Piece.CELLS: np.array( [ [ 0, 0 ] ], dtype=np.int64 ),
+            Piece.POINTS: np.array( [ [ 0, 1 ], [ 1, 2 ] ], dtype=np.int64 )
+        }
+
+        sharedElem1D3DIds: dict[ Piece, npt.NDArray[ np.int64 ] ] = {
+            Piece.CELLS: np.array( [ [ 0, 1 ] ], dtype=np.int64 ),
+            Piece.POINTS: np.array( [ [ 0, 8 ], [ 1, 10 ] ], dtype=np.int64 )
+        }
+
+        elementMap: dict[ int, npt.NDArray[ np.int64 ] ] = {}
+        nbElements: tuple[ int, int, int ] = ( 16, 8, 4 ) if piece == Piece.POINTS else ( 3, 3, 2 )
+        if meshFromName == "vtu1D":
+            if meshToName == "vtu1D":
+                elementMap[ 0 ] = np.array( [ [ 0, element ] for element in range( nbElements[ 2 ] ) ] )
+            elif meshToName == "vtu2D":
                 elementMap[ 0 ] = np.full( ( nbElements[ 1 ], 2 ), -1, np.int64 )
-            elif meshToName == "emptypolydata":
-                elementMap[ 0 ] = np.array( [ [ 0, 0 ], [ 0, 1 ], [ 0, 2 ], [ 0, 3 ], [ 0, 4 ], [ 0, 5 ], [ 0, 6 ],
-                                              [ 0, 7 ], [ 0, 8 ], [ 0, 9 ], [ 0, 10 ], [ 0, 11 ], [ 0, 12 ], [ 0, 13 ],
-                                              [ 0, 14 ], [ 0, 15 ], [ 0, 16 ], [ 0, 17 ], [ 0, 18 ], [ 0,
-                                                                                                       19 ], [ 0, 20 ],
-                                              [ 0, 21 ], [ 0, 22 ], [ 0, 23 ], [ 0, 48 ], [ 0, 50 ], [ 0,
-                                                                                                       51 ], [ 0, 54 ],
-                                              [ 0, 56 ], [ 0, 57 ], [ 0, 58 ], [ 0, 59 ], [ 0, 60 ], [ 0,
-                                                                                                       61 ], [ 0, 62 ],
-                                              [ 0, 63 ], [ 0, 64 ], [ 0, 65 ], [ 0, 66 ], [ 0, 67 ], [ 0,
-                                                                                                       68 ], [ 0, 69 ],
-                                              [ 0, 70 ], [ 0, 71 ], [ 0, 72 ], [ 0, 73 ], [ 0, 74 ],
-                                              [ 0, 75 ], [ 0, 76 ], [ 0, 77 ], [ 0, 78 ], [ 0, 79 ], [ 0, 580 ],
-                                              [ 0, 581 ], [ 0, 582 ], [ 0, 583 ], [ 0, 584 ], [ 0, 585 ], [ 0, 586 ],
-                                              [ 0, 587 ], [ 0, 588 ], [ 0, 589 ], [ 0, 590 ], [ 0, 591 ], [ 0, 592 ],
-                                              [ 0, 593 ], [ 0, 594 ], [ 0, 595 ], [ 0, 596 ], [ 0, 597 ], [ 0, 598 ],
-                                              [ 0, 599 ], [ 0, 600 ], [ 0, 601 ], [ 0, 602 ], [ 0, 603 ], [ 0, 628 ],
-                                              [ 0, 630 ], [ 0, 631 ], [ 0, 634 ], [ 0, 636 ], [ 0, 637 ], [ 0, 638 ],
-                                              [ 0, 639 ], [ 0, 640 ], [ 0, 641 ], [ 0, 642 ], [ 0, 643 ], [ 0, 644 ],
-                                              [ 0, 645 ], [ 0, 646 ], [ 0, 647 ], [ 0, 648 ], [ 0, 649 ], [ 0, 650 ],
-                                              [ 0, 651 ], [ 0, 652 ], [ 0, 653 ], [ 0, 654 ], [ 0, 655 ], [ 0, 656 ],
-                                              [ 0, 657 ], [ 0, 658 ], [ 0, 659 ], [ 0, 1160 ], [ 0, 1161 ], [ 0, 1162 ],
-                                              [ 0, 1163 ], [ 0, 1164 ], [ 0, 1165 ], [ 0, 1166 ], [ 0, 1167 ],
-                                              [ 0, 1168 ], [ 0, 1169 ], [ 0, 1170 ], [ 0, 1171 ], [ 0, 1172 ],
-                                              [ 0, 1173 ], [ 0, 1174 ], [ 0, 1175 ], [ 0, 1176 ], [ 0, 1177 ],
-                                              [ 0, 1178 ], [ 0, 1179 ], [ 0, 1180 ], [ 0, 1181 ], [ 0, 1182 ],
-                                              [ 0, 1183 ], [ 0, 1208 ], [ 0, 1210 ], [ 0, 1211 ], [ 0, 1214 ],
-                                              [ 0, 1216 ], [ 0, 1217 ], [ 0, 1218 ], [ 0, 1219 ], [ 0, 1220 ],
-                                              [ 0, 1221 ], [ 0, 1222 ], [ 0, 1223 ], [ 0, 1224 ], [ 0, 1225 ],
-                                              [ 0, 1226 ], [ 0, 1227 ], [ 0, 1228 ], [ 0, 1229 ], [ 0, 1230 ],
-                                              [ 0, 1231 ], [ 0, 1232 ], [ 0, 1233 ], [ 0, 1234 ], [ 0, 1235 ],
-                                              [ 0, 1236 ], [ 0, 1237 ], [ 0, 1238 ], [ 0, 1239 ] ] )
-            elif meshToName == "emptymultiblock":
-                elementMap[ 1 ] = np.array( [ [ 0, element ] for element in range( nbElements[ 0 ] ) ] )
-                elementMap[ 3 ] = np.full( ( nbElements[ 1 ], 2 ), -1, np.int64 )
-        elif meshFromName == "fracture":
-            if meshToName == "emptyFracture":
+                for id2DElem in range( nbElements[ 1 ] ):
+                    for sharedElem1D2DId in sharedElem1D2DIds[ piece ]:
+                        if id2DElem == sharedElem1D2DId[ 1 ]:
+                            elementMap[ 0 ][ id2DElem ] = [ 0, sharedElem1D2DId[ 0 ] ]
+            elif meshToName == "vtu3D":
+                elementMap[ 0 ] = np.full( ( nbElements[ 0 ], 2 ), -1, np.int64 )
+                for id3DElem in range( nbElements[ 0 ] ):
+                    for sharedElem1D3DId in sharedElem1D3DIds[ piece ]:
+                        if id3DElem == sharedElem1D3DId[ 1 ]:
+                            elementMap[ 0 ][ id3DElem ] = [ 0, sharedElem1D3DId[ 0 ] ]
+            elif meshToName == "vtm":
+                elementMap[ 1 ] = np.array( [ [ 0, element ] for element in range( nbElements[ 2 ] ) ] )
+                elementMap[ 2 ] = np.full( ( nbElements[ 1 ], 2 ), -1, np.int64 )
+                for id2DElem in range( nbElements[ 1 ] ):
+                    for sharedElem1D2DId in sharedElem1D2DIds[ piece ]:
+                        if id2DElem == sharedElem1D2DId[ 1 ]:
+                            elementMap[ 2 ][ id2DElem ] = [ 0, sharedElem1D2DId[ 0 ] ]
+                elementMap[ 3 ] = np.full( ( nbElements[ 0 ], 2 ), -1, np.int64 )
+                for id3DElem in range( nbElements[ 0 ] ):
+                    for sharedElem1D3DId in sharedElem1D3DIds[ piece ]:
+                        if id3DElem == sharedElem1D3DId[ 1 ]:
+                            elementMap[ 3 ][ id3DElem ] = [ 0, sharedElem1D3DId[ 0 ] ]
+        elif meshFromName == "vtu2D":
+            if meshToName == "vtu2D":
                 elementMap[ 0 ] = np.array( [ [ 0, element ] for element in range( nbElements[ 1 ] ) ] )
-            elif meshToName == "emptymultiblock":
-                elementMap[ 1 ] = np.full( ( nbElements[ 0 ], 2 ), -1, np.int64 )
-                elementMap[ 3 ] = np.array( [ [ 0, element ] for element in range( nbElements[ 1 ] ) ] )
-        elif meshFromName == "polydata" and meshToName == "emptypolydata":
-            elementMap[ 0 ] = np.array( [ [ 0, element ] for element in range( nbElements[ 1 ] ) ] )
+            elif meshToName == "vtu1D":
+                elementMap[ 0 ] = np.full( ( nbElements[ 2 ], 2 ), -1, np.int64 )
+                for id1DElem in range( nbElements[ 2 ] ):
+                    for sharedElem1D2DId in sharedElem1D2DIds[ piece ]:
+                        if id1DElem == sharedElem1D2DId[ 0 ]:
+                            elementMap[ 0 ][ id1DElem ] = [ 0, sharedElem1D2DId[ 1 ] ]
+            elif meshToName == "vtu3D":
+                elementMap[ 0 ] = np.full( ( nbElements[ 0 ], 2 ), -1, np.int64 )
+                for id3DElem in range( nbElements[ 0 ] ):
+                    for sharedElem2D3DId in sharedElem2D3DIds[ piece ]:
+                        if id3DElem == sharedElem2D3DId[ 1 ]:
+                            elementMap[ 0 ][ id3DElem ] = [ 0, sharedElem2D3DId[ 0 ] ]
+            elif meshToName == "vtm":
+                elementMap[ 1 ] = np.full( ( nbElements[ 2 ], 2 ), -1, np.int64 )
+                for id1DElem in range( nbElements[ 2 ] ):
+                    for sharedElem1D2DId in sharedElem1D2DIds[ piece ]:
+                        if id1DElem == sharedElem1D2DId[ 0 ]:
+                            elementMap[ 1 ][ id1DElem ] = [ 0, sharedElem1D2DId[ 1 ] ]
+                elementMap[ 2 ] = np.array( [ [ 0, element ] for element in range( nbElements[ 1 ] ) ] )
+                elementMap[ 3 ] = np.full( ( nbElements[ 0 ], 2 ), -1, np.int64 )
+                for id3DElem in range( nbElements[ 0 ] ):
+                    for sharedElem2D3DId in sharedElem2D3DIds[ piece ]:
+                        if id3DElem == sharedElem2D3DId[ 1 ]:
+                            elementMap[ 3 ][ id3DElem ] = [ 0, sharedElem2D3DId[ 0 ] ]
+        elif meshFromName == "vtu3D":
+            if meshToName == "vtu3D":
+                elementMap[ 0 ] = np.array( [ [ 0, element ] for element in range( nbElements[ 0 ] ) ] )
+            elif meshToName == "vtu1D":
+                elementMap[ 0 ] = np.full( ( nbElements[ 2 ], 2 ), -1, np.int64 )
+                for id1DElem in range( nbElements[ 2 ] ):
+                    for sharedElem1D3DId in sharedElem1D3DIds[ piece ]:
+                        if id1DElem == sharedElem1D3DId[ 0 ]:
+                            elementMap[ 0 ][ id1DElem ] = [ 0, sharedElem1D3DId[ 1 ] ]
+            elif meshToName == "vtu2D":
+                elementMap[ 0 ] = np.full( ( nbElements[ 1 ], 2 ), -1, np.int64 )
+                for id2DElem in range( nbElements[ 1 ] ):
+                    for sharedElem2D3DId in sharedElem2D3DIds[ piece ]:
+                        if id2DElem == sharedElem2D3DId[ 0 ]:
+                            elementMap[ 0 ][ id2DElem ] = [ 0, sharedElem2D3DId[ 1 ] ]
+            elif meshToName == "vtm":
+                elementMap[ 1 ] = np.full( ( nbElements[ 2 ], 2 ), -1, np.int64 )
+                for id1DElem in range( nbElements[ 2 ] ):
+                    for sharedElem1D3DId in sharedElem1D3DIds[ piece ]:
+                        if id1DElem == sharedElem1D3DId[ 0 ]:
+                            elementMap[ 1 ][ id1DElem ] = [ 0, sharedElem1D3DId[ 1 ] ]
+                elementMap[ 2 ] = np.full( ( nbElements[ 1 ], 2 ), -1, np.int64 )
+                for id2DElem in range( nbElements[ 1 ] ):
+                    for sharedElem2D3DId in sharedElem2D3DIds[ piece ]:
+                        if id2DElem == sharedElem2D3DId[ 0 ]:
+                            elementMap[ 2 ][ id2DElem ] = [ 0, sharedElem2D3DId[ 1 ] ]
+                elementMap[ 3 ] = np.array( [ [ 0, element ] for element in range( nbElements[ 0 ] ) ] )
+        elif meshFromName == "vtm":
+            if meshToName == "vtm":
+                elementMap[ 1 ] = np.array( [ [ 1, element ] for element in range( nbElements[ 2 ] ) ] )
+                elementMap[ 2 ] = np.full( ( nbElements[ 1 ], 2 ), -1, np.int64 )
+                for idElem in range( nbElements[ 1 ] ):
+                    for sharedElem1D2DId in sharedElem1D2DIds[ piece ]:
+                        if idElem == sharedElem1D2DId[ 1 ]:
+                            elementMap[ 2 ][ idElem ] = [ 1, sharedElem1D2DId[ 0 ] ]
+                    if ( elementMap[ 2 ][ idElem ] == [ -1, -1 ] ).all():
+                        elementMap[ 2 ][ idElem ] = [ 2, idElem ]
+                elementMap[ 3 ] = np.full( ( nbElements[ 0 ], 2 ), -1, np.int64 )
+                for idElem in range( nbElements[ 0 ] ):
+                    for sharedElem1D3DId in sharedElem1D3DIds[ piece ]:
+                        if idElem == sharedElem1D3DId[ 1 ]:
+                            elementMap[ 3 ][ idElem ] = [ 1, sharedElem1D3DId[ 0 ] ]
+                    if ( elementMap[ 3 ][ idElem ] == [ -1, -1 ] ).all():
+                        for sharedElem2D3DId in sharedElem2D3DIds[ piece ]:
+                            if idElem == sharedElem2D3DId[ 1 ]:
+                                elementMap[ 3 ][ idElem ] = [ 2, sharedElem2D3DId[ 0 ] ]
+                    if ( elementMap[ 3 ][ idElem ] == [ -1, -1 ] ).all():
+                        elementMap[ 3 ][ idElem ] = [ 3, idElem ]
+            elif meshToName == "vtu1D":
+                elementMap[ 0 ] = np.array( [ [ 1, element ] for element in range( nbElements[ 2 ] ) ] )
+            elif meshToName == "vtu2D":
+                elementMap[ 0 ] = np.full( ( nbElements[ 1 ], 2 ), -1, np.int64 )
+                for idElem in range( nbElements[ 1 ] ):
+                    for sharedElem1D2DId in sharedElem1D2DIds[ piece ]:
+                        if idElem == sharedElem1D2DId[ 1 ]:
+                            elementMap[ 0 ][ idElem ] = [ 1, sharedElem1D2DId[ 0 ] ]
+                    if ( elementMap[ 0 ][ idElem ] == [ -1, -1 ] ).all():
+                        elementMap[ 0 ][ idElem ] = [ 2, idElem ]
+            elif meshToName == "vtu3D":
+                elementMap[ 0 ] = np.full( ( nbElements[ 0 ], 2 ), -1, np.int64 )
+                for idElem in range( nbElements[ 0 ] ):
+                    for sharedElem1D3DId in sharedElem1D3DIds[ piece ]:
+                        if idElem == sharedElem1D3DId[ 1 ]:
+                            elementMap[ 0 ][ idElem ] = [ 1, sharedElem1D3DId[ 0 ] ]
+                    if ( elementMap[ 0 ][ idElem ] == [ -1, -1 ] ).all():
+                        for sharedElem2D3DId in sharedElem2D3DIds[ piece ]:
+                            if idElem == sharedElem2D3DId[ 1 ]:
+                                elementMap[ 0 ][ idElem ] = [ 2, sharedElem2D3DId[ 0 ] ]
+                    if ( elementMap[ 0 ][ idElem ] == [ -1, -1 ] ).all():
+                        elementMap[ 0 ][ idElem ] = [ 3, idElem ]
 
         return elementMap
 

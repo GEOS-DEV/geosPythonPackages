@@ -15,7 +15,7 @@ from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkMultiBlockDa
 from vtkmodules.vtkCommonTransforms import vtkLandmarkTransform
 from vtkmodules.vtkFiltersGeneral import vtkTransformFilter
 
-from geos.utils.Logger import ( Logger, getLogger )
+from geos.utils.Logger import ( getLogger, Logger, CountVerbosityHandler, isHandlerInLogger, getLoggerHandlerType )
 from geos.mesh.utils.genericHelpers import getMultiBlockBounds
 
 __doc__ = """
@@ -211,7 +211,7 @@ class ClipToMainFrameElement( vtkLandmarkTransform ):
         return ( sourcePts, targetPts )
 
 
-loggerTitle: str = "Clip mesh to main frame."
+loggerTitle: str = "Clip mesh to main frame"
 
 
 class ClipToMainFrame( vtkTransformFilter ):
@@ -231,6 +231,8 @@ class ClipToMainFrame( vtkTransformFilter ):
 
     def ComputeTransform( self ) -> None:
         """Update the transformation."""
+        self.logger.info( f"Apply filter { self.logger.name }." )
+
         # dispatch to ClipToMainFrame depending on input type
         if isinstance( self.GetInput(), vtkMultiBlockDataSet ):
             # locate reference point

@@ -18,30 +18,30 @@ class TestAttributeMatrixFromVector( TestCase ):
 
     def test_wrongInputVectorSize( self: Self ) -> None:
         """Test failure on incorrect input vector size."""
-        emptyVector: npt.NDArray[ np.float64 ] = np.array( [] )
+        emptyVector: npt.NDArray[ np.float64 ] = np.array( [ [] ] )
         with self.assertRaises( ValueError ):
             getAttributeMatrixFromVector( emptyVector )
 
     def test_vector3size( self: Self ) -> None:
         """Test for an input vector size of 3."""
         vector3 = np.arange( 1, 4 )
-        expectedMatrix: npt.NDArray[ np.float64 ] = np.array( [ [ 1, 0, 0 ], [ 0, 2, 0 ], [ 0, 0, 3 ] ] )
+        expectedMatrix: npt.NDArray[ np.float64 ] = np.array( [ [ [ 1, 0, 0 ], [ 0, 2, 0 ], [ 0, 0, 3 ] ] ] )
 
-        self.assertTrue( np.array_equal( expectedMatrix, getAttributeMatrixFromVector( vector3 ) ) )
+        self.assertTrue( np.array_equal( expectedMatrix, getAttributeMatrixFromVector( np.array( [ vector3 ] ) ) ) )
 
     def test_vector6( self: Self ) -> None:
         """Test for an input vector size of 6."""
         vector6 = np.arange( 1, 7 )
-        expectedMatrix = np.array( [ [ 1, 6, 5 ], [ 6, 2, 4 ], [ 5, 4, 3 ] ] )
+        expectedMatrix = np.array( [ [ [ 1, 6, 5 ], [ 6, 2, 4 ], [ 5, 4, 3 ] ] ] )
 
-        self.assertTrue( np.array_equal( expectedMatrix, getAttributeMatrixFromVector( vector6 ) ) )
+        self.assertTrue( np.array_equal( expectedMatrix, getAttributeMatrixFromVector( np.array( [ vector6 ] ) ) ) )
 
     def test_vector9( self: Self ) -> None:
         """Test for an input vector size of 9."""
         vector9 = np.arange( 1, 10 )
-        expectedMatrix = np.array( [ [ 1, 6, 5 ], [ 9, 2, 4 ], [ 8, 7, 3 ] ] )
+        expectedMatrix = np.array( [ [ [ 1, 6, 5 ], [ 9, 2, 4 ], [ 8, 7, 3 ] ] ] )
 
-        self.assertTrue( np.array_equal( expectedMatrix, getAttributeMatrixFromVector( vector9 ) ) )
+        self.assertTrue( np.array_equal( expectedMatrix, getAttributeMatrixFromVector( np.array( [ vector9 ] ) ) ) )
 
 
 class TestAttributeVectorFromMatrix( TestCase ):
@@ -49,25 +49,26 @@ class TestAttributeVectorFromMatrix( TestCase ):
 
     def setUp( self: Self ) -> None:
         """Set up parameters."""
-        self.rdMatrix = np.arange( 1, 10 ).reshape( 3, 3 )
-        self.expected: npt.NDArray[ np.float64 ] = np.array( [ 1, 5, 9, 6, 3, 2, 8, 7, 4 ] )
+        self.rdMatrix = np.arange( 1, 10 ).reshape( 1, 3, 3 )
+        self.expected: npt.NDArray[ np.float64 ] = np.array( [ [ 1, 5, 9, 6, 3, 2, 8, 7, 4 ] ] )
 
     def test_wrongInputMatrixShape( self ) -> None:
         """Test failure on empty input matrix."""
-        emptyMatrix = np.array( [] )
+        emptyMatrix = np.array( [ [] ] )
         with self.assertRaises( ValueError ):
-            getAttributeVectorFromMatrix( emptyMatrix, 3 )
+            getAttributeVectorFromMatrix( emptyMatrix, ( 1, 3 ) )
 
-    def test_wrongOutputSize( self: Self ) -> None:
-        """Test failure on incorrect output size requested."""
-        size = 4
+    def test_wrongOutputShape( self: Self ) -> None:
+        """Test failure on incorrect output shape requested."""
+        shape = ( 1, 4 )
         with self.assertRaises( ValueError ):
-            getAttributeVectorFromMatrix( self.rdMatrix, size )
+            getAttributeVectorFromMatrix( self.rdMatrix, shape )
 
     def test_vecOutput( self: Self ) -> None:
         """Test correct output for requested size."""
         listSize = ( 3, 6, 9 )
         for size in listSize:
             with self.subTest( size ):
-                expectedVector = np.array( self.expected[ :size ] )
-                self.assertTrue( np.array_equal( expectedVector, getAttributeVectorFromMatrix( self.rdMatrix, size ) ) )
+                expectedVector = np.array( self.expected[ :, :size ] )
+                self.assertTrue(
+                    np.array_equal( expectedVector, getAttributeVectorFromMatrix( self.rdMatrix, ( 1, size ) ) ) )

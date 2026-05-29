@@ -8,7 +8,7 @@ from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkCell, vtkTable
 
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
 from geos.mesh.stats.meshQualityMetricHelpers import getAllCellTypes
-from geos.utils.Logger import ( Logger, getLogger )
+from geos.utils.Logger import ( getLogger, Logger, CountVerbosityHandler, isHandlerInLogger, getLoggerHandlerType )
 
 __doc__ = """
 CellTypeCounterEnhanced module is a vtk filter that computes cell type counts.
@@ -33,7 +33,13 @@ To use the filter:
     cellTypeCounterEnhancedFilter.setLoggerHandler( yourHandler )
 
     # Do calculations
-    cellTypeCounterEnhancedFilter.applyFilter()
+    try:
+        cellTypeCounterEnhancedFilter.applyFilter()
+    except TypeError as e:
+        cellTypeCounterEnhancedFilter.logger.error( f"The filter { cellTypeCounterEnhancedFilter.logger.name } failed due to: { e }" )
+    except Exception as e:
+        mess: str = f"The filter { cellTypeCounterEnhancedFilter.logger.name } failed due to: { e }"
+        cellTypeCounterEnhancedFilter.logger.critical( mess, exc_info=True )
 
     # Get result
     counts: CellTypeCounts = cellTypeCounterEnhancedFilter.GetCellTypeCountsObject()
@@ -63,45 +69,47 @@ class CellTypeCounterEnhanced():
         # Logger.
         self.logger: Logger = getLogger( loggerTitle )
 
-    def applyFilter( self: Self ) -> bool:
+    def applyFilter( self: Self ) -> None:
         """Apply CellTypeCounterEnhanced filter.
 
-        Returns:
-            bool: True if the filter succeeded, False otherwise.
+        Raises:
+            TypeError: Errors with the type of the cells.
         """
         self.logger.info( f"Apply filter { self.logger.name }." )
-        try:
-            # compute cell type counts
-            self._counts.reset()
-            self._counts.setTypeCount( VTK_VERTEX, self.inputMesh.GetNumberOfPoints() )
-            for i in range( self.inputMesh.GetNumberOfCells() ):
-                cell: vtkCell = self.inputMesh.GetCell( i )
-                self._counts.addType( cell.GetCellType() )
 
-            # create output table
-            # first reset output table
-            self.outTable.RemoveAllRows()
-            self.outTable.RemoveAllColumns()
-            self.outTable.SetNumberOfRows( 1 )
+        # Compute cell type counts
+        self._counts.reset()
+        self._counts.setTypeCount( VTK_VERTEX, self.inputMesh.GetNumberOfPoints() )
+        for i in range( self.inputMesh.GetNumberOfCells() ):
+            cell: vtkCell = self.inputMesh.GetCell( i )
+            self._counts.addType( cell.GetCellType() )
 
-            # create columns per types
-            for cellType in getAllCellTypes():
-                array: vtkIntArray = vtkIntArray()
-                array.SetName( vtkCellTypes.GetClassNameFromTypeId( cellType ) )
-                array.SetNumberOfComponents( 1 )
-                array.SetNumberOfValues( 1 )
-                array.SetValue( 0, self._counts.getTypeCount( cellType ) )
-                self.outTable.AddColumn( array )
-            self.logger.info( f"The filter { self.logger.name } succeeded." )
-        except TypeError as e:
-            self.logger.error( f"The filter { self.logger.name } failed.\n{ e }" )
-            return False
-        except Exception as e:
-            mess: str = f"The filter { self.logger.name } failed.\n{ e }"
-            self.logger.critical( mess, exc_info=True )
-            return False
+        # Create output table
+        # First reset output table
+        self.outTable.RemoveAllRows()
+        self.outTable.RemoveAllColumns()
+        self.outTable.SetNumberOfRows( 1 )
 
-        return True
+        # Create columns per types
+        for cellType in getAllCellTypes():
+            array: vtkIntArray = vtkIntArray()
+            array.SetName( vtkCellTypes.GetClassNameFromTypeId( cellType ) )
+            array.SetNumberOfComponents( 1 )
+            array.SetNumberOfValues( 1 )
+            array.SetValue( 0, self._counts.getTypeCount( cellType ) )
+            self.outTable.AddColumn( array )
+
+        result: str = f"The filter { self.logger.name } succeeded"
+        if self.counter.warningCount > 0:
+            self.logger.warning( f"{ result } but { self.counter.warningCount } warnings have been logged." )
+        else:
+            self.logger.info( f"{ result }." )
+
+        # Keep number of warnings logged during the filter application and reset the warnings count in case the filter is applied again.
+        self.nbWarnings = self.counter.warningCount
+        self.counter.resetWarningCount()
+
+        return
 
     def GetCellTypeCountsObject( self: Self ) -> CellTypeCounts:
         """Get CellTypeCounts object.

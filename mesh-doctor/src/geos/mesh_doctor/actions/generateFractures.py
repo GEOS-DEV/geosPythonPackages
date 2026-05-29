@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
-# SPDX-FileContributor: Thomas Gazolla, Alexandre Benedicto
+# SPDX-FileContributor: Thomas Gazolla, Alexandre Benedicto, Bertrand Denel
 from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum
 import networkx
-from numpy import empty, ones, zeros
+from numpy import empty, ones
 from tqdm import tqdm
 from typing import Collection, Iterable, Mapping, Optional, Sequence, TypeAlias
 from vtk import vtkDataArray
@@ -326,7 +326,7 @@ def __copyFieldsSplitMesh( oldMesh: vtkUnstructuredGrid, splitMesh: vtkUnstructu
         # Reshape oldPointsArray if it is 1-dimensional
         if len( oldPointsArray.shape ) == 1:
             oldPointsArray = oldPointsArray.reshape( ( oldNrows, 1 ) )
-        newPointsArray = empty( ( newNumberPoints, oldNcols ) )
+        newPointsArray = empty( ( newNumberPoints, oldNcols ), dtype=oldPointsArray.dtype )
         newPointsArray[ :oldNrows, : ] = oldPointsArray
         for newAndOldId in addedPointsWithOldId:
             newPointsArray[ newAndOldId[ 0 ], : ] = oldPointsArray[ newAndOldId[ 1 ], : ]
@@ -418,6 +418,7 @@ def __performSplit( oldMesh: vtkUnstructuredGrid, cellToNodeMapping: Mapping[ in
     # Creating the new points for the new mesh.
     oldPoints: vtkPoints = oldMesh.GetPoints()
     newPoints = vtkPoints()
+    newPoints.SetDataType( oldPoints.GetDataType() )  # Preserve precision from input mesh
     newPoints.SetNumberOfPoints( numNewPoints )
     collocatedNodes = ones( numNewPoints, dtype=int ) * -1
     # Copying old points into the new container.
@@ -432,6 +433,46 @@ def __performSplit( oldMesh: vtkUnstructuredGrid, cellToNodeMapping: Mapping[ in
                 collocatedNodes[ o ] = i
     collocatedNodes.flags.writeable = False
 
+    # For each 2D cell, find its adjacent 3D cell and copy the node mapping
+    setupLogger.info( "Building 2D cell mappings from adjacent 3D cells..." )
+    cell2dToMapping: dict[ int, dict[ int, int ] ] = {}
+
+    for c in tqdm( range( oldMesh.GetNumberOfCells() ), desc="Matching 2D to 3D cells" ):
+        cell2d: vtkCell = oldMesh.GetCell( c )
+        if cell2d.GetCellDimension() != 2:
+            continue
+
+        # Get the point IDs of this 2D cell
+        pointIds = cell2d.GetPointIds()
+
+        # Find a 3D cell neighbor
+        neighborIds = vtkIdList()
+        oldMesh.GetCellNeighbors( c, pointIds, neighborIds )
+
+        # Use the first 3D neighbor's mapping
+        for i in range( neighborIds.GetNumberOfIds() ):
+            neighborId = neighborIds.GetId( i )
+            neighborCell = oldMesh.GetCell( neighborId )
+
+            if neighborCell.GetCellDimension() == 3 and neighborId in cellToNodeMapping:
+                # This 3D cell has a mapping - use it for the 2D cell
+                # Get the 2D cell's point IDs
+                cell2dPointIds = set( vtkIter( pointIds ) )
+
+                # Only copy mappings for nodes that belong to the 2D cell
+                neighborMapping = cellToNodeMapping[ neighborId ]
+                cell2dToMapping[ c ] = {
+                    node: newNode
+                    for node, newNode in neighborMapping.items() if node in cell2dPointIds
+                }
+                break
+
+    setupLogger.info( f"Found mappings for {len(cell2dToMapping)} 2D cells" )
+
+    # Merge 2D mappings into main mapping
+    combinedMapping = dict( cellToNodeMapping )
+    combinedMapping.update( cell2dToMapping )
+
     # We are creating a new mesh.
     # The cells will be the same, except that their nodes may be duplicated or renumbered nodes.
     # In vtk, the polyhedron and the standard cells are managed differently.
@@ -445,7 +486,7 @@ def __performSplit( oldMesh: vtkUnstructuredGrid, cellToNodeMapping: Mapping[ in
     newMesh.Allocate( oldMesh.GetNumberOfCells() )
 
     for c in tqdm( range( oldMesh.GetNumberOfCells() ), desc="Performing the mesh split" ):
-        cellNodeMapping: IDMapping = cellToNodeMapping.get( c, {} )
+        cellNodeMapping: IDMapping = combinedMapping.get( c, {} )
         cell: vtkCell = oldMesh.GetCell( c )
         cellType: int = cell.GetCellType()
         # For polyhedron, we'll manipulate the face stream directly.
@@ -475,6 +516,49 @@ def __performSplit( oldMesh: vtkUnstructuredGrid, cellToNodeMapping: Mapping[ in
     return newMesh
 
 
+def __faceIsActuallySplit( oldMesh: vtkUnstructuredGrid, cellToNodeMapping: Mapping[ int, IDMapping ],
+                           ns: Collection[ int ], pointIdsList: vtkIdList, neighbors: vtkIdList ) -> bool:
+    """Tells whether the matrix will actually be split along the face whose vertices are ``ns``.
+
+    A candidate fracture face is a real fracture surface only if the split
+    algorithm ends up assigning *different* node copies to its two adjacent 3D
+    cells for at least one of its vertices. If every vertex resolves to the
+    same copy in both cells the matrix is not separated along this face.
+    This includes fully-tip faces (no node duplicated anywhere) and intersection
+    artifacts (duplication exists but is for another fracture, and both
+    adjacent cells fell on the same side of that other fracture).
+
+    Args:
+        oldMesh (vtkUnstructuredGrid): The input (pre-split) 3D mesh.
+        cellToNodeMapping (Mapping[ int, IDMapping ]): For each input cell, the per-vertex
+                                                       remap from original to split-time node ids.
+        ns (Collection[ int ]): The face's vertex ids in the original mesh.
+        pointIdsList (vtkIdList): Scratch buffer for the face's vertex ids (reused across calls).
+        neighbors (vtkIdList): Scratch buffer for the adjacent-cells query (reused across calls).
+
+    Returns:
+        bool: ``True`` if the face is a true fracture surface (kept), ``False`` if it should be discarded.
+    """
+    pointIdsList.Reset()
+    for n in ns:
+        pointIdsList.InsertNextId( n )
+    neighbors.Reset()
+    oldMesh.GetCellNeighbors( -1, pointIdsList, neighbors )
+    adjacentCells = [
+        neighbors.GetId( i ) for i in range( neighbors.GetNumberOfIds() )
+        if oldMesh.GetCell( neighbors.GetId( i ) ).GetCellDimension() == 3
+    ]
+    if len( adjacentCells ) < 2:
+        # Boundary face with only one adjacent 3D cell => keep it.
+        return True
+    for n in ns:
+        copyA = cellToNodeMapping.get( adjacentCells[ 0 ], {} ).get( n, n )
+        copyB = cellToNodeMapping.get( adjacentCells[ 1 ], {} ).get( n, n )
+        if copyA != copyB:
+            return True
+    return False
+
+
 def __generateFractureMesh( oldMesh: vtkUnstructuredGrid, fractureInfo: FractureInfo,
                             cellToNodeMapping: Mapping[ int, IDMapping ] ) -> vtkUnstructuredGrid:
     """Generates the mesh of the fracture.
@@ -491,35 +575,33 @@ def __generateFractureMesh( oldMesh: vtkUnstructuredGrid, fractureInfo: Fracture
     setupLogger.info( "Generating the meshes" )
 
     meshPoints: vtkPoints = oldMesh.GetPoints()
-    isNodeDuplicated = zeros( meshPoints.GetNumberOfPoints(), dtype=bool )  # defaults to False
-    for nodeMapping in cellToNodeMapping.values():
-        for i, o in nodeMapping.items():
-            if not isNodeDuplicated[ i ]:
-                isNodeDuplicated[ i ] = i != o
 
-    # Some elements can have all their nodes not duplicated.
-    # In this case, it's mandatory not get rid of this element because the neighboring 3d elements won't follow.
+    # Filter out candidate faces that don't correspond to real fracture surfaces.
+    # See ``__faceIsActuallySplit`` for the criterion.
+    pointIdsList = vtkIdList()
+    neighbors = vtkIdList()
     faceNodes: list[ Collection[ int ] ] = []
     discardedFaceNodes: set[ Iterable[ int ] ] = set()
     if fractureInfo.faceCellId != []:  # The fracture policy is 'internalSurfaces'
         faceCellId: list[ int ] = []
         for ns, fId in zip( fractureInfo.faceNodes, fractureInfo.faceCellId ):
-            if any( map( isNodeDuplicated.__getitem__, ns ) ):
+            if __faceIsActuallySplit( oldMesh, cellToNodeMapping, ns, pointIdsList, neighbors ):
                 faceNodes.append( ns )
                 faceCellId.append( fId )
             else:
                 discardedFaceNodes.add( ns )
     else:  # The fracture policy is 'field'
         for ns in fractureInfo.faceNodes:
-            if any( map( isNodeDuplicated.__getitem__, ns ) ):
+            if __faceIsActuallySplit( oldMesh, cellToNodeMapping, ns, pointIdsList, neighbors ):
                 faceNodes.append( ns )
             else:
                 discardedFaceNodes.add( ns )
 
     if discardedFaceNodes:
         msg: str = "(" + '), ('.join( ", ".join( map( str, dfns ) ) for dfns in discardedFaceNodes ) + ")"
-        setupLogger.info( f"The faces made of nodes [{msg}] were/was discarded"
-                          " from the fracture mesh because none of their/its nodes were duplicated." )
+        setupLogger.info( f"The faces made of nodes [{msg}] were/was discarded from the fracture mesh"
+                          " because the matrix is not actually split along them"
+                          " (no node duplicated, or duplication is for another fracture)." )
 
     fractureNodesTmp = ones( meshPoints.GetNumberOfPoints(), dtype=int ) * -1
     for ns in faceNodes:
@@ -528,6 +610,7 @@ def __generateFractureMesh( oldMesh: vtkUnstructuredGrid, fractureInfo: Fracture
     fractureNodes: Collection[ int ] = tuple( filter( lambda n: n > -1, fractureNodesTmp ) )
     numPoints: int = len( fractureNodes )
     points = vtkPoints()
+    points.SetDataType( meshPoints.GetDataType() )  # Preserve precision from input mesh
     points.SetNumberOfPoints( numPoints )
     node3dToNode2d: dict[ int, int ] = {}  # Building the node mapping, from 3d mesh nodes to 2d fracture nodes.
     for i, n in enumerate( fractureNodes ):

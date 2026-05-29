@@ -18,7 +18,7 @@ from vtkmodules.util.numpy_support import vtk_to_numpy, numpy_to_vtk
 from geos.processing.pre_processing.CellTypeCounterEnhanced import CellTypeCounterEnhanced
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
 from geos.mesh.model.QualityMetricSummary import ( QualityMetricSummary, StatTypes )
-from geos.mesh.utils.arrayHelpers import getAttributesFromDataSet
+from geos.mesh.utils.arrayHelpers import getAttributesWithNumberOfComponents
 from geos.mesh.stats.meshQualityMetricHelpers import ( getQualityMeasureNameFromIndex, getQualityMetricFromIndex,
                                                        VtkCellQualityMetricEnum, CellQualityMetricAdditionalEnum,
                                                        QualityMetricOtherEnum, MeshQualityMetricEnum,
@@ -27,7 +27,8 @@ from geos.mesh.stats.meshQualityMetricHelpers import ( getQualityMeasureNameFrom
                                                        getChildrenCellTypes )
 
 import geos.utils.geometryFunctions as geom
-from geos.utils.Logger import ( Logger, getLogger )
+from geos.utils.Logger import ( getLogger, Logger, CountVerbosityHandler, isHandlerInLogger, getLoggerHandlerType )
+from geos.utils.pieceEnum import Piece
 
 __doc__ = """
 MeshQualityEnhanced module is a vtk filter that computes mesh quality stats.
@@ -63,7 +64,13 @@ To use the filter:
     meshQualityEnhancedFilter.SetOtherMeshQualityMetrics(otherQualityMetrics)
 
     # Do calculations
-    meshQualityEnhancedFilter.applyFilter()
+    try:
+        meshQualityEnhancedFilter.applyFilter()
+    except ( ValueError, IndexError, TypeError, AttributeError ) as e:
+        meshQualityEnhancedFilter.logger.error( f"The filter { meshQualityEnhancedFilter.logger.name } failed due to: { e }" )
+    except Exception as e:
+        mess: str = f"The filter { meshQualityEnhancedFilter.logger.name } failed due to: { e }"
+        meshQualityEnhancedFilter.logger.critical( mess, exc_info=True )
 
     # Get output mesh quality report
     outputMesh: vtkUnstructuredGrid = meshQualityEnhancedFilter.getOutput()
@@ -258,39 +265,36 @@ class MeshQualityEnhanced():
             metrics = metrics.intersection( computedMetrics )
         return metrics if commonComputedMetricsExists else None
 
-    def applyFilter( self: Self ) -> bool:
-        """Apply MeshQualityEnhanced filter.
-
-        Returns:
-            bool: True if the filter succeeded, False otherwise.
-        """
+    def applyFilter( self: Self ) -> None:
+        """Apply MeshQualityEnhanced filter."""
         self.logger.info( f"Apply filter { self.logger.name }." )
-        try:
-            self._outputMesh.ShallowCopy( self.inputMesh )
-            # Compute cell type counts
-            self._computeCellTypeCounts()
 
-            # Compute metrics and associated attributes
-            self._evaluateMeshQualityAll()
+        self._outputMesh.ShallowCopy( self.inputMesh )
+        # Compute cell type counts
+        self._computeCellTypeCounts()
 
-            # Compute stats summary
-            self._updateStatsSummary()
+        # Compute metrics and associated attributes
+        self._evaluateMeshQualityAll()
 
-            # Create field data
-            self._createFieldDataStatsSummary()
+        # Compute stats summary
+        self._updateStatsSummary()
 
-            self._outputMesh.Modified()
+        # Create field data
+        self._createFieldDataStatsSummary()
 
-            self.logger.info( f"The filter { self.logger.name } succeeded." )
-        except ( ValueError, IndexError, TypeError, AttributeError ) as e:
-            self.logger.error( f"The filter { self.logger.name } failed.\n{ e }" )
-            return False
-        except Exception as e:
-            mess: str = f"The filter { self.logger.name } failed.\n{ e }"
-            self.logger.critical( mess, exc_info=True )
-            return False
+        self._outputMesh.Modified()
 
-        return True
+        result: str = f"The filter { self.logger.name } succeeded"
+        if self.counter.warningCount > 0:
+            self.logger.warning( f"{ result } but { self.counter.warningCount } warnings have been logged." )
+        else:
+            self.logger.info( f"{ result }." )
+
+        # Keep number of warnings logged during the filter application and reset the warnings count in case the filter is applied again.
+        self.nbWarnings = self.counter.warningCount
+        self.counter.resetWarningCount()
+
+        return
 
     def getOutput( self: Self ) -> vtkUnstructuredGrid:
         """Get the mesh computed with the stats."""
@@ -298,8 +302,13 @@ class MeshQualityEnhanced():
 
     def _computeCellTypeCounts( self: Self ) -> None:
         """Compute cell type counts."""
-        if not self.cellTypeCounterEnhancedFilter.applyFilter():
-            raise
+        cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced(
+            self._outputMesh, self.speHandler )
+
+        cellTypeCounterEnhancedFilter.applyFilter()
+
+        # Add to the warning counter the number of warning logged with the call of CelltypeCounterEnhanced filter
+        self.counter.addExternalWarningCount( cellTypeCounterEnhancedFilter.nbWarnings )
 
         counts: CellTypeCounts = self.cellTypeCounterEnhancedFilter.GetCellTypeCountsObject()
         if counts is None:
@@ -332,7 +341,7 @@ class MeshQualityEnhanced():
             metricIndex (int): Quality metric index
         """
         arrayName: str = getQualityMetricArrayName( metricIndex )
-        if arrayName in getAttributesFromDataSet( self._outputMesh, False ):
+        if arrayName in getAttributesWithNumberOfComponents( self._outputMesh, piece=Piece.CELLS ):
             # Metric is already computed (by default computed for all cell types if applicable )
             return
 
@@ -724,6 +733,7 @@ class MeshQualityEnhanced():
         copyData: vtkUnstructuredGrid = vtkUnstructuredGrid()
         copyData.ShallowCopy( self._outputMesh )
         points: vtkPoints = copyData.GetPoints()
+
         for c in range( copyData.GetNumberOfCells() ):
             cell: vtkCell = copyData.GetCell( c )
             # Applies only to polyhedra
@@ -742,10 +752,12 @@ class MeshQualityEnhanced():
                 for i in range( ptsIdsList.GetNumberOfIds() ):
                     ptsIds.InsertNextValue( ptsIdsList.GetId( i ) )
                 faceCenter: npt.NDArray[ np.float64 ] = self._getCellCenter( face, ptsIds, points )
+                # TODO use vtkFilter instead of reinvening the wheel a 1000th time !!!
                 faceNormal: npt.NDArray[ np.float64 ] = self._getNormalVector( points, face )
 
                 vec: npt.NDArray[ np.float64 ] = cellCenter - faceCenter
-                angle: float = vtkMath.AngleBetweenVectors( vec, faceNormal )  # type: ignore[arg-type]
+                # TODO vtk Batch ??
+                angle: float = vtkMath.AngleBetweenVectors( vec, faceNormal[ 0 ] )  # type: ignore[arg-type]
                 squishIndex[ f ] = np.sin( angle )
             newArray.InsertValue( c, np.nanmax( squishIndex ) )
 
@@ -807,4 +819,6 @@ class MeshQualityEnhanced():
         ptsCoords: npt.NDArray[ np.float64 ] = np.zeros( ( 3, 3 ), dtype=float )
         for i in range( 3 ):
             points.GetPoint( facePtsIds.GetId( i ), ptsCoords[ i ] )
-        return geom.computeNormalFromPoints( ptsCoords[ 0 ], ptsCoords[ 1 ], ptsCoords[ 2 ] )
+        # TODO vectorize !!!
+        return geom.computeNormalFromPoints( np.array( [ ptsCoords[ 0 ] ] ), np.array( [ ptsCoords[ 1 ] ] ),
+                                             np.array( [ ptsCoords[ 2 ] ] ) )

@@ -5,13 +5,10 @@
 
 from typing_extensions import Self
 
-from geos.utils.Logger import Logger, getLogger
+from geos.utils.Logger import ( getLogger, Logger, CountVerbosityHandler, isHandlerInLogger, getLoggerHandlerType )
 from geos.mesh.utils.multiblockModifiers import mergeBlocks
 
-from vtkmodules.vtkCommonDataModel import (
-    vtkMultiBlockDataSet,
-    vtkUnstructuredGrid,
-)
+from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet, vtkUnstructuredGrid
 
 __doc__ = """
 Merge Blocks Keeping Partial Attributes is a filter that allows to merge blocks from a multiblock dataset
@@ -49,8 +46,11 @@ To use it:
     # Do calculations
     try:
         mergeBlockEnhancedFilter.applyFilter()
-    except VTKError:
-        logging.error("Something went wrong in VTK")
+    except VTKError as e:
+        mergeBlockEnhancedFilter.logger.error( f"The filter { mergeBlockEnhancedFilter.logger.name } failed due to: { e }" )
+    except Exception as e:
+        mess: str = f"The filter { mergeBlockEnhancedFilter.logger.name } failed due to: { e }"
+        mergeBlockEnhancedFilter.logger.critical( mess, exc_info=True )
 
     # Get the merged mesh
     mergeBlockEnhancedFilter.getOutput()
@@ -86,17 +86,26 @@ class MergeBlockEnhanced:
     def applyFilter( self: Self ) -> None:
         """Merge the blocks of a multiblock dataset mesh.
 
-        Returns:
-            bool: True if the blocks were successfully merged, False otherwise.
-
         Raises:
-            VTKError (geos.utils.Errors) : error captured if any from the VTK log
+            VTKError (geos.utils.Errors): Errors captured if any from the VTK log.
         """
-        self.logger.info( f"Applying filter { self.logger.name }." )
+        self.logger.info( f"Apply filter { self.logger.name }." )
 
         outputMesh: vtkUnstructuredGrid
         outputMesh = mergeBlocks( self.inputMesh, keepPartialAttributes=True, logger=self.logger )
         self.outputMesh = outputMesh
+
+        result: str = f"The filter { self.logger.name } succeeded"
+        if self.counter.warningCount > 0:
+            self.logger.warning( f"{ result } but { self.counter.warningCount } warnings have been logged." )
+        else:
+            self.logger.info( f"{ result }." )
+
+        # Keep number of warnings logged during the filter application and reset the warnings count in case the filter is applied again.
+        self.nbWarnings = self.counter.warningCount
+        self.counter.resetWarningCount()
+
+        return
 
     def getOutput( self: Self ) -> vtkUnstructuredGrid:
         """Get the merged mesh.

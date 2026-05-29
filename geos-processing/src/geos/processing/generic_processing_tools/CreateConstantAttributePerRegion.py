@@ -9,17 +9,13 @@ from typing import Union, Any
 from typing_extensions import Self
 
 import vtkmodules.util.numpy_support as vnp
-from vtkmodules.vtkCommonDataModel import (
-    vtkMultiBlockDataSet,
-    vtkDataSet,
-)
+from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet, vtkDataSet
 
-from geos.utils.Logger import ( getLogger, Logger, CountWarningHandler )
-from geos.mesh.utils.arrayHelpers import ( getArrayInObject, getComponentNames, getNumberOfComponents,
-                                           getVtkDataTypeInObject, isAttributeGlobal, getAttributePieceInfo,
-                                           checkValidValuesInDataSet, checkValidValuesInMultiBlock )
-from geos.mesh.utils.arrayModifiers import ( createAttribute, createConstantAttributeDataSet,
-                                             createConstantAttributeMultiBlock )
+from geos.utils.pieceEnum import Piece
+from geos.utils.Logger import ( getLogger, Logger, CountVerbosityHandler, isHandlerInLogger, getLoggerHandlerType )
+from geos.mesh.utils.arrayHelpers import ( getArrayInObject, getComponentNames, getAttributePieceInfo,
+                                           getVtkArrayTypeInObject, getNumberOfComponents, checkValidValuesInObject )
+from geos.mesh.utils.arrayModifiers import ( createAttribute, createConstantAttribute )
 from geos.mesh.utils.multiblockHelpers import getBlockElementIndexesFlatten
 
 __doc__ = """
@@ -27,12 +23,9 @@ CreateConstantAttributePerRegion is a vtk filter that allows to create an attrib
 with constant values per components for each chosen indexes of a reference/region attribute.
 If other region indexes exist values are set to nan for float type, -1 for int type or 0 for uint type.
 
-Input mesh is either vtkMultiBlockDataSet or vtkDataSet and the region attribute must have one component.
-The relation index/values is given by a dictionary.
-Its keys are the indexes and its items are the list of values for each component.
-To use a handler of yours, set the variable 'speHandler' to True and add it using the member function addLoggerHandler.
+Input mesh is either vtkMultiBlockDataSet or vtkDataSet and the region attribute must have exactly one component.
+The values for each region are provided with a dictionary with regions indexes as keys and list of values for each components as associated values. By default, the value type is set to float32, the is one component.
 
-By default, the value type is set to float32, their is one component and no name and the logger use an intern handler.
 
 To use it:
 
@@ -67,7 +60,13 @@ To use it:
     createConstantAttributePerRegionFilter.addLoggerHandler( yourHandler )
 
     # Do calculations.
-    createConstantAttributePerRegionFilter.applyFilter()
+    try:
+        createConstantAttributePerRegionFilter.applyFilter()
+    except ( ValueError, AttributeError ) as e:
+        createConstantAttributePerRegionFilter.logger.error( f"The filter { createConstantAttributePerRegionFilter.logger.name } failed due to: { e }" )
+    except Exception as e:
+        mess: str = f"The filter { createConstantAttributePerRegionFilter.logger.name } failed due to: { e }"
+        createConstantAttributePerRegionFilter.logger.critical( mess, exc_info=True )
 """
 
 loggerTitle: str = "Create Constant Attribute Per Region"
@@ -113,9 +112,7 @@ class CreateConstantAttributePerRegion:
         # Region attribute settings.
         self.regionName: str = regionName
         self.dictRegionValues: dict[ Any, Any ] = dictRegionValues
-        self.onPoints: Union[ None, bool ]
-        self.onBoth: bool
-        self.onPoints, self.onBoth = getAttributePieceInfo( self.mesh, self.regionName )
+        self.piece: Piece = getAttributePieceInfo( self.mesh, self.regionName )
 
         # Check if the new component have default values (information for the output message).
         self.useDefaultValue: bool = False
@@ -128,73 +125,56 @@ class CreateConstantAttributePerRegion:
         # Add the handler to count warnings messages.
         self.logger.addHandler( self.counter )
 
-    def applyFilter( self: Self ) -> bool:
+    def applyFilter( self: Self ) -> None:
         """Create a constant attribute per region in the mesh.
 
-        Returns:
-            boolean (bool): True if calculation successfully ended, False otherwise.
+        Raises:
+            ValueError: Errors with the input value for the region index.
+            AttributeError: Errors with the attribute of the mesh.
         """
         self.logger.info( f"Apply filter { self.logger.name }." )
 
         # Check the validity of the attribute region.
-        if self.onPoints is None:
-            self.logger.error( f"{ self.regionName } is not in the mesh." )
-            self.logger.error( f"The new attribute { self.newAttributeName } has not been added." )
-            self.logger.error( f"The filter { self.logger.name } failed." )
-            return False
+        if self.piece == Piece.NONE:
+            raise AttributeError( f"The attribute { self.regionName } is not in the mesh." )
 
-        if self.onBoth:
-            self.logger.error( f"There are two attributes named { self.regionName }, one on points"
-                               "and the other on cells. The region attribute must be unique." )
-            self.logger.error( f"The new attribute { self.newAttributeName } has not been added." )
-            self.logger.error( f"The filter { self.logger.name } failed." )
-            return False
+        if self.piece == Piece.BOTH:
+            raise AttributeError(
+                f"There are two attributes named { self.regionName }, one on points and the other on cells. The region attribute must be unique."
+            )
 
-        nbComponentsRegion: int = getNumberOfComponents( self.mesh, self.regionName, self.onPoints )
+        nbComponentsRegion: int = getNumberOfComponents( self.mesh, self.regionName, self.piece )
         if nbComponentsRegion != 1:
-            self.logger.error( f"The region attribute { self.regionName } has to many components, one is requires." )
-            self.logger.error( f"The new attribute { self.newAttributeName } has not been added." )
-            self.logger.error( f"The filter { self.logger.name } failed." )
-            return False
+            raise AttributeError( f"The region attribute { self.regionName } has to many components, one is requires." )
 
         self._setInfoRegion()
         # Check if the number of components and number of values for the region indexes are coherent.
         for index in self.dictRegionValues:
             if len( self.dictRegionValues[ index ] ) != self.nbComponents:
-                self.logger.error( f"The number of value given for the region index { index } is not correct."
-                                   f" You must set a value for each component, in this case { self.nbComponents }." )
-                return False
+                raise ValueError(
+                    f"The number of value given for the region index { index } is not correct. You must set a value for each component, in this case { self.nbComponents }."
+                )
 
         listIndexes: list[ Any ] = list( self.dictRegionValues.keys() )
-        validIndexes: list[ Any ] = []
-        invalidIndexes: list[ Any ] = []
+        validIndexes: list[ Any ]
+        invalidIndexes: list[ Any ]
+        validIndexes, invalidIndexes = checkValidValuesInObject( self.mesh, self.regionName, listIndexes, self.piece )
         regionArray: npt.NDArray[ Any ]
         newArray: npt.NDArray[ Any ]
         if isinstance( self.mesh, vtkMultiBlockDataSet ):
-            # Check if the attribute region is global.
-            if not isAttributeGlobal( self.mesh, self.regionName, self.onPoints ):
-                self.logger.error( f"The region attribute { self.regionName } has to be global." )
-                self.logger.error( f"The new attribute { self.newAttributeName } has not been added." )
-                self.logger.error( f"The filter { self.logger.name } failed." )
-                return False
-
-            validIndexes, invalidIndexes = checkValidValuesInMultiBlock( self.mesh, self.regionName, listIndexes,
-                                                                         self.onPoints )
             if len( validIndexes ) == 0:
                 if len( self.dictRegionValues ) == 0:
-                    self.logger.warning( "No region indexes entered." )
+                    self.logger.warning( "No region index entered." )
                 else:
                     self.logger.warning(
                         f"The region indexes entered are not in the region attribute { self.regionName }." )
 
-                if not createConstantAttributeMultiBlock( self.mesh,
-                                                          self.defaultValue,
-                                                          self.newAttributeName,
-                                                          componentNames=self.componentNames,
-                                                          onPoints=self.onPoints,
-                                                          logger=self.logger ):
-                    self.logger.error( f"The filter { self.logger.name } failed." )
-                    return False
+                createConstantAttribute( self.mesh,
+                                         self.defaultValue,
+                                         self.newAttributeName,
+                                         componentNames=self.componentNames,
+                                         piece=self.piece,
+                                         logger=self.logger )
 
             else:
                 if len( invalidIndexes ) > 0:
@@ -206,56 +186,48 @@ class CreateConstantAttributePerRegion:
                 for flatIdDataSet in listFlatIdDataSet:
                     dataSet: vtkDataSet = vtkDataSet.SafeDownCast( self.mesh.GetDataSet( flatIdDataSet ) )
 
-                    regionArray = getArrayInObject( dataSet, self.regionName, self.onPoints )
+                    regionArray = getArrayInObject( dataSet, self.regionName, self.piece )
                     newArray = self._createArrayFromRegionArrayWithValueMap( regionArray )
-                    if not createAttribute( dataSet,
-                                            newArray,
-                                            self.newAttributeName,
-                                            componentNames=self.componentNames,
-                                            onPoints=self.onPoints,
-                                            logger=self.logger ):
-                        self.logger.error( f"The filter { self.logger.name } failed." )
-                        return False
+                    createAttribute( dataSet,
+                                     newArray,
+                                     self.newAttributeName,
+                                     componentNames=self.componentNames,
+                                     piece=self.piece,
+                                     logger=self.logger )
 
         else:
-            validIndexes, invalidIndexes = checkValidValuesInDataSet( self.mesh, self.regionName, listIndexes,
-                                                                      self.onPoints )
             if len( validIndexes ) == 0:
                 if len( self.dictRegionValues ) == 0:
-                    self.logger.warning( "No region indexes entered." )
+                    self.logger.warning( "No region index entered." )
                 else:
                     self.logger.warning(
                         f"The region indexes entered are not in the region attribute { self.regionName }." )
 
-                if not createConstantAttributeDataSet( self.mesh,
-                                                       self.defaultValue,
-                                                       self.newAttributeName,
-                                                       componentNames=self.componentNames,
-                                                       onPoints=self.onPoints,
-                                                       logger=self.logger ):
-                    self.logger.error( f"The filter { self.logger.name } failed." )
-                    return False
+                createConstantAttribute( self.mesh,
+                                         self.defaultValue,
+                                         self.newAttributeName,
+                                         componentNames=self.componentNames,
+                                         piece=self.piece,
+                                         logger=self.logger )
 
             else:
                 if len( invalidIndexes ) > 0:
                     self.logger.warning(
                         f"The region indexes { invalidIndexes } are not in the region attribute { self.regionName }." )
 
-                regionArray = getArrayInObject( self.mesh, self.regionName, self.onPoints )
+                regionArray = getArrayInObject( self.mesh, self.regionName, self.piece )
                 newArray = self._createArrayFromRegionArrayWithValueMap( regionArray )
-                if not createAttribute( self.mesh,
-                                        newArray,
-                                        self.newAttributeName,
-                                        componentNames=self.componentNames,
-                                        onPoints=self.onPoints,
-                                        logger=self.logger ):
-                    self.logger.error( f"The filter { self.logger.name } failed." )
-                    return False
+                createAttribute( self.mesh,
+                                 newArray,
+                                 self.newAttributeName,
+                                 componentNames=self.componentNames,
+                                 piece=self.piece,
+                                 logger=self.logger )
 
         # Log the output message.
         self._logOutputMessage( validIndexes )
 
-        return True
+        return
 
     def _setInfoRegion( self: Self ) -> None:
         """Update self.dictRegionValues and set self.defaultValue.
@@ -265,7 +237,7 @@ class CreateConstantAttributePerRegion:
         """
         # Get the numpy type from the vtk typecode.
         dictType: dict[ int, Any ] = vnp.get_vtk_to_numpy_typemap()
-        regionVtkType: int = getVtkDataTypeInObject( self.mesh, self.regionName, self.onPoints )
+        regionVtkType: int = getVtkArrayTypeInObject( self.mesh, self.regionName, self.piece )
         regionNpType: type = dictType[ regionVtkType ]
 
         # Set the correct type of values and region index.
@@ -334,16 +306,12 @@ class CreateConstantAttributePerRegion:
         Args:
             trueIndexes (list[Any]): The list of the true region indexes use to create the attribute.
         """
-        # The Filter succeed.
-        self.logger.info( f"The filter { self.logger.name } succeeded." )
-
         # Info about the created attribute.
         # The piece where the attribute is created.
-        piece: str = "points" if self.onPoints else "cells"
-        self.logger.info( f"The new attribute { self.newAttributeName } is created on { piece }." )
+        self.logger.info( f"The new attribute { self.newAttributeName } is created on { self.piece.value }." )
 
         # The number of component and they names if multiple.
-        componentNamesCreated: tuple[ str, ...] = getComponentNames( self.mesh, self.newAttributeName, self.onPoints )
+        componentNamesCreated: tuple[ str, ...] = getComponentNames( self.mesh, self.newAttributeName, self.piece )
         if self.nbComponents > 1:
             messComponent: str = ( f"The new attribute { self.newAttributeName } has { self.nbComponents } components"
                                    f" named { componentNamesCreated }." )
@@ -402,3 +370,15 @@ class CreateConstantAttributePerRegion:
                     self.logger.warning( messValue )
                 else:
                     self.logger.info( messValue )
+
+        result: str = f"The filter { self.logger.name } succeeded"
+        if self.counter.warningCount > 0:
+            self.logger.warning( f"{ result } but { self.counter.warningCount } warnings have been logged." )
+        else:
+            self.logger.info( f"{ result }." )
+
+        # Keep number of warnings logged during the filter application and reset the warnings count in case the filter is applied again.
+        self.nbWarnings = self.counter.warningCount
+        self.counter.resetWarningCount()
+
+        return

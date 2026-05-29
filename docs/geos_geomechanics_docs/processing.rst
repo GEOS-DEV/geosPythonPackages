@@ -3,8 +3,8 @@ Processing
 
 The processing part of `geos-geomechanics` package contains the basis functions to compute geomechanical properties.
 
-geos.geomechanics.processing.geomechanicsCalculatorFunctions module
----------------------------------------------------------------------
+Geomechanical properties
+-----------------------------------
 
 .. automodule:: geos.geomechanics.processing.geomechanicsCalculatorFunctions
    :members:

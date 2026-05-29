@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<Plugins>
+  <!-- 0- Generic Processing -->
+  <Plugin name="PVAttributeMapping" filename="src/geos/pv/plugins/generic_processing/PVAttributeMapping.py"/>
+  <Plugin name="PVClipToMainFrame" filename="src/geos/pv/plugins/generic_processing/PVClipToMainFrame.py"/>
+  <Plugin name="PVCreateConstantAttributePerRegion" filename="src/geos/pv/plugins/generic_processing/PVCreateConstantAttributePerRegion.py"/>
+  <Plugin name="PVFillPartialArrays" filename="src/geos/pv/plugins/generic_processing/PVFillPartialArrays.py"/>
+  <Plugin name="PVMergeBlocksEnhanced" filename="src/geos/pv/plugins/generic_processing/PVMergeBlocksEnhanced.py"/>
+  <Plugin name="PVSplitMesh" filename="src/geos/pv/plugins/generic_processing/PVSplitMesh.py"/>
+  <!-- 1- Pre Processing -->
+  <!-- 2- Post Processing -->
+  <Plugin name="PVGeomechanicsCalculator" filename="src/geos/pv/plugins/post_processing/PVGeomechanicsCalculator.py"/>
+  <Plugin name="PVGeomechanicsWorkflow" filename="src/geos/pv/plugins/post_processing/PVGeomechanicsWorkflow.py"/>
+  <Plugin name="PVGeosBlockExtractAndMerge" filename="src/geos/pv/plugins/post_processing/PVGeosBlockExtractAndMerge.py"/>
+  <Plugin name="PVGeosLogReader" filename="src/geos/pv/plugins/post_processing/PVGeosLogReader.py"/>
+  <Plugin name="PVMohrCirclePlot" filename="src/geos/pv/plugins/post_processing/PVMohrCirclePlot.py"/>
+  <Plugin name="PVSurfaceGeomechanics" filename="src/geos/pv/plugins/post_processing/PVSurfaceGeomechanics.py"/>
+   <!-- 3- QC -->
+  <Plugin name="PVCellTypeCounterEnhanced" filename="src/geos/pv/plugins/qc/PVCellTypeCounterEnhanced.py"/>
+  <Plugin name="PVMeshQualityEnhanced" filename="src/geos/pv/plugins/qc/PVMeshQualityEnhanced.py"/>
+  <Plugin name="PVPythonViewConfigurator" filename="src/geos/pv/plugins/qc/PVPythonViewConfigurator.py"/>
+  <Plugin name="PVTetQualityAnalysis" filename="src/geos/pv/plugins/qc/PVTetQualityAnalysis.py"/>
+</Plugins>

@@ -13,96 +13,76 @@ import numpy as np
 
 
 @pytest.mark.parametrize(
-    "meshType, newAttributeName, regionName, dictRegionValues, componentNames, componentNamesTest, valueNpType, succeed",
+    "meshType, regionName, dictRegionValues, componentNames, componentNamesTest, valueNpType",
     [
-        # Test the name of the new attribute (new on the mesh, one present on the other piece).
+        # Test the piece of the region attribute.
         ## For vtkDataSet.
-        ( "dataset", "newAttribute", "GLOBAL_IDS_POINTS", {}, (), (), np.float32, True ),
-        ( "dataset", "CellAttribute", "GLOBAL_IDS_POINTS", {}, (), (), np.float32, True ),
-        ## For vtkMultiBlockDataSet.
-        ( "multiblock", "newAttribute", "GLOBAL_IDS_POINTS", {}, (), (), np.float32, True ),
-        ( "multiblock", "CellAttribute", "GLOBAL_IDS_POINTS", {}, (), (), np.float32, True ),
-        ( "multiblock", "GLOBAL_IDS_CELLS", "GLOBAL_IDS_POINTS", {}, (), (), np.float32, True ),
-        # Test if the region attribute is on cells or on points.
-        ( "dataset", "newAttribute", "FAULT", {}, (), (), np.float32, True ),
-        # Test the component name.
-        ( "dataset", "newAttribute", "FAULT", {}, ( "X" ), (), np.float32, True ),
-        ( "dataset", "newAttribute", "FAULT", {}, (), ( "Component0", "Component1" ), np.float32, True ),
-        ( "dataset", "newAttribute", "FAULT", {}, ( "X" ), ( "Component0", "Component1" ), np.float32, True ),
-        ( "dataset", "newAttribute", "FAULT", {}, ( "X", "Y" ), ( "X", "Y" ), np.float32, True ),
-        ( "dataset", "newAttribute", "FAULT", {}, ( "X", "Y", "Z" ), ( "X", "Y" ), np.float32, True ),
-        # Test the type of value.
-        ( "dataset", "newAttribute", "FAULT", {}, (), (), np.int8, True ),
-        ( "dataset", "newAttribute", "FAULT", {}, (), (), np.int16, True ),
-        ( "dataset", "newAttribute", "FAULT", {}, (), (), np.int32, True ),
-        ( "dataset", "newAttribute", "FAULT", {}, (), (), np.int64, True ),
-        ( "dataset", "newAttribute", "FAULT", {}, (), (), np.uint8, True ),
-        ( "dataset", "newAttribute", "FAULT", {}, (), (), np.uint16, True ),
-        ( "dataset", "newAttribute", "FAULT", {}, (), (), np.uint32, True ),
-        ( "dataset", "newAttribute", "FAULT", {}, (), (), np.uint64, True ),
-        ( "dataset", "newAttribute", "FAULT", {}, (), (), np.float64, True ),
-        # Test index/value.
-        ( "dataset", "newAttribute", "FAULT", {
-            0: [ 0 ],
-            100: [ 1 ]
-        }, (), (), np.float32, True ),
-        ( "dataset", "newAttribute", "FAULT", {
-            0: [ 0 ],
-            100: [ 1 ],
-            101: [ 2 ]
-        }, (), (), np.float32, True ),
-        ( "dataset", "newAttribute", "FAULT", {
-            0: [ 0 ],
-            100: [ 1 ],
-            101: [ 2 ],
-            2: [ 3 ]
-        }, (), (), np.float32, True ),
-        ( "dataset", "newAttribute", "FAULT", {
-            0: [ 0, 0 ],
-            100: [ 1, 1 ]
-        }, (), ( "Component0", "Component1" ), np.float32, True ),
-        ( "dataset", "newAttribute", "FAULT", {
-            0: [ 0, 0 ],
-            100: [ 1, 1 ],
-            101: [ 2, 2 ]
-        }, (), ( "Component0", "Component1" ), np.float32, True ),
-        ( "dataset", "newAttribute", "FAULT", {
-            0: [ 0, 0 ],
-            100: [ 1, 1 ],
-            101: [ 2, 2 ],
-            2: [ 3, 3 ]
-        }, (), ( "Component0", "Component1" ), np.float32, True ),
-        # Test common error.
-        ## Number of components.
-        ( "dataset", "newAttribute", "FAULT", {
-            0: [ 0 ],
-            100: [ 1, 1 ]
-        }, (), (), np.float32, False ),  # Number of value inconsistent.
-        ( "dataset", "newAttribute", "FAULT", {
-            0: [ 0, 0 ],
-            100: [ 1, 1 ]
-        }, (), (), np.float32, False ),  # More values than components.
-        ( "dataset", "newAttribute", "FAULT", {
-            0: [ 0 ],
-            100: [ 1 ]
-        }, ( "X", "Y" ), ( "X", "Y" ), np.float32, False ),  # More components than value.
-        ## Attribute name.
-        ( "dataset", "PERM", "FAULT", {}, (), (), np.float32, False ),  # The attribute name already exist.
-        ## Region attribute.
-        ( "dataset", "newAttribute", "PERM", {}, (),
-          (), np.float32, False ),  # Region attribute has too many components.
-        ( "multiblock", "newAttribute", "FAULT", {}, (), (), np.float32, False ),  # Region attribute is partial.
+        ( "extractAndMergeVolume", "fractureMechSolver_totalDisplacement_dofIndex", {}, (),
+          (), np.float32 ),  # on Points
+        ( "extractAndMergeVolume", "reservoirAndWellsSolver_singlePhaseVariables_dofIndex", {}, (),
+          (), np.float32 ),  # on Cells
+        ## For vtkMultiBlockDataSet
+        ( "2Ranks", "fractureMechSolver_totalDisplacement_dofIndex", {}, (), (), np.float32 ),
+        ( "2Ranks", "reservoirAndWellsSolver_singlePhaseVariables_dofIndex", {}, (), (), np.float32 ),
+        # Test the component name
+        ( "extractAndMergeVolume", "reservoirAndWellsSolver_singlePhaseVariables_dofIndex", {}, ( "X" ),
+          (), np.float32 ),
+        ( "extractAndMergeVolume", "reservoirAndWellsSolver_singlePhaseVariables_dofIndex", {}, (),
+          ( "Component0", "Component1" ), np.float32 ),
+        ( "extractAndMergeVolume", "reservoirAndWellsSolver_singlePhaseVariables_dofIndex", {}, ( "X" ),
+          ( "Component0", "Component1" ), np.float32 ),
+        ( "extractAndMergeVolume", "reservoirAndWellsSolver_singlePhaseVariables_dofIndex", {}, ( "X", "Y" ),
+          ( "X", "Y" ), np.float32 ),
+        ( "extractAndMergeVolume", "reservoirAndWellsSolver_singlePhaseVariables_dofIndex", {}, ( "X", "Y", "Z" ),
+          ( "X", "Y" ), np.float32 ),
+        # Test the type of value
+        ( "extractAndMergeVolume", "reservoirAndWellsSolver_singlePhaseVariables_dofIndex", {}, (), (), np.int8 ),
+        ( "extractAndMergeVolume", "reservoirAndWellsSolver_singlePhaseVariables_dofIndex", {}, (), (), np.int16 ),
+        ( "extractAndMergeVolume", "reservoirAndWellsSolver_singlePhaseVariables_dofIndex", {}, (), (), np.int32 ),
+        ( "extractAndMergeVolume", "reservoirAndWellsSolver_singlePhaseVariables_dofIndex", {}, (), (), np.int64 ),
+        ( "extractAndMergeVolume", "reservoirAndWellsSolver_singlePhaseVariables_dofIndex", {}, (), (), np.uint8 ),
+        ( "extractAndMergeVolume", "reservoirAndWellsSolver_singlePhaseVariables_dofIndex", {}, (), (), np.uint16 ),
+        ( "extractAndMergeVolume", "reservoirAndWellsSolver_singlePhaseVariables_dofIndex", {}, (), (), np.uint32 ),
+        ( "extractAndMergeVolume", "reservoirAndWellsSolver_singlePhaseVariables_dofIndex", {}, (), (), np.uint64 ),
+        ( "extractAndMergeVolume", "reservoirAndWellsSolver_singlePhaseVariables_dofIndex", {}, (), (), np.float64 ),
+        # Test index/value
+        ## with only correct indexes
+        ( "extractAndMergeVolume", "reservoirAndWellsSolver_singlePhaseVariables_dofIndex", {
+            30: [ 0 ],
+        }, (), (), np.float32 ),
+        ( "extractAndMergeVolume", "reservoirAndWellsSolver_singlePhaseVariables_dofIndex", {
+            30: [ 0, 0 ],
+        }, (), ( "Component0", "Component1" ), np.float32 ),
+        ## with also incorrect indexes
+        (
+            "extractAndMergeVolume",
+            "reservoirAndWellsSolver_singlePhaseVariables_dofIndex",
+            {
+                30: [ 0 ],
+                0: [ 1 ],  # 0 is not an index of the region attribute
+            },
+            (),
+            (),
+            np.float32 ),
+        (
+            "extractAndMergeVolume",
+            "reservoirAndWellsSolver_singlePhaseVariables_dofIndex",
+            {
+                30: [ 0, 0 ],
+                0: [ 1, 1 ],  # 0 is not an index of the region attribute
+            },
+            (),
+            ( "Component0", "Component1" ),
+            np.float32 ),
     ] )
 def test_CreateConstantAttributePerRegion(
     dataSetTest: Union[ vtkMultiBlockDataSet, vtkDataSet ],
     meshType: str,
-    newAttributeName: str,
     regionName: str,
     dictRegionValues: dict[ Any, Any ],
     componentNames: tuple[ str, ...],
     componentNamesTest: tuple[ str, ...],
     valueNpType: int,
-    succeed: bool,
 ) -> None:
     """Test CreateConstantAttributePerRegion."""
     mesh: Union[ vtkMultiBlockDataSet, vtkDataSet ] = dataSetTest( meshType )
@@ -114,10 +94,77 @@ def test_CreateConstantAttributePerRegion(
         mesh,
         regionName,
         dictRegionValues,
-        newAttributeName,
+        "newAttribute",
         valueNpType=valueNpType,
         nbComponents=nbComponents,
         componentNames=componentNames,
     )
 
-    assert createConstantAttributePerRegionFilter.applyFilter() == succeed
+    createConstantAttributePerRegionFilter.applyFilter()
+
+
+@pytest.mark.parametrize(
+    "meshType, newAttributeName, regionName",
+    [
+        ( "extractAndMergeVolume", "newAttribute", "averageStrain" ),  # Region attribute has too many components
+        ( "geosOutput2Ranks", "newAttribute",
+          "reservoirAndWellsSolver_singlePhaseVariables_dofIndex" ),  # Region attribute is partial
+        ( "extractAndMergeVolume", "mass", "reservoirAndWellsSolver_singlePhaseVariables_dofIndex"
+         ),  # The attribute name already exist in the mesh on the same piece
+    ] )
+def test_CreateConstantAttributePerRegionRaisesAttributeError(
+    dataSetTest: Union[ vtkMultiBlockDataSet, vtkDataSet ],
+    meshType: str,
+    newAttributeName: str,
+    regionName: str,
+) -> None:
+    """Test the fails of CreateConstantAttributePerRegion with attributes issues."""
+    mesh: Union[ vtkMultiBlockDataSet, vtkDataSet ] = dataSetTest( meshType )
+
+    createConstantAttributePerRegionFilter: CreateConstantAttributePerRegion = CreateConstantAttributePerRegion(
+        mesh,
+        regionName,
+        {},
+        newAttributeName,
+    )
+
+    with pytest.raises( AttributeError ):
+        createConstantAttributePerRegionFilter.applyFilter()
+
+
+@pytest.mark.parametrize(
+    "dictRegionValues, componentNames",
+    [
+        ( {
+            30: [ 0 ],
+            31: [ 1, 1 ],
+        }, () ),  # Number of value inconsistent.
+        ( {
+            30: [ 0, 0 ],
+        }, () ),  # More values than components.
+        ( {
+            30: [ 0 ],
+        }, ( "X", "Y" ) ),  # More components than value.
+    ] )
+def test_CreateConstantAttributePerRegionRaisesValueError(
+    dataSetTest: vtkDataSet,
+    dictRegionValues: dict[ Any, Any ],
+    componentNames: tuple[ str, ...],
+) -> None:
+    """Test the fails of CreateConstantAttributePerRegion with inputs value issues."""
+    mesh: vtkDataSet = dataSetTest( 'extractAndMergeVolume' )
+    nbComponents: int = len( componentNames )
+    if nbComponents == 0:  # If the attribute has one component, the component has no name.
+        nbComponents += 1
+
+    createConstantAttributePerRegionFilter: CreateConstantAttributePerRegion = CreateConstantAttributePerRegion(
+        mesh,
+        "reservoirAndWellsSolver_singlePhaseVariables_dofIndex",
+        dictRegionValues,
+        "newAttribute",
+        nbComponents=nbComponents,
+        componentNames=componentNames,
+    )
+
+    with pytest.raises( ValueError ):
+        createConstantAttributePerRegionFilter.applyFilter()

@@ -10,26 +10,27 @@ GEOS computes many outputs including flow and geomechanic properties if coupled 
 
 .. Note::
 
-    Several processing filters require the definition of physical parameters. The following list is non-exhaustive.
+    Several processing filters require the definition of physical parameters. The following list is non-exhaustive. See :ref:`output-constant`.
 
     Default values:
+
     - grainBulkModulus = 38e9 Pa ( quartz value )
     - specificDensity = 1000.0 kg/m³ ( water value )
-    - rock cohesion: 0.0 Pa $( fractured case )
+    - rock cohesion: 0.0 Pa ( fractured case )
     - friction angle: 10°
 
 
-geos.processing.post_processing.SurfaceGeomechanics
--------------------------------------------------------
+FaultStabilityAnalysis
+-----------------------------
 
-.. automodule:: geos.processing.post_processing.SurfaceGeomechanics
-    :members:
-    :undoc-members:
-    :show-inheritance:
+.. automodule:: geos.processing.post_processing.FaultStabilityAnalysis
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 
-geos.processing.post_processing.GeomechanicsCalculator module
---------------------------------------------------------------
+GeomechanicsCalculator
+--------------------------------
 
 .. automodule:: geos.processing.post_processing.GeomechanicsCalculator
    :members:
@@ -37,8 +38,8 @@ geos.processing.post_processing.GeomechanicsCalculator module
    :show-inheritance:
 
 
-geos.processing.post_processing.GeosBlockExtractor module
-----------------------------------------------------------
+GeosBlockExtractor
+------------------------------------
 
 .. automodule:: geos.processing.post_processing.GeosBlockExtractor
    :members:
@@ -46,10 +47,19 @@ geos.processing.post_processing.GeosBlockExtractor module
    :show-inheritance:
 
 
-geos.processing.post_processing.GeosBlockMerge module
+GeosBlockMerge
 -----------------------------------------------------
 
 .. automodule:: geos.processing.post_processing.GeosBlockMerge
    :members:
    :undoc-members:
    :show-inheritance:
+
+
+SurfaceGeomechanics
+-----------------------------
+
+.. automodule:: geos.processing.post_processing.SurfaceGeomechanics
+    :members:
+    :undoc-members:
+    :show-inheritance:

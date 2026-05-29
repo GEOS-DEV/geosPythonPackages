@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
-# SPDX-FileContributor: Kitware
+# SPDX-FileContributor: Kitware, Jacques Franc
 from typing import Any
+import re
 
 from trame_client.widgets.core import AbstractElement
 from trame_simput import get_simput_manager
@@ -65,7 +66,8 @@ class PropertiesChecker( AbstractElement ):
                             field[ "invalid_properties" ].append( attr )
                             continue
                         for array_name in arrays:
-                            if array_name not in array_names:
+                            pattern = re.compile( rf'^{re.escape(array_name)}(?:_\d)?$' )
+                            if all( not pattern.match( item ) for item in array_names ):
                                 field[ "invalid_properties" ].append( attr )
                                 break
 

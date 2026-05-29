@@ -1,16 +1,20 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Alexandre Benedicto
+import logging
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 from typing import Optional, Type, TypeAlias
-from vtkmodules.vtkCommonDataModel import vtkPointSet, vtkUnstructuredGrid
+from typing_extensions import Self, Union
+from xml.etree import ElementTree as ET
+from vtkmodules.vtkCommonDataModel import vtkPointSet, vtkUnstructuredGrid, vtkDataSet
 from vtkmodules.vtkIOCore import vtkWriter
 from vtkmodules.vtkIOLegacy import vtkDataReader, vtkUnstructuredGridWriter, vtkUnstructuredGridReader
 from vtkmodules.vtkIOXML import ( vtkXMLGenericDataObjectReader, vtkXMLUnstructuredGridWriter, vtkXMLWriter,
                                   vtkXMLStructuredGridWriter )
-from geos.utils.Logger import getLogger
+
+from geos.utils.Logger import ( getLogger, Logger )
 
 __doc__ = """
 Input and Output methods for various VTK mesh formats.
@@ -104,7 +108,11 @@ def _readData( filepath: str, readerClass: VtkReaderClass ) -> Optional[ vtkPoin
     return output
 
 
-def _writeData( mesh: vtkPointSet, writerClass: VtkWriterClass, output: str, isBinary: bool ) -> int:
+def _writeData( mesh: vtkPointSet,
+                writerClass: VtkWriterClass,
+                output: str,
+                isBinary: bool,
+                logger: Union[ Logger, None ] = None ) -> int:
     """Generic helper to write a VTK file using a specific writer class.
 
     Args:
@@ -112,11 +120,16 @@ def _writeData( mesh: vtkPointSet, writerClass: VtkWriterClass, output: str, isB
         writerClass (VtkWriterClass): The VTK writer class to use.
         output (str): The output file path.
         isBinary (bool): Whether to write the file in binary mode (True) or ASCII (False).
+        logger (Union[Logger, None], optional): A logger to manage the output messages.
+                    Defaults to None, an internal logger is used.
 
     Returns:
         int: 1 if success, 0 otherwise.
     """
-    ioLogger.info( f"Writing mesh to '{output}' using {writerClass.__name__}..." )
+    if logger is None:
+        logger = ioLogger
+
+    logger.info( f"Writing mesh to '{output}' using {writerClass.__name__}..." )
     writer = writerClass()
     writer.SetFileName( output )
     writer.SetInputData( mesh )
@@ -125,10 +138,10 @@ def _writeData( mesh: vtkPointSet, writerClass: VtkWriterClass, output: str, isB
     if isinstance( writer, vtkXMLWriter ):
         if isBinary:
             writer.SetDataModeToBinary()
-            ioLogger.info( "Data mode set to Binary." )
+            logger.info( "Data mode set to Binary." )
         else:
             writer.SetDataModeToAscii()
-            ioLogger.info( "Data mode set to ASCII." )
+            logger.info( "Data mode set to ASCII." )
 
     return writer.Write()
 
@@ -220,7 +233,10 @@ def readUnstructuredGrid( filepath: str ) -> vtkUnstructuredGrid:
     return mesh
 
 
-def writeMesh( mesh: vtkPointSet, vtkOutput: VtkOutput, canOverwrite: bool = False ) -> int:
+def writeMesh( mesh: vtkPointSet,
+               vtkOutput: VtkOutput,
+               canOverwrite: bool = False,
+               logger: Union[ Logger, None ] = None ) -> int:
     """
     Writes a vtkPointSet to a file.
 
@@ -231,6 +247,8 @@ def writeMesh( mesh: vtkPointSet, vtkOutput: VtkOutput, canOverwrite: bool = Fal
         vtkOutput (VtkOutput): Configuration for the output file.
         canOverwrite (bool, optional): If False, raises an error if the file
                                       already exists. Defaults to False.
+        logger (Union[Logger, None], optional): A logger to manage the output messages.
+                    Defaults to None, an internal logger is used.
 
     Raises:
         FileExistsError: If the output file exists and `canOverwrite` is False.
@@ -240,6 +258,9 @@ def writeMesh( mesh: vtkPointSet, vtkOutput: VtkOutput, canOverwrite: bool = Fal
     Returns:
         int: Returns 1 on success, consistent with the VTK writer's return code.
     """
+    if logger is None:
+        logger = ioLogger
+
     outputPath = Path( vtkOutput.output )
     if outputPath.exists() and not canOverwrite:
         raise FileExistsError( f"File '{outputPath}' already exists. Set canOverwrite=True to replace it." )
@@ -256,13 +277,96 @@ def writeMesh( mesh: vtkPointSet, vtkOutput: VtkOutput, canOverwrite: bool = Fal
         if not writerClass:
             raise ValueError( f"Writing to extension '{outputPath.suffix}' is not supported." )
 
-        successCode = _writeData( mesh, writerClass, str( outputPath ), vtkOutput.isDataModeBinary )
+        successCode = _writeData( mesh, writerClass, str( outputPath ), vtkOutput.isDataModeBinary, logger )
         if not successCode:
             raise RuntimeError( f"VTK writer failed to write file '{outputPath}'." )
 
-        ioLogger.info( f"Successfully wrote mesh to '{outputPath}'." )
+        logger.info( f"Successfully wrote mesh to '{outputPath}'." )
         return successCode
 
     except ( ValueError, RuntimeError ) as e:
-        ioLogger.error( e )
+        logger.error( e )
         raise
+
+
+class PVDReader:
+
+    def __init__( self: Self, filename: str, logger: Union[ Logger, None ] = None ) -> None:
+        """PVD Reader class.
+
+        Args:
+            filename (str): PVD filename with full path.
+            logger (Union[Logger, None], optional): A logger to manage the output messages.
+                    Defaults to None, an internal logger is used.
+        """
+        self.logger: Logger
+        if logger is None:
+            self.logger = getLogger( "PVD Reader", True )
+        else:
+            self.logger = logging.getLogger( f"{logger.name}" )
+            self.logger.setLevel( logging.INFO )
+            self.logger.propagate = False
+
+        self.filename = filename
+        self.dir = Path( filename ).parent
+        self.datasets = {}
+        self._read()
+
+    def _read( self ) -> None:
+        tree = ET.parse( self.filename )
+        root = tree.getroot()
+        datasets = root[ 0 ].findall( 'DataSet' )
+
+        for n, dataset in enumerate( datasets ):
+            timestep = float( dataset.attrib.get( 'timestep', 0 ) )
+            datasetFile = Path( dataset.attrib.get( 'file' ) )
+            self.datasets[ n ] = ( timestep, datasetFile )
+
+        self.logger.info( "All filenames from PVD file have been read." )
+
+    def getDataSetAtTimeIndex( self: Self, timeIndex: int ) -> vtkDataSet:
+        """Get the dataset corresponding to requested time index.
+
+        Args:
+            timeIndex (int): Time index
+
+        Returns:
+            vtkDataSet: Dataset
+        """
+        return readMesh( self.dir / self.datasets[ timeIndex ][ 1 ] )
+
+    def getAllTimestepsValues( self: Self ) -> list[ float ]:
+        """Get the list of all timesteps values from the PVD.
+
+        Returns:
+            list[float]: List of timesteps values.
+        """
+        return [ value[ 0 ] for _, value in self.datasets.items() ]
+
+
+def createPVD( outputDir: Path,
+               pvdFilename: str,
+               outputFiles: list[ tuple[ int, str ] ],
+               logger: Union[ Logger, None ] = None ) -> None:
+    """Create PVD collection file.
+
+    Args:
+        outputDir (Path): Output directory
+        pvdFilename (str): Output PVD filename
+        outputFiles (list[tuple[int, str]]): List containing all the filenames of the PVD files
+        logger (Union[Logger, None], optional): A logger to manage the output messages.
+                    Defaults to None, an internal logger is used.
+    """
+    if logger is None:
+        logger = getLogger( "createPVD", True )
+
+    pvdPath = outputDir / pvdFilename
+    with open( pvdPath, 'w' ) as f:
+        f.write( '<VTKFile type="Collection" version="0.1">\n' )
+        f.write( '  <Collection>\n' )
+        for t, fname in outputFiles:
+            f.write( f'    <DataSet timestep="{t}" file="{fname}"/>\n' )
+        f.write( '  </Collection>\n' )
+        f.write( '</VTKFile>\n' )
+
+    logger.info( f"PVD created: {pvdPath}." )

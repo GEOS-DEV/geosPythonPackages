@@ -3,9 +3,9 @@
 # SPDX-FileContributor: Paloma Martinez, Romain Baville
 # SPDX-License-Identifier: Apache 2.0
 # ruff: noqa: E402 # disable Module level import not at top of file
-import os
 import pytest
-from typing import Union, Any
+from pathlib import Path
+from typing import Any
 
 from vtkmodules.vtkCommonDataModel import vtkDataSet, vtkMultiBlockDataSet, vtkPolyData
 from vtkmodules.vtkIOXML import vtkXMLGenericDataObjectReader
@@ -19,7 +19,7 @@ def dataSetTest() -> Any:
         (vtkMultiBlockDataSet, vtkPolyData, vtkDataSet): The vtk object.
     """
 
-    def _get_dataset( datasetType: str ) -> Union[ vtkMultiBlockDataSet, vtkPolyData, vtkDataSet ]:
+    def _get_dataset( datasetType: str ) -> vtkMultiBlockDataSet | vtkPolyData | vtkDataSet:
         """Get a vtkObject from a file.
 
         Args:
@@ -29,25 +29,44 @@ def dataSetTest() -> Any:
             (vtkMultiBlockDataSet, vtkPolyData, vtkDataSet): The vtk object.
         """
         reader: vtkXMLGenericDataObjectReader = vtkXMLGenericDataObjectReader()
-        if datasetType == "multiblock":
-            vtkFilename = "data/displacedFault.vtm"
-        elif datasetType == "emptymultiblock":
-            vtkFilename = "data/displacedFaultempty.vtm"
-        elif datasetType == "multiblockGeosOutput":
-            # adapted from example GEOS/inputFiles/compositionalMultiphaseWell/simpleCo2InjTutorial_smoke.xml
-            vtkFilename = "data/simpleReservoirViz_small_000478.vtm"
-        elif datasetType == "fracture":
-            vtkFilename = "data/fracture_res5_id.vtu"
-        elif datasetType == "emptyFracture":
-            vtkFilename = "data/fracture_res5_id_empty.vtu"
-        elif datasetType == "dataset":
-            vtkFilename = "data/domain_res5_id.vtu"
-        elif datasetType == "emptydataset":
-            vtkFilename = "data/domain_res5_id_empty.vtu"
-        elif datasetType == "meshGeosExtractBlockTmp":
-            vtkFilename = "data/meshGeosExtractBlockTmp.vtm"
+        # Meshes from the GEOS integrated test singlePhasePoromechanics_FaultModel_well_seq from geos-mesh
+        if datasetType == "2Ranks":
+            vtkFilename = "geos-mesh/tests/data/singlePhasePoromechanics_FaultModel_well_seq/cellElementRegion2Ranks.vtm"
+        elif datasetType == "4Ranks":
+            vtkFilename = "geos-mesh/tests/data/singlePhasePoromechanics_FaultModel_well_seq/cellElementRegion4Ranks.vtm"
+        elif datasetType == "geosOutput2Ranks":
+            vtkFilename = "geos-mesh/tests/data/singlePhasePoromechanics_FaultModel_well_seq/geosOutput2Ranks.vtm"
+        elif datasetType == "extractAndMergeVolume":
+            vtkFilename = "geos-mesh/tests/data/singlePhasePoromechanics_FaultModel_well_seq/extractAndMergeVolume.vtu"
+        elif datasetType == "extractAndMergeFault":
+            vtkFilename = "geos-mesh/tests/data/singlePhasePoromechanics_FaultModel_well_seq/extractAndMergeFault.vtu"
+        elif datasetType == "extractAndMergeFaultVtp":
+            vtkFilename = "geos-mesh/tests/data/singlePhasePoromechanics_FaultModel_well_seq/extractAndMergeFault.vtp"
+        elif datasetType == "extractAndMergeWell1":
+            vtkFilename = "geos-mesh/tests/data/singlePhasePoromechanics_FaultModel_well_seq/extractAndMergeWell1.vtu"
+        elif datasetType == "extractAndMergeVolumeWell1":
+            vtkFilename = "geos-mesh/tests/data/singlePhasePoromechanics_FaultModel_well_seq/extractAndMergeVolumeWell1.vtm"
+        elif datasetType == "extractAndMergeFaultWell1":
+            vtkFilename = "geos-mesh/tests/data/singlePhasePoromechanics_FaultModel_well_seq/extractAndMergeFaultWell1.vtm"
+        elif datasetType == "rank0":
+            vtkFilename = "geos-mesh/tests/data/singlePhasePoromechanics_FaultModel_well_seq/geosOutput2Ranks/geosOutput2Ranks_1_0.vtu"
+        elif datasetType == "rank0WithAttr":
+            vtkFilename = "geos-mesh/tests/data/rank0WithAttr.vtu"
+        elif datasetType == "mergeVolumeWithAttr":
+            vtkFilename = "geos-mesh/tests/data/mergeVolumeWithAttr.vtu"
+        elif datasetType == "hasFault":
+            vtkFilename = "geos-mesh/tests/data/hasFault.vtu"
+        # Small useful meshes
+        elif datasetType == "quads2_tris4":
+            vtkFilename = "geos-processing/tests/data/quads2_tris4.vtu"
+        elif datasetType == "hexs3_tets36_pyrs18":
+            vtkFilename = "geos-processing/tests/data/hexs3_tets36_pyrs18.vtu"
+        elif datasetType == "meshtet1":
+            vtkFilename = "geos-processing/tests/data/mesh1.vtu"
+        elif datasetType == "meshtet1b":
+            vtkFilename = "geos-processing/tests/data/mesh1b.vtu"
 
-        datapath: str = os.path.join( os.path.dirname( os.path.realpath( __file__ ) ), vtkFilename )
+        datapath: str = str( Path( __file__ ).parent.parent.parent / vtkFilename )
         reader.SetFileName( datapath )
         reader.Update()
 
