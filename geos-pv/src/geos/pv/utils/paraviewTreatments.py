@@ -8,7 +8,7 @@ from typing import Any, Union
 
 import numpy as np
 import numpy.typing as npt
-import pandas as pd  # type: ignore[import-untypedGEOSFormatter ]
+import pandas as pd  # type: ignore[import-untyped]
 
 from paraview.simple import (  # type: ignore[import-not-found]
     FindSource, GetActiveView, GetAnimationScene, GetDisplayProperties, GetSources, servermanager,

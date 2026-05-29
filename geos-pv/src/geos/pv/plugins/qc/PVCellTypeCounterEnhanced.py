@@ -24,6 +24,7 @@ update_paths()
 from geos.processing.pre_processing.CellTypeCounterEnhanced import CellTypeCounterEnhanced, loggerTitle
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
 from geos.utils.Logger import addPluginLogSupport
+from geos.pv.utils.details import FilterCategory
 
 __doc__ = f"""
 The ``Cell Type Counter Enhanced`` filter computes cell type counts. Counts can be exported into a file easily.
@@ -36,9 +37,6 @@ To use it:
 * Apply
 
 """
-
-HANDLER: logging.Handler = VTKHandler()
-
 
 @smproxy.filter( name="PVCellTypeCounterEnhanced", label="Cell Type Counter Enhanced" )
 @smhint.xml( f'<ShowInMenu category="{ FilterCategory.QC.value }"/>' )
@@ -152,11 +150,11 @@ class PVCellTypeCounterEnhanced( VTKPythonAlgorithmBase ):
                         fout.write( self._countsAll.print() )
                         cellTypeCounterEnhancedFilter.logger.info( f"File {self._filename} was successfully written." )
                     
-                    except TypeError as e:
+                except TypeError as e:
                     cellTypeCounterEnhancedFilter.logger.error(
-                        f"The filter { cellTypeCounterEnhancedFilter.logger.name } failed due to:\n{ e }" )
-                    
-                    except Exception as e:
+                    f"The filter { cellTypeCounterEnhancedFilter.logger.name } failed due to:\n{ e }" )
+                
+                except Exception as e:
                     cellTypeCounterEnhancedFilter.logger.info( f"Error while exporting the file due to:\n{ e }" )
 
 
