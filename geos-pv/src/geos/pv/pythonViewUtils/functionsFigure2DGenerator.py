@@ -618,7 +618,8 @@ def propertiesPerIdentifier( propertyNames: list[ str ] ) -> dict[ str, list[ st
 
     Args:
         propertyNames (list[str]): Property names.
-            Example
+
+    Example:
 
             .. code-block:: python
 
@@ -631,7 +632,8 @@ def propertiesPerIdentifier( propertyNames: list[ str ] ) -> dict[ str, list[ st
 
     Returns:
         dict[str, list[str]]: Property identifiers.
-            Example
+
+    Example:
 
             .. code-block:: python
 
@@ -666,7 +668,8 @@ def associationIdentifiers( propertyNames: list[ str ] ) -> dict[ str, dict[ str
 
     Args:
         propertyNames (list[str]): Property names.
-        Example
+
+    Example:
 
         .. code-block:: python
 
@@ -695,7 +698,8 @@ def associationIdentifiers( propertyNames: list[ str ] ) -> dict[ str, dict[ str
 
     Returns:
         dict[str, dict[str, list[str]]]: Property identifiers.
-            Example
+
+    Example:
 
             .. code-block:: python
 
@@ -1306,7 +1310,6 @@ Under this is the first version of smartLabels without abbreviations.
 #     if legendLabel.startswith(pattern):
 #         return legendLabel[len(pattern):]
 #     return legendLabel
-
 """
 Other 2D tools for simplest figures
 """

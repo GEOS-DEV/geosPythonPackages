@@ -8,12 +8,11 @@ from pathlib import Path
 from typing import Any, Optional, Union
 from typing_extensions import Self
 
-from paraview.util.vtkAlgorithm import VTKPythonAlgorithmBase, smproperty  # type: ignore[import-not-found]
-# source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
-from paraview.detail.loghandler import VTKHandler  # type: ignore[import-not-found]
-# source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
-
-from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet
+from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
+    VTKPythonAlgorithmBase, smproperty,
+)  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
+from vtkmodules.vtkCommonDataModel import (
+    vtkMultiBlockDataSet, )
 
 # update sys.path to load all GEOS Python Package dependencies
 geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent.parent
@@ -22,9 +21,10 @@ from geos.pv.utils.config import update_paths
 
 update_paths()
 
-from geos.utils.Logger import isHandlerInLogger
-from geos.pv.utils.details import ( SISOFilter, FilterCategory )
-from geos.processing.generic_processing_tools.FillPartialArrays import FillPartialArrays
+from geos.pv.utils.details import SISOFilter, FilterCategory
+from geos.processing.generic_processing_tools.FillPartialArrays import FillPartialArrays, loggerTitle
+
+from geos.utils.Logger import addPluginLogSupport
 
 __doc__ = f"""
 Fill partial arrays of input mesh.
@@ -41,12 +41,10 @@ To use it:
 
 """
 
-HANDLER: logging.Handler = VTKHandler()
-
-
 @SISOFilter( category=FilterCategory.GENERIC_PROCESSING,
              decoratedLabel="Fill Partial Arrays",
              decoratedType="vtkMultiBlockDataSet" )
+@addPluginLogSupport( loggerTitles=[ loggerTitle ] )
 class PVFillPartialArrays( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self, ) -> None:
@@ -106,11 +104,7 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
         fillPartialArraysFilter: FillPartialArrays = FillPartialArrays(
             outputMesh,
             self.dictAttributesValues,
-            speHandler=True,
         )
-
-        if not isHandlerInLogger( HANDLER, fillPartialArraysFilter.logger ):
-            fillPartialArraysFilter.setLoggerHandler( HANDLER )
 
         try:
             fillPartialArraysFilter.applyFilter()

@@ -76,15 +76,9 @@ To use the filter:
     # Define filter inputs
     mesh: vtkUnstructuredGrid
     computeAdvancedProperties: bool # optional, defaults to False
-    speHandler: bool # optional, defaults to False
-    loggerName: str # Defaults to "Geomechanics Calculator"
 
     # Instantiate the filter
-    geomechanicsCalculatorFilter: GeomechanicsCalculator = GeomechanicsCalculator( mesh, computeAdvancedProperties, speHandler )
-
-    # Use your own handler (if speHandler is True)
-    yourHandler: logging.Handler
-    geomechanicsCalculatorFilter.setLoggerHandler( yourHandler )
+    geomechanicsCalculatorFilter: GeomechanicsCalculator = GeomechanicsCalculator( mesh, computeAdvancedProperties )
 
     # Change the physical constants if needed
     ## For the basic properties
@@ -170,6 +164,9 @@ CRITICAL_PORE_PRESSURE_THRESHOLD: AttributeEnum = PostProcessingOutputsEnum.CRIT
 ADVANCED_PROPERTIES: tuple[ AttributeEnum, ...] = ( CRITICAL_TOTAL_STRESS_RATIO, TOTAL_STRESS_RATIO_THRESHOLD,
                                                     CRITICAL_PORE_PRESSURE, CRITICAL_PORE_PRESSURE_THRESHOLD )
 
+                            
+
+loggerTitle: str = "Geomechanics Calculator"
 
 class GeomechanicsCalculator:
 
@@ -699,8 +696,6 @@ class GeomechanicsCalculator:
         self: Self,
         mesh: vtkUnstructuredGrid,
         computeAdvancedProperties: bool = False,
-        loggerName: str = "Geomechanics Calculator",
-        speHandler: bool = False,
     ) -> None:
         """VTK Filter to perform geomechanics properties computation.
 
@@ -710,8 +705,6 @@ class GeomechanicsCalculator:
                 Defaults to False.
             loggerName (str, optional): Name of the filter logger.
                 Defaults to "Geomechanics Calculator".
-            speHandler (bool, optional): True to use a specific handler, False to use the internal handler.
-                Defaults to False.
         """
         self.output: vtkUnstructuredGrid = mesh.NewInstance()
         self.output.DeepCopy( mesh )
@@ -726,25 +719,7 @@ class GeomechanicsCalculator:
         self._attributesToCreate: list[ AttributeEnum ] = []
 
         # Logger.
-        self.logger: Logger
-        if not speHandler:
-            self.logger = getLogger( loggerName, True )
-        else:
-            self.logger = logging.getLogger( loggerName )
-            self.logger.setLevel( logging.INFO )
-            self.logger.propagate = False
-
-        counter: CountVerbosityHandler = CountVerbosityHandler()
-        self.counter: CountVerbosityHandler
-        self.nbWarnings: int = 0
-        try:
-            self.counter = getLoggerHandlerType( type( counter ), self.logger )
-            self.counter.resetWarningCount()
-        except ValueError:
-            self.counter = counter
-            self.counter.setLevel( logging.INFO )
-
-        self.logger.addHandler( self.counter )
+        self.logger: Logger = getLogger( loggerTitle )
 
     def applyFilter( self: Self ) -> None:
         """Compute the geomechanics properties and create attributes on the mesh.

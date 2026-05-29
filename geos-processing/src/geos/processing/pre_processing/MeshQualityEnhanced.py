@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Antoine Mazuyer, Martin Lemay, Paloma Martinez
-import logging
 import numpy as np
 import numpy.typing as npt
 from typing import Optional, cast
@@ -102,13 +101,11 @@ class MeshQualityEnhanced():
     def __init__(
         self: Self,
         inputMesh: vtkUnstructuredGrid,
-        speHandler: bool = False,
     ) -> None:
         """Enhanced vtkMeshQuality filter.
 
         Args:
             inputMesh (vtkUnstructuredGrid): Input mesh
-            speHandler (bool, optional): True to use a specific handler, False to use the internal handler.
                 Defaults to False.
         """
         self.inputMesh: vtkUnstructuredGrid = inputMesh
@@ -131,51 +128,12 @@ class MeshQualityEnhanced():
         # Static members that can be loaded once to save computational times
         self._allCellTypesExtended: tuple[ int, ...] = getAllCellTypesExtended()
         self._allCellTypes: tuple[ int, ...] = getAllCellTypes()
-        self.speHandler: bool = speHandler
-        self.handler: logging.Handler
 
-        # Logger
-        self.logger: Logger
-        if not speHandler:
-            self.logger = getLogger( loggerTitle, True )
-        else:
-            self.logger = logging.getLogger( loggerTitle )
-            self.logger.setLevel( logging.INFO )
-            self.logger.propagate = False
-            handlers: list[ logging.Handler ] = self.logger.handlers
-            # Get the handler to specify if the logger already exist and has it
-            for handler in handlers:
-                # The CountVerbosityHandler can't be the handler to specify
-                if type( handler ) is not type( CountVerbosityHandler() ):
-                    self.handler = handler
-                    break
+        #deps
+        self.cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced( self._outputMesh )
 
-        counter: CountVerbosityHandler = CountVerbosityHandler()
-        self.counter: CountVerbosityHandler
-        self.nbWarnings: int = 0
-        try:
-            self.counter = getLoggerHandlerType( type( counter ), self.logger )
-            self.counter.resetWarningCount()
-        except ValueError:
-            self.counter = counter
-            self.counter.setLevel( logging.INFO )
-
-        self.logger.addHandler( self.counter )
-
-    def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
-        """Set a specific handler for the filter logger.
-
-        In this filter 4 log levels are use, .info, .error, .warning and .critical,
-        be sure to have at least the same 4 levels.
-
-        Args:
-            handler (logging.Handler): The handler to add.
-        """
-        self.handler = handler
-        if not isHandlerInLogger( handler, self.logger ):
-            self.logger.addHandler( handler )
-        else:
-            self.logger.warning( "The logger already has this handler, it has not been added." )
+        # Logger.
+        self.logger: Logger = getLogger( loggerTitle )
 
     def GetQualityMetricSummary( self: Self ) -> QualityMetricSummary:
         """Get QualityMetricSummary object.
@@ -347,15 +305,12 @@ class MeshQualityEnhanced():
         cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced(
             self._outputMesh, self.speHandler )
 
-        if self.speHandler and not isHandlerInLogger( self.handler, cellTypeCounterEnhancedFilter.logger ):
-            cellTypeCounterEnhancedFilter.setLoggerHandler( self.handler )
-
         cellTypeCounterEnhancedFilter.applyFilter()
 
         # Add to the warning counter the number of warning logged with the call of CelltypeCounterEnhanced filter
         self.counter.addExternalWarningCount( cellTypeCounterEnhancedFilter.nbWarnings )
 
-        counts: CellTypeCounts = cellTypeCounterEnhancedFilter.GetCellTypeCountsObject()
+        counts: CellTypeCounts = self.cellTypeCounterEnhancedFilter.GetCellTypeCountsObject()
         if counts is None:
             raise AttributeError( "CellTypeCounts is undefined" )
 

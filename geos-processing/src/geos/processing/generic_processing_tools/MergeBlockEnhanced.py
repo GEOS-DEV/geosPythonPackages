@@ -2,7 +2,6 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Paloma Martinez
 # ruff: noqa: E402 # disable Module level import not at top of file
-import logging
 
 from typing_extensions import Self
 
@@ -65,7 +64,6 @@ class MergeBlockEnhanced:
     def __init__(
         self: Self,
         inputMesh: vtkMultiBlockDataSet,
-        speHandler: bool = False,
     ) -> None:
         """Merge a multiblock dataset and keep the partial attributes in the output mesh.
 
@@ -83,38 +81,7 @@ class MergeBlockEnhanced:
         self.outputMesh: vtkUnstructuredGrid = vtkUnstructuredGrid()
 
         # Logger
-        self.logger: Logger
-        if not speHandler:
-            self.logger = getLogger( loggerTitle, True )
-        else:
-            self.logger = logging.getLogger( loggerTitle )
-            self.logger.setLevel( logging.INFO )
-            self.logger.propagate = False
-
-        counter: CountVerbosityHandler = CountVerbosityHandler()
-        self.counter: CountVerbosityHandler
-        self.nbWarnings: int = 0
-        try:
-            self.counter = getLoggerHandlerType( type( counter ), self.logger )
-            self.counter.resetWarningCount()
-        except ValueError:
-            self.counter = counter
-            self.counter.setLevel( logging.INFO )
-
-        self.logger.addHandler( self.counter )
-
-    def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
-        """Set a specific handler for the filter logger.
-
-        In this filter 4 log levels are use, .info, .error, .warning and .critical, be sure to have at least the same 4 levels.
-
-        Args:
-            handler (logging.Handler): The handler to add.
-        """
-        if not isHandlerInLogger( handler, self.logger ):
-            self.logger.addHandler( handler )
-        else:
-            self.logger.warning( "The logger already has this handler, it has not been added." )
+        self.logger: Logger = getLogger( loggerTitle )
 
     def applyFilter( self: Self ) -> None:
         """Merge the blocks of a multiblock dataset mesh.

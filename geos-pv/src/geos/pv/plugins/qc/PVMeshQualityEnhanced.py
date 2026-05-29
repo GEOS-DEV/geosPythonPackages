@@ -8,8 +8,6 @@ from pathlib import Path
 from typing_extensions import Self, Optional
 
 from paraview.util.vtkAlgorithm import VTKPythonAlgorithmBase, smdomain, smproperty  # type: ignore[import-not-found]
-# source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
-from paraview.detail.loghandler import VTKHandler  # type: ignore[import-not-found]
 # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
 from vtkmodules.vtkCommonCore import vtkDataArraySelection
@@ -23,7 +21,8 @@ from geos.pv.utils.config import update_paths
 update_paths()
 
 from geos.mesh.model.QualityMetricSummary import QualityMetricSummary
-from geos.processing.pre_processing.MeshQualityEnhanced import MeshQualityEnhanced
+from geos.processing.pre_processing.MeshQualityEnhanced import MeshQualityEnhanced, loggerTitle
+from geos.processing.pre_processing.CellTypeCounterEnhanced import loggerTitle as cloggerTitle
 from geos.mesh.stats.meshQualityMetricHelpers import ( getQualityMetricsOther, getQualityMeasureNameFromIndex,
                                                        getQualityMeasureIndexFromName, getQuadQualityMeasure,
                                                        getTriangleQualityMeasure, getCommonPolygonQualityMeasure,
@@ -33,7 +32,7 @@ from geos.mesh.stats.meshQualityMetricHelpers import ( getQualityMetricsOther, g
 from geos.pv.utils.checkboxFunction import createModifiedCallback  # type: ignore[attr-defined]
 from geos.pv.utils.paraviewTreatments import getArrayChoices
 from geos.pv.utils.details import ( SISOFilter, FilterCategory )
-from geos.utils.Logger import isHandlerInLogger
+from geos.utils.Logger import addPluginLogSupport, GEOSHandler
 
 __doc__ = f"""
 The ``Mesh Quality Enhanced`` filter computes requested mesh quality metrics on meshes. Both surfaces and volumic metrics can be computed with this plugin.
@@ -60,8 +59,10 @@ To use it:
 
 HANDLER: logging.Handler = VTKHandler()
 
-
-@SISOFilter( category=FilterCategory.QC, decoratedLabel="Mesh Quality Enhanced", decoratedType="vtkUnstructuredGrid" )
+@SISOFilter( category=FilterCategory.QC,
+             decoratedLabel="Mesh Quality Enhanced",
+             decoratedType="vtkUnstructuredGrid" )
+@addPluginLogSupport( loggerTitles=[ loggerTitle, cloggerTitle ] )
 class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:
@@ -231,10 +232,7 @@ class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
             self._getQualityMetricsToUse( self._HexQualityMetric ) )
         otherMetrics: set[ int ] = self._getQualityMetricsToUse( self._commonMeshQualityMetric )
 
-        meshQualityEnhancedFilter: MeshQualityEnhanced = MeshQualityEnhanced( inputMesh, True )
-        if not isHandlerInLogger( HANDLER, meshQualityEnhancedFilter.logger ):
-            meshQualityEnhancedFilter.setLoggerHandler( HANDLER )
-
+        meshQualityEnhancedFilter: MeshQualityEnhanced = MeshQualityEnhanced( inputMesh )
         meshQualityEnhancedFilter.SetCellQualityMetrics( triangleMetrics=triangleMetrics,
                                                          quadMetrics=quadMetrics,
                                                          tetraMetrics=tetraMetrics,

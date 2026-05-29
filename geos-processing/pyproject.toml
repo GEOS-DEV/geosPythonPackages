@@ -19,6 +19,7 @@ maintainers = [
                {name = "Alexandre Benedicto", email = "alexandre.benedicto@external.totalenergies.com" },
                {name = "Romain Baville", email = "romain.baville@external.totalenergies.com" },
                {name = "Paloma Martinez", email = "paloma.martinez@external.totalenergies.com" },
+               {name = "Jacques Franc", email = "jacques.franc@external.totalenergies.com" },
 ]
 license = {text = "Apache-2.0"}
 classifiers = [

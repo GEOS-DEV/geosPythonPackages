@@ -4,7 +4,6 @@
 # ruff: noqa: E402 # disable Module level import not at top of file
 import numpy as np
 import numpy.typing as npt
-import logging
 from typing_extensions import Self, Union
 from vtkmodules.vtkCommonDataModel import vtkDataSet, vtkMultiBlockDataSet
 from geos.mesh.utils.arrayModifiers import transferAttributeWithElementMap
@@ -43,20 +42,14 @@ To use the filter:
     attributeNames: set[ str ]
     # Optional inputs.
     piece: Piece  # defaults to Piece.CELLS
-    speHandler: bool  # defaults to False
 
     # Instantiate the filter
     attributeMappingFilter: AttributeMapping = AttributeMapping(
         meshFrom,
         meshTo,
         attributeNames,
-        piece,
-        speHandler,
+        onPoints,
     )
-
-    # Set the handler of yours (only if speHandler is True).
-    yourHandler: logging.Handler
-    attributeMappingFilter.setLoggerHandler( yourHandler )
 
     # Do calculations.
     try:
@@ -79,7 +72,6 @@ class AttributeMapping:
         meshTo: Union[ vtkDataSet, vtkMultiBlockDataSet ],
         attributeNames: set[ str ],
         piece: Piece = Piece.CELLS,
-        speHandler: bool = False,
     ) -> None:
         """Transfer global attributes from a source mesh to a final mesh.
 
@@ -102,40 +94,8 @@ class AttributeMapping:
         # Element map
         self.ElementMap: dict[ int, npt.NDArray[ np.int64 ] ] = {}
 
-        # Logger
-        self.logger: Logger
-        if not speHandler:
-            self.logger = getLogger( loggerTitle, True )
-        else:
-            self.logger = logging.getLogger( loggerTitle )
-            self.logger.setLevel( logging.INFO )
-            self.logger.propagate = False
-
-        counter: CountVerbosityHandler = CountVerbosityHandler()
-        self.counter: CountVerbosityHandler
-        self.nbWarnings: int = 0
-        try:
-            self.counter = getLoggerHandlerType( type( counter ), self.logger )
-            self.counter.resetWarningCount()
-        except ValueError:
-            self.counter = counter
-            self.counter.setLevel( logging.INFO )
-
-        self.logger.addHandler( self.counter )
-
-    def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
-        """Set a specific handler for the filter logger.
-
-        In this filter 4 log levels are use, .info, .error, .warning and .critical,
-        be sure to have at least the same 4 levels.
-
-        Args:
-            handler (logging.Handler): The handler to add.
-        """
-        if not isHandlerInLogger( handler, self.logger ):
-            self.logger.addHandler( handler )
-        else:
-            self.logger.warning( "The logger already has this handler, it has not been added." )
+        # Logger.
+        self.logger: Logger = getLogger( loggerTitle )
 
     def getElementMap( self: Self ) -> dict[ int, npt.NDArray[ np.int64 ] ]:
         """Getter of the element mapping dictionary.

@@ -10,7 +10,7 @@ from geos.utils.Errors import VTKError
 
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet
 
-from paraview.detail.loghandler import VTKHandler  # type: ignore[import-not-found]
+from geos.utils.Logger import GEOSHandler 
 
 HANDLER: logging.Handler = VTKHandler()
 
@@ -42,8 +42,8 @@ def doExtractAndMerge(
                                                              extractFault=extractFault,
                                                              extractWell=extractWell,
                                                              speHandler=True )
-    if not isHandlerInLogger( HANDLER, blockExtractor.logger ):
-        blockExtractor.setLoggerHandler( HANDLER )
+    if not blockExtractor.logger.hasHandlers():
+        blockExtractor.setLoggerHandler( GEOSHandler() )
 
     try:
         blockExtractor.applyFilter()
@@ -100,9 +100,9 @@ def mergeBlocksFilter(
     """
     loggerName = f"GEOS Block Merge for the domain { domainToMerge }"
     mergeBlockFilter: GeosBlockMerge = GeosBlockMerge( mesh, convertSurfaces, True, loggerName )
-    if not isHandlerInLogger( HANDLER, mergeBlockFilter.logger ):
-        mergeBlockFilter.setLoggerHandler( HANDLER )
 
+    if not mergeBlockFilter.logger.hasHandlers():
+        mergeBlockFilter.setLoggerHandler( GEOSHandler() )
     try:
         mergeBlockFilter.applyFilter()
     except ( ValueError, VTKError ) as e:
