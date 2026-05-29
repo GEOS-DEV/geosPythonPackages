@@ -134,7 +134,7 @@ def __displaySurfaceGroup( g: SurfaceGroup ) -> None:
         if c.nonManifoldEdgeEndpoints:
             _MAX_DISPLAY = 10
             shown = c.nonManifoldEdgeEndpoints[ :_MAX_DISPLAY ]
-            setupLogger.results( f"    non-manifold edge endpoints (point id pairs): "
+            setupLogger.results( "    non-manifold edge endpoints (point id pairs): "
                                  + ", ".join( f"({a},{b})" for a, b in shown )
                                  + ( f" … (+{len(c.nonManifoldEdgeEndpoints)-_MAX_DISPLAY} more)"
                                      if len( c.nonManifoldEdgeEndpoints ) > _MAX_DISPLAY else "" ) )
