@@ -233,7 +233,7 @@ def _toGlobalEdgeId( mesh: vtk.vtkUnstructuredGrid, edge: tuple[ int, int ] ) ->
         ids = vtk_to_numpy( ids ).astype( np.int64, copy=False )
         return ( ids[p0], ids[p1] )
     else:
-        setupLogger.warning( f"No globalIds found. Falling back to local id for non-manifold edge detection.", stacklevel=2 )
+        setupLogger.warning( "No globalIds found. Falling back to local id for non-manifold edge detection.", stacklevel=2 )
         return edge
 
 def __surfaceComponentsFromColored( colored: vtk.vtkUnstructuredGrid ) -> list[ SurfaceComponent ]:
