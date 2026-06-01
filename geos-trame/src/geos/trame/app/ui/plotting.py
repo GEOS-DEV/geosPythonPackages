@@ -57,7 +57,7 @@ class DeckPlotting( vuetify.VCard ):
             "dpi": dpi,
         }
 
-    def _permeability( self, **kwargs: Any ) -> Figure:
+    def _permeability( self, **kwargs: Any ) -> type[ Figure ]:
         # read data
         assert self.source.input_file is not None
         if self.source.input_file is None:
