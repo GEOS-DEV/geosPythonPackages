@@ -153,7 +153,6 @@ def __countConnectedComponents( mesh: vtk.vtkUnstructuredGrid ) -> int:
     cf = vtk.vtkConnectivityFilter()
     cf.SetInputData( mesh )
     cf.SetExtractionModeToAllRegions()
-    cf.SetRegionIdAssignmentMode( vtk.vtkConnectivityFilter.CELL_COUNT_DESCENDING )
     cf.ColorRegionsOn()
     cf.Update()
     return cf.GetNumberOfExtractedRegions()
