@@ -10,23 +10,30 @@ record_type = Dict[ str, Dict[ str, Any ] ]
 def parse_schema_element( root: ElementTree.Element,
                           node: ElementTree.Element,
                           xsd: str = '{http://www.w3.org/2001/XMLSchema}',
-                          recursive_types: Iterable[ str ] = [ 'PeriodicEvent', 'SoloEvent', 'HaltEvent' ],
-                          folders: Iterable[ str ] = [ 'src', 'examples' ] ) -> record_type:
+                          folders: Iterable[ str ] = [ 'src', 'examples' ],
+                          _seen: set | None = None ) -> record_type:
     """Parse the xml schema at the current level.
 
     Args:
         root (lxml.etree.Element): the root schema node
         node (lxml.etree.Element): current schema node
         xsd (str): the file namespace
-        recursive_types (list): node tags that allow recursive nesting
         folders (list): folders to sort xml attribute usage into
+        _seen (set): complexType names visited on the current recursion
+            path, used to break cycles. Managed by recursive calls.
 
     Returns:
         dict: Dictionary of attributes and children for the current node
     """
     element_type = node.get( 'type' )
-    element_name = node.get( 'name' )
+    if _seen is None:
+        _seen = set()
+    if element_type in _seen:
+        return { 'attributes': {}, 'children': {} }
+    _seen = _seen | { element_type }
     element_def = root.find( "%scomplexType[@name='%s']" % ( xsd, element_type ) )
+    if element_def is None:
+        return { 'attributes': {}, 'children': {} }
     local_types: record_type = { 'attributes': {}, 'children': {} }
 
     # Parse attributes
@@ -41,8 +48,11 @@ def parse_schema_element( root: ElementTree.Element,
     if choice_node:
         for child in choice_node[ 0 ].findall( '%selement' % ( xsd ) ):
             child_name = child.get( 'name' )
-            if not ( ( child_name in recursive_types ) and ( element_name in recursive_types ) ):
-                local_types[ 'children' ][ child_name ] = parse_schema_element( root, child )
+            local_types[ 'children' ][ child_name ] = parse_schema_element( root,
+                                                                            child,
+                                                                            xsd=xsd,
+                                                                            folders=folders,
+                                                                            _seen=_seen )
 
     return local_types
 
@@ -71,10 +81,14 @@ def collect_xml_attributes_level( local_types: record_type, node: ElementTree.El
         folder (str): the source folder for the current file
     """
     for ka in node.attrib:
-        local_types[ 'attributes' ][ ka ][ folder ].append( node.get( ka ) )
+        # Skip attributes not present in the parsed schema (e.g. off-schema
+        # attributes in a deck, or truncated recursive complexTypes).
+        slot = local_types.get( 'attributes', {} ).get( ka )
+        if slot is not None and folder in slot:
+            slot[ folder ].append( node.get( ka ) )
 
     for child in node:
-        if child.tag in local_types[ 'children' ]:
+        if isinstance( child.tag, str ) and child.tag in local_types.get( 'children', {} ):
             collect_xml_attributes_level( local_types[ 'children' ][ child.tag ], child, folder )
 
 
