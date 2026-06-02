@@ -225,16 +225,19 @@ def __interpretSurface( chi: int, boundaryEdges: int, nonManifoldEdges: int ) ->
         return f"surface with multiple boundaries / holes (chi={chi})"
     return f"open (chi={chi}, unusual)"
 
+
 def _toGlobalEdgeId( mesh: vtk.vtkUnstructuredGrid, edge: tuple[ int, int ] ) -> tuple[ int, int ]:
     """Return a global edge ID for a pair of point IDs."""
     p0, p1 = edge
     ids = mesh.GetPointData().GetGlobalIds()
     if ids is not None:
         ids = vtk_to_numpy( ids ).astype( np.int64, copy=False )
-        return ( ids[p0], ids[p1] )
+        return ( ids[ p0 ], ids[ p1 ] )
     else:
-        setupLogger.warning( "No globalIds found. Falling back to local id for non-manifold edge detection.", stacklevel=2 )
+        setupLogger.warning( "No globalIds found. Falling back to local id for non-manifold edge detection.",
+                             stacklevel=2 )
         return edge
+
 
 def __surfaceComponentsFromColored( colored: vtk.vtkUnstructuredGrid ) -> list[ SurfaceComponent ]:
     """Compute (V, E, F, chi, boundary, non-manifold) per RegionId of a colored 2D mesh."""
