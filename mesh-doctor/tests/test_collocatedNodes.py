@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
-# SPDX-FileContributor: Thomas Gazolla, Alexandre Benedicto
+# SPDX-FileContributor: Thomas Gazolla, Alexandre Benedicto, Jacques Franc
 import pytest
 from typing import Iterator, Tuple
 from vtkmodules.vtkCommonCore import vtkPoints
 from vtkmodules.vtkCommonDataModel import vtkCellArray, vtkTetra, vtkUnstructuredGrid, VTK_TETRA
 from geos.mesh_doctor.actions.collocatedNodes import Options, meshAction
+from .helpers import build_mesh_with_collocated_nodes
 
 
 def getPoints() -> Iterator[ Tuple[ vtkPoints, int ] ]:
@@ -70,3 +71,28 @@ def test_wrongSupportElements() -> None:
     assert len( result.nodesBuckets ) == 0
     assert len( result.wrongSupportElements ) == 1
     assert result.wrongSupportElements[ 0 ] == 0
+
+
+def test_collocated_shared_face_nodes() -> None:
+    """Two hexes with duplicated shared-face nodes: 4 buckets with exact pair indices.
+
+    ``build_mesh_with_collocated_nodes()`` has 16 points instead of 12.
+    The four shared-face nodes on the x=1 plane are duplicated in place:
+
+      original  │  duplicate
+      ──────────┼───────────
+           1    │     8
+           2    │    11
+           5    │    12
+           6    │    15
+
+    Each bucket is a tuple ``(first_inserted_id, rejected_duplicate_id)``.
+    """
+    mesh = build_mesh_with_collocated_nodes()
+    result = meshAction( mesh, Options( tolerance=1.e-6 ) )
+
+    assert len( result.wrongSupportElements ) == 0
+    assert len( result.nodesBuckets ) == 4
+
+    buckets = sorted( result.nodesBuckets )
+    assert buckets == [ ( 1, 8 ), ( 2, 11 ), ( 5, 12 ), ( 6, 15 ) ]
