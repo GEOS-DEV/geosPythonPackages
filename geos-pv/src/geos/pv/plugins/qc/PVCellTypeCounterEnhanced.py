@@ -10,9 +10,6 @@ from typing import Optional
 
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy )
-# source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
-from paraview.detail.loghandler import VTKHandler  # type: ignore[import-not-found]
-# source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
 from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
 from vtkmodules.vtkCommonDataModel import vtkPointSet, vtkTable
@@ -24,10 +21,10 @@ from geos.pv.utils.config import update_paths
 
 update_paths()
 
-from geos.processing.pre_processing.CellTypeCounterEnhanced import CellTypeCounterEnhanced
+from geos.processing.pre_processing.CellTypeCounterEnhanced import CellTypeCounterEnhanced, loggerTitle
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
+from geos.utils.Logger import addPluginLogSupport
 from geos.pv.utils.details import FilterCategory
-from geos.utils.Logger import isHandlerInLogger
 
 __doc__ = f"""
 The ``Cell Type Counter Enhanced`` filter computes cell type counts. Counts can be exported into a file easily.
@@ -41,9 +38,6 @@ To use it:
 
 """
 
-HANDLER: logging.Handler = VTKHandler()
-
-
 @smproxy.filter( name="PVCellTypeCounterEnhanced", label="Cell Type Counter Enhanced" )
 @smhint.xml( f'<ShowInMenu category="{ FilterCategory.QC.value }"/>' )
 @smproperty.input( name="Input", port_index=0 )
@@ -51,6 +45,7 @@ HANDLER: logging.Handler = VTKHandler()
     dataTypes=[ "vtkUnstructuredGrid" ],
     composite_data_supported=True,
 )
+@addPluginLogSupport( loggerTitles=[ loggerTitle ] )
 class PVCellTypeCounterEnhanced( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:
@@ -140,12 +135,8 @@ class PVCellTypeCounterEnhanced( VTKPythonAlgorithmBase ):
         assert inputMesh is not None, "Input server mesh is null."
         assert outputTable is not None, "Output pipeline is null."
 
-        cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced( inputMesh, True )
-        if not isHandlerInLogger( HANDLER, cellTypeCounterEnhancedFilter.logger ):
-            cellTypeCounterEnhancedFilter.setLoggerHandler( HANDLER )
-
-        try:
-            cellTypeCounterEnhancedFilter.applyFilter()
+        cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced( inputMesh )
+        if cellTypeCounterEnhancedFilter.applyFilter():
             outputTable.ShallowCopy( cellTypeCounterEnhancedFilter.getOutput() )
 
             # print counts in Output Messages view
@@ -158,14 +149,14 @@ class PVCellTypeCounterEnhanced( VTKPythonAlgorithmBase ):
                     with open( self._filename, 'w' ) as fout:
                         fout.write( self._countsAll.print() )
                         cellTypeCounterEnhancedFilter.logger.info( f"File {self._filename} was successfully written." )
+                    
+                except TypeError as e:
+                    cellTypeCounterEnhancedFilter.logger.error(
+                    f"The filter { cellTypeCounterEnhancedFilter.logger.name } failed due to:\n{ e }" )
+                
                 except Exception as e:
                     cellTypeCounterEnhancedFilter.logger.info( f"Error while exporting the file due to:\n{ e }" )
 
-        except TypeError as e:
-            cellTypeCounterEnhancedFilter.logger.error(
-                f"The filter { cellTypeCounterEnhancedFilter.logger.name } failed due to:\n{ e }" )
-        except Exception as e:
-            mess: str = f"The filter { cellTypeCounterEnhancedFilter.logger.name } failed due to:\n{ e }"
-            cellTypeCounterEnhancedFilter.logger.critical( mess, exc_info=True )
+
 
         return 1

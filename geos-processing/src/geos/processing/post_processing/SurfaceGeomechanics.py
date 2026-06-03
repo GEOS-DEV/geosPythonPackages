@@ -2,7 +2,6 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay, Paloma Martinez
 # ruff: noqa: E402 # disable Module level import not at top of file
-import logging
 import numpy as np
 
 from typing_extensions import Self, Union
@@ -92,12 +91,7 @@ To use the filter:
 
 class SurfaceGeomechanics:
 
-    def __init__(
-        self: Self,
-        surfacicMesh: vtkPolyData,
-        loggerName: str = "Surface Geomechanics",
-        speHandler: bool = False,
-    ) -> None:
+    def __init__( self: Self, surfacicMesh: vtkPolyData ) -> None:
         """Vtk filter to compute geomechanical surfacic attributes.
 
         Input and Output objects are a vtkPolydata with surfaces
@@ -111,26 +105,12 @@ class SurfaceGeomechanics:
                 Defaults to False.
         """
         # Logger
-        self.logger: Logger
-        if not speHandler:
-            self.logger = getLogger( loggerName, True )
-        else:
-            self.logger = logging.getLogger( loggerName )
-            self.logger.setLevel( logging.INFO )
-            self.logger.propagate = False
+        self.logger: Logger = getLogger( loggerTitle )
 
-        counter: CountVerbosityHandler = CountVerbosityHandler()
-        self.counter: CountVerbosityHandler
-        self.nbWarnings: int = 0
-        try:
-            self.counter = getLoggerHandlerType( type( counter ), self.logger )
-            self.counter.resetWarningCount()
-        except ValueError:
-            self.counter = counter
-            self.counter.setLevel( logging.INFO )
-
-        self.logger.addHandler( self.counter )
-
+        # Input surfacic mesh
+        print( surfacicMesh )
+        if not surfacicMesh.IsA( "vtkPolyData" ):
+            self.logger.error( f"Input surface is expected to be a vtkPolyData, not a {type(surfacicMesh)}." )
         self.inputMesh: vtkPolyData = surfacicMesh
         # Identification of the input surface (logging purpose)
         self.name: Union[ str, None ] = None
@@ -151,18 +131,13 @@ class SurfaceGeomechanics:
         # New created attributes names
         self.newAttributeNames: set[ str ] = set()
 
-    def SetLoggerHandler( self: Self, handler: Logger ) -> None:
-        """Set a specific handler for the filter logger.
-
-        In this filter 4 log levels are use, .info, .error, .warning and .critical, be sure to have at least the same 4 levels.
+    def SetSurfaceName( self: Self, name: str ) -> None:
+        """Set a name for the input surface. For logging purpose only.
 
         Args:
-            handler (logging.Handler): The handler to add.
+            name (str): The identifier for the surface.
         """
-        if not isHandlerInLogger( handler, self.logger ):
-            self.logger.addHandler( handler )
-        else:
-            self.logger.warning( "The logger already has this handler, it has not been added." )
+        self.name = name
 
     def SetRockCohesion( self: Self, rockCohesion: float ) -> None:
         """Set rock cohesion value. Defaults to 0.0 Pa.

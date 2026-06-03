@@ -70,7 +70,7 @@ def fillPartialAttributes(
     """
     # Check if an external logger is given.
     if logger is None:
-        logger = getLogger( "fillPartialAttributes", True )
+        logger = getLogger( "fillPartialAttributes")
 
     # Check if the input mesh is inherited from vtkMultiBlockDataSet.
     if not isinstance( multiBlockDataSet, vtkMultiBlockDataSet ):
@@ -161,7 +161,7 @@ def fillAllPartialAttributes(
     """
     # Check if an external logger is given.
     if logger is None:
-        logger = getLogger( "fillAllPartialAttributes", True )
+        logger = getLogger( "fillAllPartialAttributes")
 
     # Check if the input mesh is inherited from vtkMultiBlockDataSet.
     if not isinstance( multiBlockDataSet, vtkMultiBlockDataSet ):
@@ -252,7 +252,7 @@ def createConstantAttribute(
     """
     # Check if an external logger is given.
     if logger is None:
-        logger = getLogger( "createConstantAttribute", True )
+        logger = getLogger( "createConstantAttribute")
 
     # Deals with multiBlocksDataSets.
     if isinstance( mesh, ( vtkMultiBlockDataSet, vtkCompositeDataSet ) ):
@@ -353,7 +353,7 @@ def createAttribute(
     """
     # Check if an external logger is given.
     if logger is None:
-        logger = getLogger( "createAttribute", True )
+        logger = getLogger( "createAttribute")
 
     # Check the piece.
     if piece not in [ Piece.POINTS, Piece.CELLS ]:
@@ -458,7 +458,7 @@ def copyAttribute(
     """
     # Check if an external logger is given.
     if logger is None:
-        logger = getLogger( "copyAttribute", True )
+        logger = getLogger( "copyAttribute")
 
     if isinstance( meshTo, vtkDataSet ) and isinstance( meshFrom, vtkDataSet ):
         # Small check to check if the two meshes are similar.
@@ -578,8 +578,8 @@ def transferAttributeWithElementMap(
         AttributeError: Error with the attribute attributeName.
     """
     # Check if an external logger is given.
-    if logger is None:
-        logger = getLogger( "transferAttributeWithElementMap", True )
+    if logger is None:#
+        logger = getLogger( "transferAttributeWithElementMap")
 
     # Check the piece.
     if piece not in [ Piece.POINTS, Piece.CELLS ]:

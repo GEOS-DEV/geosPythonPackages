@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: Apache 2.0
 # SPDX-FileCopyrightText: Copyright 2023-2025 TotalEnergies
 # SPDX-FileContributor: Jacques Franc
-import logging
 
 import numpy as np
 import numpy.typing as npt
@@ -218,7 +217,7 @@ loggerTitle: str = "Clip mesh to main frame"
 class ClipToMainFrame( vtkTransformFilter ):
     """Filter to clip a mesh to the main frame using ClipToMainFrame class."""
 
-    def __init__( self, speHandler: bool = False, **properties: str ) -> None:
+    def __init__( self, **properties: str ) -> None:
         """Initialize the ClipToMainFrame Filter with optional speHandler args and forwarding properties to main class.
 
         Args:
@@ -227,41 +226,8 @@ class ClipToMainFrame( vtkTransformFilter ):
             properties (kwargs): kwargs forwarded to vtkTransformFilter.
         """
         super().__init__( **properties )
-
-        # Logger
-        self.logger: Logger
-        if not speHandler:
-            self.logger = getLogger( loggerTitle, True )
-        else:
-            self.logger = logging.getLogger( loggerTitle )
-            self.logger.setLevel( logging.INFO )
-            self.logger.propagate = False
-
-        counter: CountVerbosityHandler = CountVerbosityHandler()
-        self.counter: CountVerbosityHandler
-        self.nbWarnings: int = 0
-        try:
-            self.counter = getLoggerHandlerType( type( counter ), self.logger )
-            self.counter.resetWarningCount()
-        except ValueError:
-            self.counter = counter
-            self.counter.setLevel( logging.INFO )
-
-        self.logger.addHandler( self.counter )
-
-    def Update( self ) -> None:  # type: ignore[override]
-        """Update the filter."""
-        super().Update()
-
-        result: str = f"The filter { self.logger.name } succeeded"
-        if self.counter.warningCount > 0:
-            self.logger.warning( f"{ result } but { self.counter.warningCount } warnings have been logged." )
-        else:
-            self.logger.info( f"{ result }." )
-
-        # Keep number of warnings logged during the filter application and reset the warnings count in case the filter is applied again.
-        self.nbWarnings = self.counter.warningCount
-        self.counter.resetWarningCount()
+        # Logger.
+        self.logger: Logger = getLogger( loggerTitle )
 
     def ComputeTransform( self ) -> None:
         """Update the transformation."""
@@ -284,20 +250,7 @@ class ClipToMainFrame( vtkTransformFilter ):
 
         clip.Update()
         self.SetTransform( clip )
-
-    def SetLoggerHandler( self, handler: logging.Handler ) -> None:
-        """Set a specific handler for the filter logger.
-
-        In this filter 4 log levels are use, .info, .error, .warning and .critical,
-        be sure to have at least the same 4 levels.
-
-        Args:
-            handler (logging.Handler): The handler to add.
-        """
-        if not isHandlerInLogger( handler, self.logger ):
-            self.logger.addHandler( handler )
-        else:
-            self.logger.warning( "The logger already has this handler, it has not been added." )
+        self.logger.info( f"{self.logger.name} applied successfully." )
 
     def __locate_reference_point( self, multiBlockDataSet: vtkMultiBlockDataSet ) -> int:
         """Locate the block to use as reference for the transformation.

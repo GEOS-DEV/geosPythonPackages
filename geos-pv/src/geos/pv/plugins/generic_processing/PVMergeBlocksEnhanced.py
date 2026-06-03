@@ -9,13 +9,17 @@ from typing import Union
 from typing_extensions import Self
 
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy )
-# source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
-from paraview.detail.loghandler import VTKHandler  # type: ignore[import-not-found]
-# source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
-
-from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
-from vtkmodules.vtkCommonDataModel import vtkCompositeDataSet, vtkMultiBlockDataSet, vtkUnstructuredGrid
+    VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
+)
+from vtkmodules.vtkCommonCore import (
+    vtkInformation,
+    vtkInformationVector,
+)
+from vtkmodules.vtkCommonDataModel import (
+    vtkCompositeDataSet,
+    vtkMultiBlockDataSet,
+    vtkUnstructuredGrid,
+)
 
 # Update sys.path to load all GEOS Python Package dependencies
 geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent.parent
@@ -24,10 +28,8 @@ from geos.pv.utils.config import update_paths
 
 update_paths()
 
-from geos.processing.generic_processing_tools.MergeBlockEnhanced import MergeBlockEnhanced
-from geos.utils.Errors import VTKError
-from geos.utils.Logger import isHandlerInLogger
-from geos.pv.utils.details import FilterCategory
+from geos.processing.generic_processing_tools.MergeBlockEnhanced import MergeBlockEnhanced, loggerTitle
+from geos.utils.Logger import addPluginLogSupport
 
 __doc__ = f"""
 Merge Blocks Keeping Partial Attributes is a Paraview plugin filter that allows to merge blocks from a multiblock dataset while keeping partial attributes.
@@ -53,13 +55,12 @@ To use it:
     - nan for float data.
 """
 
-HANDLER: logging.Handler = VTKHandler()
-
 
 @smproxy.filter( name="PVMergeBlocksEnhanced", label="Merge Blocks Keeping Partial Attributes" )
 @smhint.xml( f'<ShowInMenu category="{ FilterCategory.GENERIC_PROCESSING.value }"/>' )
 @smproperty.input( name="Input", port_index=0, label="Input" )
 @smdomain.datatype( dataTypes=[ "vtkMultiBlockDataSet" ], composite_data_supported=True )
+@addPluginLogSupport( loggerTitles=[ loggerTitle, f"{loggerTitle}.vtkErrorLogger" ] )
 class PVMergeBlocksEnhanced( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:
@@ -117,10 +118,7 @@ class PVMergeBlocksEnhanced( VTKPythonAlgorithmBase ):
         assert inputMesh is not None, "Input mesh is null."
         assert outputMesh is not None, "Output pipeline is null."
 
-        mergeBlockEnhancedFilter: MergeBlockEnhanced = MergeBlockEnhanced( inputMesh, True )
-
-        if not isHandlerInLogger( HANDLER, mergeBlockEnhancedFilter.logger ):
-            mergeBlockEnhancedFilter.setLoggerHandler( HANDLER )
+        mergeBlockEnhancedFilter: MergeBlockEnhanced = MergeBlockEnhanced( inputMesh )
 
         try:
             mergeBlockEnhancedFilter.applyFilter()

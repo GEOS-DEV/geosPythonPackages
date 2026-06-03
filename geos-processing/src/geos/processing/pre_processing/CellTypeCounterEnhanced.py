@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Antoine Mazuyer, Martin Lemay
-import logging
 
 from typing_extensions import Self
 from vtkmodules.vtkCommonCore import vtkIntArray
@@ -55,7 +54,6 @@ class CellTypeCounterEnhanced():
     def __init__(
         self: Self,
         inputMesh: vtkUnstructuredGrid,
-        speHandler: bool = False,
     ) -> None:
         """CellTypeCounterEnhanced filter computes mesh stats.
 
@@ -68,40 +66,8 @@ class CellTypeCounterEnhanced():
         self.outTable: vtkTable = vtkTable()
         self._counts: CellTypeCounts = CellTypeCounts()
 
-        # Logger
-        self.logger: Logger
-        if not speHandler:
-            self.logger = getLogger( loggerTitle, True )
-        else:
-            self.logger = logging.getLogger( loggerTitle )
-            self.logger.setLevel( logging.INFO )
-            self.logger.propagate = False
-
-        counter: CountVerbosityHandler = CountVerbosityHandler()
-        self.counter: CountVerbosityHandler
-        self.nbWarnings: int = 0
-        try:
-            self.counter = getLoggerHandlerType( type( counter ), self.logger )
-            self.counter.resetWarningCount()
-        except ValueError:
-            self.counter = counter
-            self.counter.setLevel( logging.INFO )
-
-        self.logger.addHandler( self.counter )
-
-    def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
-        """Set a specific handler for the filter logger.
-
-        In this filter 4 log levels are use, .info, .error, .warning and .critical,
-        be sure to have at least the same 4 levels.
-
-        Args:
-            handler (logging.Handler): The handler to add.
-        """
-        if not isHandlerInLogger( handler, self.logger ):
-            self.logger.addHandler( handler )
-        else:
-            self.logger.warning( "The logger already has this handler, it has not been added." )
+        # Logger.
+        self.logger: Logger = getLogger( loggerTitle )
 
     def applyFilter( self: Self ) -> None:
         """Apply CellTypeCounterEnhanced filter.

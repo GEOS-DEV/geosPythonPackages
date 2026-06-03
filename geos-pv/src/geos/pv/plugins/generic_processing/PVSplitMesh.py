@@ -8,9 +8,6 @@ from pathlib import Path
 from typing_extensions import Self
 
 from paraview.util.vtkAlgorithm import VTKPythonAlgorithmBase  # type: ignore[import-not-found]
-# source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
-from paraview.detail.loghandler import VTKHandler  # type: ignore[import-not-found]
-# source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
 from vtkmodules.vtkCommonDataModel import vtkPointSet
 
@@ -21,9 +18,10 @@ from geos.pv.utils.config import update_paths
 
 update_paths()
 
-from geos.processing.generic_processing_tools.SplitMesh import SplitMesh
-from geos.utils.Logger import isHandlerInLogger
+from geos.processing.generic_processing_tools.SplitMesh import ( SplitMesh, loggerTitle )
+from geos.processing.pre_processing.CellTypeCounterEnhanced import loggerTitle as cloggerTitle
 from geos.pv.utils.details import ( SISOFilter, FilterCategory )
+from geos.utils.Logger import addPluginLogSupport
 
 __doc__ = f"""
 Split each cell of input mesh to smaller cells.
@@ -39,10 +37,9 @@ To use it:
 
 """
 
-HANDLER: logging.Handler = VTKHandler()
 
-
-@SISOFilter( category=FilterCategory.GENERIC_PROCESSING, decoratedLabel="Split Mesh", decoratedType="vtkPointSet" )
+@SISOFilter( category=FilterCategory.GEOS_UTILS, decoratedLabel="Split Mesh", decoratedType="vtkPointSet" )
+@addPluginLogSupport( loggerTitles=[ loggerTitle, cloggerTitle ] )
 class PVSplitMesh( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:
@@ -55,9 +52,7 @@ class PVSplitMesh( VTKPythonAlgorithmBase ):
             inputMesh(vtkPointSet): Input mesh.
             outputMesh: Output mesh.
         """
-        splitMeshFilter: SplitMesh = SplitMesh( inputMesh, True )
-        if not isHandlerInLogger( HANDLER, splitMeshFilter.logger ):
-            splitMeshFilter.setLoggerHandler( HANDLER )
+        splitMeshFilter: SplitMesh = SplitMesh( inputMesh )
 
         try:
             splitMeshFilter.applyFilter()

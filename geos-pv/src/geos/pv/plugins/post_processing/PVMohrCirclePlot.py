@@ -11,6 +11,12 @@ from typing_extensions import Self
 
 import numpy as np
 import numpy.typing as npt
+from paraview.simple import (  # type: ignore[import-not-found]
+    Render, )
+from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
+    VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
+)
+
 
 from paraview.simple import Render  # type: ignore[import-not-found]
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
@@ -30,14 +36,17 @@ from geos.pv.utils.config import update_paths
 
 update_paths()
 
-from geos.geomechanics.model.MohrCircle import MohrCircle
-from geos.utils.pieceEnum import Piece
-from geos.utils.Logger import CountVerbosityHandler
+from geos.geomechanics.model.MohrCircle import MohrCircle, loggerTitle
 from geos.utils.enumUnits import Pressure, enumerationDomainUnit
-from geos.utils.GeosOutputsConstants import ( FAILURE_ENVELOPE, GeosMeshOutputsEnum )
-from geos.utils.Logger import ( getLoggerHandlerType )
-from geos.utils.PhysicalConstants import ( DEFAULT_FRICTION_ANGLE_DEG, DEFAULT_FRICTION_ANGLE_RAD,
-                                           DEFAULT_ROCK_COHESION )
+from geos.utils.GeosOutputsConstants import (
+    FAILURE_ENVELOPE,
+    GeosMeshOutputsEnum,
+)
+from geos.utils.PhysicalConstants import (
+    DEFAULT_FRICTION_ANGLE_DEG,
+    DEFAULT_FRICTION_ANGLE_RAD,
+    DEFAULT_ROCK_COHESION,
+)
 from geos.mesh.utils.arrayHelpers import getArrayInObject
 
 import geos.pv.utils.mohrCircles.functionsMohrCircle as mcf
@@ -47,7 +56,7 @@ from geos.pv.utils.DisplayOrganizationParaview import buildNewLayoutWithPythonVi
 from geos.pv.pyplotUtils.matplotlibOptions import ( FontStyleEnum, FontWeightEnum, LegendLocationEnum, LineStyleEnum,
                                                     MarkerStyleEnum, OptionSelectionEnum, optionEnumToXml )
 from geos.pv.utils.mohrCircles.functionsMohrCircle import StressConventionEnum
-from geos.pv.utils.details import FilterCategory
+from geos.utils.Logger import ( addPluginLogSupport, getLogger )
 
 __doc__ = f"""
 PVMohrCirclePlot is a ParaView plugin that allows to compute and plot
@@ -91,7 +100,6 @@ If you start from a raw GEOS output, execute the following steps before moving o
         * The attribute 'CellId' has to be used for the 'Selection Labels'.
 """
 
-HANDLER: logging.Handler = VTKHandler()
 loggerTitle: str = "Mohr Circle"
 
 
@@ -105,6 +113,7 @@ loggerTitle: str = "Mohr Circle"
     dataTypes=[ "vtkUnstructuredGrid" ],
     composite_data_supported=False,
 )
+@addPluginLogSupport( loggerTitles=[ loggerTitle ] )
 class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:
@@ -181,23 +190,7 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
 
         # Request data processing step - incremented each time RequestUpdateExtent is called
         self.requestDataStep: int = -1
-
-        self.logger = logging.getLogger( loggerTitle )
-        self.logger.setLevel( logging.INFO )
-        self.logger.addHandler( HANDLER )
-        self.logger.propagate = False
-
-        counter: CountVerbosityHandler = CountVerbosityHandler()
-        self.counter: CountVerbosityHandler
-        self.nbWarnings: int = 0
-        try:
-            self.counter = getLoggerHandlerType( type( counter ), self.logger )
-            self.counter.resetWarningCount()
-        except ValueError:
-            self.counter = counter
-            self.counter.setLevel( logging.INFO )
-
-        self.logger.addHandler( self.counter )
+        self.logger: Logger = getLogger( loggerTitle )
 
     @smproperty.xml( """
         <Property name="Refresh Data"

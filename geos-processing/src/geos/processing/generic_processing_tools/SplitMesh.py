@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Antoine Mazuyer, Martin Lemay
-import logging
 import numpy as np
 import numpy.typing as npt
 from typing_extensions import Self
@@ -53,12 +52,12 @@ To use the filter:
     outputMesh: vtkUnstructuredGrid = splitMeshFilter.getOutput()
 """
 
-loggerTitle: str = "Split Mesh"
+loggerTitle: str = "SplitMesh"
 
 
 class SplitMesh():
 
-    def __init__( self, inputMesh: vtkUnstructuredGrid, speHandler: bool = False ) -> None:
+    def __init__( self, inputMesh: vtkUnstructuredGrid ) -> None:
         """SplitMesh filter splits each cell using edge centers.
 
         Args:
@@ -72,50 +71,11 @@ class SplitMesh():
         self.points: vtkPoints
         self.originalId: vtkIdTypeArray
         self.cellTypes: list[ int ]
-        self.speHandler: bool = speHandler
-        self.handler: None | logging.Handler = None
 
+        #subordonate filter
+        self.cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced( self.inputMesh )
         # Logger
-        self.logger: Logger
-        if not speHandler:
-            self.logger = getLogger( loggerTitle, True )
-        else:
-            self.logger = logging.getLogger( loggerTitle )
-            self.logger.setLevel( logging.INFO )
-            self.logger.propagate = False
-            handlers: list[ logging.Handler ] = self.logger.handlers
-            # Get the handler to specify if the logger already exist and has it
-            for handler in handlers:
-                # The CountVerbosityHandler can't be the handler to specify
-                if type( handler ) is not type( CountVerbosityHandler() ):
-                    self.handler = handler
-                    break
-
-        counter: CountVerbosityHandler = CountVerbosityHandler()
-        self.counter: CountVerbosityHandler
-        self.nbWarnings: int = 0
-        try:
-            self.counter = getLoggerHandlerType( type( counter ), self.logger )
-            self.counter.resetWarningCount()
-        except ValueError:
-            self.counter = counter
-            self.counter.setLevel( logging.INFO )
-
-        self.logger.addHandler( self.counter )
-
-    def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
-        """Set a specific handler for the filter logger.
-
-        In this filter 4 log levels are use, .info, .error, .warning and .critical, be sure to have at least the same 4 levels.
-
-        Args:
-            handler (logging.Handler): The handler to add.
-        """
-        self.handler = handler
-        if not isHandlerInLogger( handler, self.logger ):
-            self.logger.addHandler( handler )
-        else:
-            self.logger.warning( "The logger already has this handler, it has not been added." )
+        self.logger: Logger = getLogger( loggerTitle )
 
     def applyFilter( self: Self ) -> None:
         """Apply the filter SplitMesh.
@@ -212,16 +172,9 @@ class SplitMesh():
         Returns:
             CellTypeCounts: cell type counts
         """
-        cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced(
-            self.inputMesh, self.speHandler )
-        if self.speHandler and not isHandlerInLogger( self.handler, cellTypeCounterEnhancedFilter.logger ):
-            cellTypeCounterEnhancedFilter.setLoggerHandler( self.handler )
-
-        cellTypeCounterEnhancedFilter.applyFilter()
-        # Add to the warning counter the number of warning logged with the call of CelltypeCounterEnhanced filter
-        self.counter.addExternalWarningCount( cellTypeCounterEnhancedFilter.nbWarnings )
-
-        return cellTypeCounterEnhancedFilter.GetCellTypeCountsObject()
+        if not self.cellTypeCounterEnhancedFilter.applyFilter():
+            raise
+        return self.cellTypeCounterEnhancedFilter.GetCellTypeCountsObject()
 
     def _addMidPoint( self: Self, ptA: int, ptB: int ) -> int:
         """Add a point at the center of the edge defined by input point ids.

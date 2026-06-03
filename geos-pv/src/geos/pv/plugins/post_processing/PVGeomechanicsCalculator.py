@@ -9,10 +9,9 @@ import numpy as np
 from pathlib import Path
 from typing_extensions import Self
 
-from paraview.util.vtkAlgorithm import VTKPythonAlgorithmBase, smdomain, smproperty  # type: ignore[import-not-found]
-# source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
-from paraview.detail.loghandler import VTKHandler  # type: ignore[import-not-found]
-# source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
+from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
+    VTKPythonAlgorithmBase, smdomain, smproperty
+)  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
 
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkMultiBlockDataSet
 
@@ -27,8 +26,9 @@ from geos.utils.Logger import ( CountVerbosityHandler, isHandlerInLogger, getLog
 from geos.utils.PhysicalConstants import ( DEFAULT_FRICTION_ANGLE_DEG, DEFAULT_GRAIN_BULK_MODULUS,
                                            DEFAULT_ROCK_COHESION, WATER_DENSITY )
 from geos.mesh.utils.multiblockHelpers import ( getBlockElementIndexesFlatten, getBlockNameFromIndex )
-from geos.processing.post_processing.GeomechanicsCalculator import GeomechanicsCalculator
+from geos.processing.post_processing.GeomechanicsCalculator import GeomechanicsCalculator, loggerTitle
 from geos.pv.utils.details import ( SISOFilter, FilterCategory )
+from geos.utils.Logger import addPluginLogSupport
 
 __doc__ = f"""
 PVGeomechanicsCalculator is a paraview plugin that allows to compute additional geomechanics properties from existing ones in the mesh.
@@ -81,6 +81,7 @@ loggerTitle: str = "Geomechanics Calculator"
 @SISOFilter( category=FilterCategory.GEOS_POST_PROCESSING,
              decoratedLabel="GEOS Geomechanics Calculator",
              decoratedType=[ "vtkUnstructuredGrid", "vtkMultiBlockDataSet" ] )
+@addPluginLogSupport( loggerTitles=[ loggerTitle ] )
 class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:
@@ -264,17 +265,38 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
             geomechanicsCalculatorFilter = GeomechanicsCalculator(
                 outputMesh,
                 self.computeAdvancedProperties,
-                loggerName="Geomechanics Calculators on the unstructured grid",
-                speHandler=True,
             )
 
-            if not isHandlerInLogger( HANDLER, geomechanicsCalculatorFilter.logger ):
-                geomechanicsCalculatorFilter.setLoggerHandler( HANDLER )
+            # if not geomechanicsCalculatorFilter.logger.hasHandlers():
+            #     geomechanicsCalculatorFilter.setLoggerHandler( GEOSHandler() )
 
             geomechanicsCalculatorFilter.physicalConstants.grainBulkModulus = self.grainBulkModulus
             geomechanicsCalculatorFilter.physicalConstants.specificDensity = self.specificDensity
             geomechanicsCalculatorFilter.physicalConstants.rockCohesion = self.rockCohesion
             geomechanicsCalculatorFilter.physicalConstants.frictionAngle = self.frictionAngle
+
+            geomechanicsCalculatorFilter.applyFilter()
+            outputMesh.ShallowCopy( geomechanicsCalculatorFilter.getOutput() )
+        elif isinstance( outputMesh, vtkMultiBlockDataSet ):
+            volumeBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( outputMesh )
+            for blockIndex in volumeBlockIndexes:
+                volumeBlock: vtkUnstructuredGrid = vtkUnstructuredGrid.SafeDownCast(
+                    outputMesh.GetDataSet( blockIndex ) )
+                # volumeBlockName: str = getBlockNameFromIndex( outputMesh, blockIndex )
+                # filterName: str = f"Geomechanics Calculator for the block { volumeBlockName }"
+
+                geomechanicsCalculatorFilter = GeomechanicsCalculator(
+                    volumeBlock,
+                    self.computeAdvancedProperties,
+                )
+
+                # if not geomechanicsCalculatorFilter.logger.hasHandlers():
+                    # geomechanicsCalculatorFilter.setLoggerHandler( GEOSHandler() )
+
+                geomechanicsCalculatorFilter.physicalConstants.grainBulkModulus = self.grainBulkModulus
+                geomechanicsCalculatorFilter.physicalConstants.specificDensity = self.specificDensity
+                geomechanicsCalculatorFilter.physicalConstants.rockCohesion = self.rockCohesion
+                geomechanicsCalculatorFilter.physicalConstants.frictionAngle = self.frictionAngle
 
             try:
                 geomechanicsCalculatorFilter.applyFilter()
