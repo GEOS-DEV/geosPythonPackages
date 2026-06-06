@@ -167,6 +167,7 @@ def _available_cpu_count() -> int:
         return len( os.sched_getaffinity( 0 ) )
     return os.cpu_count() or 1
 
+
 def _pack_baselines_with_parallel_gzip( archive_name: str, baseline_path: str ) -> bool:
     tar_bin = shutil.which( 'tar' )
     pigz_bin = shutil.which( 'pigz' )
@@ -180,8 +181,7 @@ def _pack_baselines_with_parallel_gzip( archive_name: str, baseline_path: str ) 
 
     try:
         with open( archive_path, 'wb' ) as output:
-            tar_process = subprocess.Popen( [ tar_bin, '-C', baseline_path, '-cf', '-', '.' ],
-                                            stdout=subprocess.PIPE )
+            tar_process = subprocess.Popen( [ tar_bin, '-C', baseline_path, '-cf', '-', '.' ], stdout=subprocess.PIPE )
             if tar_process.stdout is None:
                 raise RuntimeError( 'failed to capture tar output' )
             pigz_process = subprocess.Popen( [ pigz_bin, '-9', '-p', threads ],
