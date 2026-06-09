@@ -6,7 +6,7 @@ import numpy.typing as npt
 import pytest
 from typing import Any
 
-from geos.processing.pre_processing.CellTypeCounterEnhanced import CellTypeCounterEnhanced
+from geos.mesh.stats.CellTypeCounterEnhanced import CellTypeCounterEnhanced
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
 
 from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkCellTypes, vtkCell, VTK_TRIANGLE, VTK_QUAD,

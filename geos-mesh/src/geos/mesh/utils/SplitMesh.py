@@ -8,18 +8,19 @@ from typing_extensions import Self
 
 from vtkmodules.vtkCommonCore import vtkPoints, vtkIdTypeArray, vtkDataArray
 from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkCellArray, vtkCellData, vtkCell, vtkCellTypes,
-                                            VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_HEXAHEDRON, VTK_PYRAMID, VTK_WEDGE,
-                                            VTK_POLYHEDRON, VTK_POLYGON )
+                                            VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_HEXAHEDRON, VTK_PYRAMID, VTK_WEDGE )
 from vtkmodules.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 
 from geos.utils.Logger import ( getLogger, Logger, CountVerbosityHandler, isHandlerInLogger, getLoggerHandlerType )
-from geos.processing.pre_processing.CellTypeCounterEnhanced import CellTypeCounterEnhanced
+from geos.mesh.stats.CellTypeCounterEnhanced import CellTypeCounterEnhanced
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
 
 __doc__ = """
 SplitMesh module is a vtk filter that splits cells of a mesh composed of tetrahedra, pyramids, hexahedra, triangles, and quads.
 
-.. Warning:: Current implementation only supports meshes composed of either polygons or polyhedra, not both together.
+Polygons (2D) and polyhedra (3D) may be mixed in the same mesh: edge midpoints are
+shared through an internal cache, so a 2D cell coincident with a 3D cell face splits
+conformally with that face. Wedges are not supported.
 
 Filter input and output types are vtkUnstructuredGrid.
 
@@ -27,7 +28,7 @@ To use the filter:
 
 .. code-block:: python
 
-    from geos.processing.generic_processing_tools.SplitMesh import SplitMesh
+    from geos.mesh.utils.SplitMesh import SplitMesh
 
     # Filter inputs
     inputMesh: vtkUnstructuredGrid
@@ -74,6 +75,9 @@ class SplitMesh():
         self.cellTypes: list[ int ]
         self.speHandler: bool = speHandler
         self.handler: None | logging.Handler = None
+        # Cache of edge midpoints keyed on (min_pt_id, max_pt_id) so that
+        # shared edges across adjacent cells reuse the same point ID.
+        self.m_edgeMidpointCache: dict[ tuple[ int, int ], int ] = {}
 
         # Logger
         self.logger: Logger
@@ -133,20 +137,14 @@ class SplitMesh():
         if counts.getTypeCount( VTK_WEDGE ) != 0:
             raise TypeError( "Input mesh contains wedges that are not currently supported." )
 
-        nbPolygon: int = counts.getTypeCount( VTK_POLYGON )
-        nbPolyhedra: int = counts.getTypeCount( VTK_POLYHEDRON )
-        # Current implementation only supports meshes composed of either polygons or polyhedra
-        if nbPolyhedra * nbPolygon != 0:
-            raise TypeError(
-                "Input mesh is composed of both polygons and polyhedra, but it must contains only one of the two." )
-
         nbTet: int = counts.getTypeCount( VTK_TETRA )  # will divide into 8 tets
         nbPyr: int = counts.getTypeCount( VTK_PYRAMID )  # will divide into 6 pyramids and 4 tets so 10 new cells
         nbHex: int = counts.getTypeCount( VTK_HEXAHEDRON )  # will divide into 8 hexes
         nbTriangles: int = counts.getTypeCount( VTK_TRIANGLE )  # will divide into 4 triangles
         nbQuad: int = counts.getTypeCount( VTK_QUAD )  # will divide into 4 quads
-        nbNewPoints: int = 0
-        nbNewPoints = nbHex * 19 + nbTet * 6 + nbPyr * 9 if nbPolyhedra > 0 else nbTriangles * 3 + nbQuad * 5
+        # Upper bound: shared edges (e.g. between a 3D cell and its 2D face) produce one midpoint
+        # not two, thanks to the edge midpoint cache. The actual count will be <= this.
+        nbNewPoints: int = nbHex * 19 + nbTet * 6 + nbPyr * 9 + nbTriangles * 3 + nbQuad * 5
         nbNewCells: int = nbHex * 8 + nbTet * 8 + nbPyr * 10 + nbTriangles * 4 + nbQuad * 4
 
         self.points = vtkPoints()
@@ -159,6 +157,7 @@ class SplitMesh():
         self.originalId.SetName( "OriginalID" )
         self.originalId.Allocate( nbNewCells )
         self.cellTypes = []
+        self.m_edgeMidpointCache = {}
 
         # Define cell type to splitting method mapping
         splitMethods = {
@@ -233,10 +232,16 @@ class SplitMesh():
         Returns:
             int: inserted point Id
         """
+        key: tuple[ int, int ] = ( min( ptA, ptB ), max( ptA, ptB ) )
+        cached = self.m_edgeMidpointCache.get( key )
+        if cached is not None:
+            return cached
         ptACoor: npt.NDArray[ np.float64 ] = np.array( self.points.GetPoint( ptA ) )
         ptBCoor: npt.NDArray[ np.float64 ] = np.array( self.points.GetPoint( ptB ) )
         center: npt.NDArray[ np.float64 ] = ( ptACoor + ptBCoor ) / 2.
-        return self.points.InsertNextPoint( center[ 0 ], center[ 1 ], center[ 2 ] )
+        newId: int = self.points.InsertNextPoint( center[ 0 ], center[ 1 ], center[ 2 ] )
+        self.m_edgeMidpointCache[ key ] = newId
+        return newId
 
     def _splitTetrahedron( self: Self, cell: vtkCell, index: int ) -> None:
         r"""Split a tetrahedron.

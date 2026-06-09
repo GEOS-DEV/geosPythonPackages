@@ -12,8 +12,8 @@ from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkCellArray, v
                                             VTK_QUAD, VTK_TETRA, VTK_HEXAHEDRON, VTK_PYRAMID )
 from vtkmodules.vtkCommonCore import vtkPoints, vtkIdList, vtkDataArray
 
-from geos.mesh.utils.genericHelpers import createSingleCellMesh
-from geos.processing.generic_processing_tools.SplitMesh import SplitMesh
+from geos.mesh.utils.genericHelpers import createMultiCellMesh, createSingleCellMesh
+from geos.mesh.utils.SplitMesh import SplitMesh
 
 ###############################################################
 #                  create single tetra mesh                   #
@@ -296,3 +296,86 @@ def test_splitMesh(
     nbArrayInput: int = cellDataInput.GetNumberOfArrays()
     nbArraySplitted: int = cellData.GetNumberOfArrays()
     assert nbArraySplitted == nbArrayInput + 1, f"Number of arrays should be { nbArrayInput + 1 }."
+
+
+@pytest.mark.parametrize( "cellType,coords", [
+    ( VTK_HEXAHEDRON, [
+        np.array( [ [ 0., 0., 0. ], [ 1., 0., 0. ], [ 1., 1., 0. ], [ 0., 1., 0. ], [ 0., 0., 1. ], [ 1., 0., 1. ],
+                    [ 1., 1., 1. ], [ 0., 1., 1. ] ] ),
+        np.array( [ [ 1., 0., 0. ], [ 2., 0., 0. ], [ 2., 1., 0. ], [ 1., 1., 0. ], [ 1., 0., 1. ], [ 2., 0., 1. ],
+                    [ 2., 1., 1. ], [ 1., 1., 1. ] ] ),
+    ] ),
+    ( VTK_TETRA, [
+        np.array( [ [ 0., 0., 0. ], [ 1., 0., 0. ], [ 0., 1., 0. ], [ 0., 0., 1. ] ] ),
+        np.array( [ [ 1., 0., 0. ], [ 1., 1., 0. ], [ 0., 1., 0. ], [ 0., 0., 1. ] ] ),
+    ] ),
+    ( VTK_TRIANGLE, [
+        np.array( [ [ 0., 0., 0. ], [ 1., 0., 0. ], [ 0., 1., 0. ] ] ),
+        np.array( [ [ 1., 0., 0. ], [ 1., 1., 0. ], [ 0., 1., 0. ] ] ),
+    ] ),
+    ( VTK_QUAD, [
+        np.array( [ [ 0., 0., 0. ], [ 1., 0., 0. ], [ 1., 1., 0. ], [ 0., 1., 0. ] ] ),
+        np.array( [ [ 1., 0., 0. ], [ 2., 0., 0. ], [ 2., 1., 0. ], [ 1., 1., 0. ] ] ),
+    ] ),
+] )
+def test_splitMeshFaceConformity( cellType: int, coords: list[ npt.NDArray[ np.float64 ] ] ) -> None:
+    """Two adjacent cells sharing a face must produce topologically conforming children.
+
+    After splitting, no two distinct point IDs should occupy the same coordinates.
+    If the edge-midpoint cache works correctly, shared-edge midpoints are inserted
+    once and reused, so unique coordinates == number of points in the output.
+    """
+    cellTypeName: str = vtkCellTypes.GetClassNameFromTypeId( cellType )
+    mesh: vtkUnstructuredGrid = createMultiCellMesh( [ cellType, cellType ], coords, sharePoints=True )
+
+    splitFilter: SplitMesh = SplitMesh( mesh )
+    splitFilter.applyFilter()
+    output: vtkUnstructuredGrid = splitFilter.getOutput()
+
+    pts: npt.NDArray[ np.float64 ] = vtk_to_numpy( output.GetPoints().GetData() )
+    uniquePts = np.unique( pts, axis=0 )
+
+    assert len( uniquePts ) == output.GetNumberOfPoints(), (
+        f"{ cellTypeName }: found { output.GetNumberOfPoints() - len( uniquePts ) } duplicate coincident points after "
+        f"splitting -- shared-edge midpoints are not being reused." )
+
+
+def test_splitMeshHybrid2D3DConformity() -> None:
+    """A 3D cell with an explicit 2D face cell must split conformally.
+
+    Build a single tetrahedron (pts 0-3) whose bottom face (pts 0,1,2) is also
+    represented as an explicit triangle cell (as fracture or boundary faces are
+    in GEOS meshes). After splitting, the 2D children must share the same point
+    IDs as the corresponding face children of the 3D split -- no duplicate
+    coincident points, and the output has the correct cell counts.
+    """
+    pts = np.array( [ [ 0., 0., 0. ], [ 1., 0., 0. ], [ 0., 1., 0. ], [ 0., 0., 1. ] ], dtype=np.float64 )
+
+    mesh: vtkUnstructuredGrid = vtkUnstructuredGrid()
+    points = vtkPoints()
+    for p in pts:
+        points.InsertNextPoint( p[ 0 ], p[ 1 ], p[ 2 ] )
+    mesh.SetPoints( points )
+
+    tetIds = vtkIdList()
+    for i in [ 0, 1, 2, 3 ]:
+        tetIds.InsertNextId( i )
+    mesh.InsertNextCell( VTK_TETRA, tetIds )
+
+    triIds = vtkIdList()
+    for i in [ 0, 1, 2 ]:  # bottom face of the tet
+        triIds.InsertNextId( i )
+    mesh.InsertNextCell( VTK_TRIANGLE, triIds )
+
+    splitFilter: SplitMesh = SplitMesh( mesh )
+    splitFilter.applyFilter()
+    output: vtkUnstructuredGrid = splitFilter.getOutput()
+
+    # 1 tet -> 8 tets, 1 tri -> 4 tris
+    assert output.GetNumberOfCells() == 12, f"Expected 12 cells, got { output.GetNumberOfCells() }."
+
+    outPts: npt.NDArray[ np.float64 ] = vtk_to_numpy( output.GetPoints().GetData() )
+    uniquePts = np.unique( outPts, axis=0 )
+    assert len( uniquePts ) == output.GetNumberOfPoints(), (
+        f"Found { output.GetNumberOfPoints() - len( uniquePts ) } duplicate coincident points -- "
+        f"3D/2D shared-face edges are not sharing midpoint IDs." )

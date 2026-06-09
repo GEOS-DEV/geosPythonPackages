@@ -20,7 +20,7 @@ To use the filter:
 
 .. code-block:: python
 
-    from geos.processing.pre_processing.CellTypeCounterEnhanced import CellTypeCounterEnhanced
+    from geos.mesh.stats.CellTypeCounterEnhanced import CellTypeCounterEnhanced
 
     # Filter inputs
     inputMesh: vtkUnstructuredGrid

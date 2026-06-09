@@ -57,3 +57,12 @@ geos.mesh.utils.pyvistaTools module
    :members:
    :undoc-members:
    :show-inheritance:
+
+
+geos.mesh.utils.SplitMesh module
+-----------------------------------------------
+
+.. automodule:: geos.mesh.utils.SplitMesh
+   :members:
+   :undoc-members:
+   :show-inheritance:

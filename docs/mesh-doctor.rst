@@ -134,6 +134,17 @@ The ``generateGlobalIds`` can generate `global ids` for the imported ``vtk`` mes
 .. command-output:: mesh-doctor generateGlobalIds --help
    :shell:
 
+``refineMesh``
+""""""""""""""
+
+The ``refineMesh`` module refines a mesh by splitting each cell into smaller cells of the same type using edge midpoints
+(hexahedron -> 8, tetrahedron -> 8, pyramid -> 6 pyramids + 4 tetrahedra, triangle -> 4, quad -> 4).
+Shared edges reuse the same midpoint, so the refined mesh stays conformal, including across 2D faces coincident with 3D cell faces.
+The refinement can be applied several times with the ``--iterations`` option.
+
+.. command-output:: mesh-doctor refineMesh --help
+   :shell:
+
 ``nonConformal``
 """"""""""""""""
 

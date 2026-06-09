@@ -55,12 +55,3 @@ MergeBlockEnhanced
     :members:
     :undoc-members:
     :show-inheritance:
-
-
-SplitMesh
--------------------------
-
-.. automodule:: geos.processing.generic_processing_tools.SplitMesh
-    :members:
-    :undoc-members:
-    :show-inheritance:
