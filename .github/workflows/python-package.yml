@@ -140,40 +140,66 @@ jobs:
   check_integration_label:
     runs-on: ubuntu-latest
     needs: [build]
+    permissions:
+      pull-requests: read
     outputs:
       has_geos_integration_label: ${{ steps.set-label.outputs.has_label }}
     steps:
       - name: Check if PR has '${{ env.LABEL_TEST_GEOS_INTEGRATION }}' label
         id: set-label
+        # Fetch labels live from the GitHub REST API rather than reading
+        # github.event.pull_request.labels. The event payload is a snapshot
+        # frozen at the time the workflow was first triggered, so labels
+        # added after that first run are invisible to re-runs.
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          REQUIRED_LABEL: ${{ env.LABEL_TEST_GEOS_INTEGRATION }}
         run: |
           echo "Checking for label..."
           LABEL_FOUND=false
-          LABELS='${{ toJson(github.event.pull_request.labels.*.name) }}'
+          PR_JSON=$(curl --fail --silent --show-error \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            "https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}")
+          LABELS=$(echo "${PR_JSON}" | jq -crM '[.labels[].name]')
           echo "PR Labels: $LABELS"
-          if echo "$LABELS" | grep -q "${{ env.LABEL_TEST_GEOS_INTEGRATION }}"; then
+          if echo "$LABELS" | jq -e --arg label "${REQUIRED_LABEL}" 'index($label) != null' > /dev/null; then
             LABEL_FOUND=true
-            echo "Label '${{ env.LABEL_TEST_GEOS_INTEGRATION }}' found"
+            echo "Label '${REQUIRED_LABEL}' found"
           fi
-          echo "has_label=$LABEL_FOUND" >> $GITHUB_OUTPUT
+          echo "has_label=$LABEL_FOUND" >> "$GITHUB_OUTPUT"
 
   check_force_integration_label:
     runs-on: ubuntu-latest
     # needs: [build]
+    permissions:
+      pull-requests: read
     outputs:
       has_geos_integration_force_label: ${{ steps.set-label.outputs.has_label }}
     steps:
       - name: Check if PR has '${{ env.LABEL_FORCE_GEOS_INTEGRATION }}' label
         id: set-label
+        # Fetch labels live from the GitHub REST API rather than reading
+        # github.event.pull_request.labels. The event payload is a snapshot
+        # frozen at the time the workflow was first triggered, so labels
+        # added after that first run are invisible to re-runs.
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          REQUIRED_LABEL: ${{ env.LABEL_FORCE_GEOS_INTEGRATION }}
         run: |
           echo "Checking for label..."
           LABEL_FOUND=false
-          LABELS='${{ toJson(github.event.pull_request.labels.*.name) }}'
+          PR_JSON=$(curl --fail --silent --show-error \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            "https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}")
+          LABELS=$(echo "${PR_JSON}" | jq -crM '[.labels[].name]')
           echo "PR Labels: $LABELS"
-          if echo "$LABELS" | grep -q "${{ env.LABEL_FORCE_GEOS_INTEGRATION }}"; then
+          if echo "$LABELS" | jq -e --arg label "${REQUIRED_LABEL}" 'index($label) != null' > /dev/null; then
             LABEL_FOUND=true
-            echo "Label '${{ env.LABEL_FORCE_GEOS_INTEGRATION }}' found"
+            echo "Label '${REQUIRED_LABEL}' found"
           fi
-          echo "has_label=$LABEL_FOUND" >> $GITHUB_OUTPUT
+          echo "has_label=$LABEL_FOUND" >> "$GITHUB_OUTPUT"
 
   # Step 3: Check if GEOS integration is required based on changed files
   check_geos_integration_required:

@@ -21,7 +21,7 @@ from geos.pv.utils.config import update_paths
 
 update_paths()
 
-from geos.processing.generic_processing_tools.SplitMesh import SplitMesh
+from geos.mesh.utils.SplitMesh import SplitMesh
 from geos.utils.Logger import isHandlerInLogger
 from geos.pv.utils.details import ( SISOFilter, FilterCategory )
 

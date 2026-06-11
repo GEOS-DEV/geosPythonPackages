@@ -16,7 +16,7 @@ from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkPolyData, vt
                                             VTK_POLYHEDRON )
 from vtkmodules.util.numpy_support import vtk_to_numpy, numpy_to_vtk
 
-from geos.processing.pre_processing.CellTypeCounterEnhanced import CellTypeCounterEnhanced
+from geos.mesh.stats.CellTypeCounterEnhanced import CellTypeCounterEnhanced
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
 from geos.mesh.model.QualityMetricSummary import ( QualityMetricSummary, StatTypes )
 from geos.mesh.utils.arrayHelpers import getAttributesWithNumberOfComponents

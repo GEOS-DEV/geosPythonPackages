@@ -11,3 +11,12 @@ geos.mesh.stats.meshQualityMetricHelpers module
     :members:
     :undoc-members:
     :show-inheritance:
+
+
+geos.mesh.stats.CellTypeCounterEnhanced module
+----------------------------------------------
+
+.. automodule:: geos.mesh.stats.CellTypeCounterEnhanced
+    :members:
+    :undoc-members:
+    :show-inheritance:

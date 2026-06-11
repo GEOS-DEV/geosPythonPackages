@@ -58,9 +58,9 @@ def dataSetTest() -> Any:
             vtkFilename = "geos-mesh/tests/data/hasFault.vtu"
         # Small useful meshes
         elif datasetType == "quads2_tris4":
-            vtkFilename = "geos-processing/tests/data/quads2_tris4.vtu"
+            vtkFilename = "geos-mesh/tests/data/quads2_tris4.vtu"
         elif datasetType == "hexs3_tets36_pyrs18":
-            vtkFilename = "geos-processing/tests/data/hexs3_tets36_pyrs18.vtu"
+            vtkFilename = "geos-mesh/tests/data/hexs3_tets36_pyrs18.vtu"
         elif datasetType == "meshtet1":
             vtkFilename = "geos-processing/tests/data/mesh1.vtu"
         elif datasetType == "meshtet1b":
