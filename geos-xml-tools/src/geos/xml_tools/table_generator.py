@@ -1,18 +1,42 @@
+# ------------------------------------------------------------------------------------------------------------
+# SPDX-License-Identifier: LGPL-2.1-only
+#
+# Copyright (c) 2016-2025 Lawrence Livermore National Security LLC
+# Copyright (c) 2018-2025 TotalEnergies
+# Copyright (c) 2018-2025 The Board of Trustees of the Leland Stanford Junior University
+# Copyright (c) 2023-2025 Chevron
+# Copyright (c) 2019-     GEOS/GEOSX Contributors
+# All rights reserved
+#
+# See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+# ------------------------------------------------------------------------------------------------------------
 import numpy as np
-from typing import Tuple, Iterable, Dict
+from typing import Iterable
 
-__doc__ = """Tools for reading/writing GEOSX ascii tables."""
+__doc__ = """
+Multi-dimensional Table I/O for GEOS.
+
+This module provides tools to save and load multi-dimensional data tables to and from .geos file extensions.
+Features:
+* Write GEOS-compatible ASCII tables for axes and properties.
+* Read tables back into numpy arrays for analysis or simulation.
+
+Typical usage:
+    from geos.xml_tools.table_generator import write_GEOS_table, read_GEOS_table
+
+Intended for use in workflows that require tabular data exchange with GEOS.
+"""
 
 
 def write_GEOS_table( axes_values: Iterable[ np.ndarray ],
-                      properties: Dict[ str, np.ndarray ],
+                      properties: dict[ str, np.ndarray ],
                       axes_names: Iterable[ str ] = [ 'x', 'y', 'z', 't' ],
                       string_format: str = '%1.5e' ) -> None:
-    """Write an GEOS-compatible ascii table.
+    """Write a GEOS-compatible ascii table.
 
     Args:
         axes_values (list): List of arrays containing the coordinates for each axis of the table.
-        properties (dict): Dict of arrays with dimensionality/size defined by the axes_values
+        properties (dict): dict of arrays with dimensionality/size defined by the axes_values
         axes_names (list): Names for each axis (default = ['x', 'y', 'z', 't'])
         string_format (str): Format for output values (default = %1.5e)
     """
@@ -33,7 +57,7 @@ def write_GEOS_table( axes_values: Iterable[ np.ndarray ],
 
 
 def read_GEOS_table( axes_files: Iterable[ str ],
-                     property_files: Iterable[ str ] ) -> Tuple[ Iterable[ np.ndarray ], Dict[ str, np.ndarray ] ]:
+                     property_files: Iterable[ str ] ) -> tuple[ Iterable[ np.ndarray ], dict[ str, np.ndarray ] ]:
     """Read an GEOS-compatible ascii table.
 
     Args:
