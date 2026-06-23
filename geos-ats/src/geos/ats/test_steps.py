@@ -431,11 +431,6 @@ class geos( TestStepBase ):
         return True
 
     def executable( self ):
-        # python = os.path.join(binDir, "..", "lib", "PYGEOS", "bin", "python3")
-        # pygeosDir = os.path.join(binDir, "..", "..", "src", "pygeos")
-        # return python + " -m mpi4py " + os.path.join( pygeosDir, "reentrantTest.py" )
-        # return python + " -m mpi4py " + os.path.join( pygeosDir, "test.py" )
-        # return config.geos_bin_dir
         return os.path.join( config.geos_bin_dir, 'geosx' )
 
     def update( self, dictionary ):
@@ -511,6 +506,37 @@ class geos( TestStepBase ):
 
     def rebaseline( self ):
         history.write_baseline_log( os.path.join( self.p.baseline_directory, '.baseline_info' ) )
+
+
+################################################################################
+# pygeos
+################################################################################
+class pygeos_test( geos ):
+    """
+    Class for the pygeos test step.
+    """
+
+    doc = """
+    This TestCase runs the pygeos executable."""
+
+    command = "python [script] [-i <deck>] [-r <restart_file>] [-x <x_partitions>] [-y <y_partitions>] [-z <z_partitions>] [-s <schema_level>] [-n <problem_name>] [-o <output_directory>] [ --suppress-pinned ] "
+
+    params = geos.params + ( TestParam( "script", "Pygeos run script." ), )  # type: ignore[assignment]
+
+    checkstepnames = [ "restartcheck" ]
+
+    def label( self ):
+        return "pygeos"
+
+    def executable( self ):
+        p = os.path.abspath(os.path.join( config.geos_bin_dir, 'python' ))
+        if os.path.islink(p):
+            p = os.readlink(p)
+        return p
+
+    def makeArgs( self ):
+        args = [ os.path.join( self.p.test_directory, self.p.script ) ]
+        return args + super().makeArgs()
 
 
 ################################################################################
