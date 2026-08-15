@@ -63,7 +63,7 @@ def build_xml_formatter_input_parser() -> argparse.ArgumentParser:
                          '--line-length',
                          type=int,
                          help='Write leaf blocks on one line when they fit in this many columns (0 disables)',
-                         default=100  )
+                         default=100 )
     return parser
 
 
