@@ -41,10 +41,7 @@ def format_attribute( attribute_indent: str, ka: str, attribute_value: str ) -> 
     return attribute_value
 
 
-def collect_attributes( node: ElementTree.Element,
-                        level: int,
-                        attribute_indent: str,
-                        sort_attributes: bool,
+def collect_attributes( node: ElementTree.Element, level: int, attribute_indent: str, sort_attributes: bool,
                         include_namespace: bool ) -> Dict[ str, str ]:
     """Collect and format attributes for an xml element.
 
@@ -179,8 +176,7 @@ def format_xml_level( output: TextIO,
                               sort_attributes, close_tag_newline, include_namespace, max_line_length )
 
             # Add space between blocks
-            if ( ( level < block_separation_max_depth ) & ( ii < Nc - 1 ) &
-                 ( child.tag is not ElementTree.Comment ) ):
+            if ( ( level < block_separation_max_depth ) & ( ii < Nc - 1 ) & ( child.tag is not ElementTree.Comment ) ):
                 output.write( '\n' )
 
         # Write the end tag
