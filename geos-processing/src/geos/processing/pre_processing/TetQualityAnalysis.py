@@ -877,7 +877,7 @@ class TetQualityAnalysis:
         # 9. Shape Quality Box Plot
         ax9 = fig.add_subplot( gs_main[ 1, 0 ] )
         sq = [ self.validMetrics[ n ][ "shapeQuality" ] for n, _ in enumerate( self.meshes, 1 ) ]
-        bp1 = ax9.boxplot( sq, labels=lbl, patch_artist=True, showfliers=False )  # type: ignore[call-arg]
+        bp1 = ax9.boxplot( sq, tick_labels=lbl, patch_artist=True, showfliers=False )  # type: ignore[call-arg]
         ax9.set_ylabel( 'Shape Quality', fontweight='bold' )
         ax9.set_title( 'Shape Quality Comparison', fontweight='bold' )
         ax9.grid( True, alpha=0.3, axis='y' )
@@ -885,7 +885,7 @@ class TetQualityAnalysis:
         # 10. Aspect Ratio Box Plot
         ax10 = fig.add_subplot( gs_main[ 1, 1 ] )
         ar = [ self.validMetrics[ n ][ "aspectRatio" ] for n, _ in enumerate( self.meshes, 1 ) ]
-        bp2 = ax10.boxplot( ar, labels=lbl, patch_artist=True, showfliers=False )  # type: ignore[call-arg]
+        bp2 = ax10.boxplot( ar, tick_labels=lbl, patch_artist=True, showfliers=False )  # type: ignore[call-arg]
         ax10.set_yscale( 'log' )
         ax10.set_ylabel( 'Aspect Ratio (log)', fontweight='bold' )
         ax10.set_title( 'Aspect Ratio Comparison', fontweight='bold' )
@@ -894,7 +894,8 @@ class TetQualityAnalysis:
         # 11. Min Dihedral Box Plot
         ax11 = fig.add_subplot( gs_main[ 1, 2 ] )
         minDihedral = [ self.validMetrics[ n ][ "minDihedral" ] for n, _ in enumerate( self.meshes, 1 ) ]
-        bp3 = ax11.boxplot( minDihedral, labels=lbl, patch_artist=True, showfliers=False )  # type: ignore[call-arg]
+        bp3 = ax11.boxplot( minDihedral, tick_labels=lbl, patch_artist=True,
+                            showfliers=False )  # type: ignore[call-arg]
         ax11.set_ylabel( 'Min Dihedral Angle (degrees)', fontweight='bold' )
         ax11.set_title( 'Min Dihedral Comparison', fontweight='bold' )
         ax11.grid( True, alpha=0.3, axis='y' )
@@ -902,7 +903,7 @@ class TetQualityAnalysis:
         # 12. Edge Ratio Box Plot
         ax12 = fig.add_subplot( gs_main[ 1, 3 ] )
         edgeRatio = [ self.validMetrics[ n ][ "edgeRatio" ] for n, _ in enumerate( self.meshes, 1 ) ]
-        bp4 = ax12.boxplot( edgeRatio, labels=lbl, patch_artist=True, showfliers=False )  # type: ignore[call-arg]
+        bp4 = ax12.boxplot( edgeRatio, tick_labels=lbl, patch_artist=True, showfliers=False )  # type: ignore[call-arg]
         ax12.set_yscale( 'log' )
         ax12.set_ylabel( 'Edge Length Ratio (log)', fontweight='bold' )
         ax12.set_title( 'Edge Ratio Comparison', fontweight='bold' )
@@ -911,7 +912,7 @@ class TetQualityAnalysis:
         # 13. Volume Box Plot
         ax13 = fig.add_subplot( gs_main[ 1, 4 ] )
         vol = [ self.validMetrics[ n ][ "volume" ] for n, _ in enumerate( self.meshes, 1 ) ]
-        bp5 = ax13.boxplot( vol, labels=lbl, patch_artist=True, showfliers=False )  # type: ignore[call-arg]
+        bp5 = ax13.boxplot( vol, tick_labels=lbl, patch_artist=True, showfliers=False )  # type: ignore[call-arg]
         ax13.set_yscale( 'log' )
         ax13.set_ylabel( 'Volume (log)', fontweight='bold' )
         ax13.set_title( 'Volume Comparison', fontweight='bold' )
@@ -1126,7 +1127,7 @@ class TetQualityAnalysis:
         bp_dih = ax22.boxplot(
             dih,
             positions=positions,
-            labels=lbl_boxplot,  # type: ignore[call-arg]
+            tick_labels=lbl_boxplot,  # type: ignore[call-arg]
             patch_artist=True,
             showfliers=False,
             widths=0.6 )

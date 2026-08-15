@@ -2,8 +2,9 @@ from typing_extensions import Self
 import unittest
 import re
 import os
+import tempfile
 import filecmp
-from geos.xml_tools import regex_tools, unit_manager, xml_processor
+from geos.xml_tools import regex_tools, unit_manager, xml_processor, xml_formatter
 from geos.xml_tools.tests import generate_test_xml
 import argparse
 from parameterized import parameterized
@@ -172,6 +173,107 @@ class TestXMLProcessor( unittest.TestCase ):
             self.assertTrue( expect_fail )
 
 
+class TestXMLFormatter( unittest.TestCase ):
+
+    def test_short_leaf_blocks_are_one_line( self: Self ) -> None:
+        """Leaf blocks that fit in 100 columns are written on one line."""
+        with tempfile.TemporaryDirectory() as tmp:
+            fname = os.path.join( tmp, 'compact_leaves.xml' )
+            with open( fname, 'w' ) as f:
+                f.write( """<Problem>
+  <Geometry>
+    <Box
+      name="source"
+      xMin="{-0.01, -0.01, -0.01}"
+      xMax="{1.01, 1.01, 1.01}"/>
+  </Geometry>
+  <FieldSpecifications>
+    <FieldSpecification
+      name="permx"
+      setNames="{all}"
+      fieldName="permeability"
+      scale="2.0e-16"/>
+    <SourceFlux
+      name="sourceTerm"
+      setNames="{source}"
+      scale="-0.00001"/>
+  </FieldSpecifications>
+</Problem>
+""" )
+            xml_formatter.format_file( fname )
+            with open( fname, 'r' ) as f:
+                text = f.read()
+
+        box_line = '    <Box name="source" xMin="{ -0.01, -0.01, -0.01 }" xMax="{ 1.01, 1.01, 1.01 }"/>'
+        fs_line = '    <FieldSpecification name="permx" setNames="{ all }" fieldName="permeability" scale="2.0e-16"/>'
+        flux_line = '    <SourceFlux name="sourceTerm" setNames="{ source }" scale="-0.00001"/>'
+        self.assertLessEqual( len( box_line ), xml_formatter.DEFAULT_MAX_LINE_LENGTH )
+        self.assertLessEqual( len( fs_line ), xml_formatter.DEFAULT_MAX_LINE_LENGTH )
+        self.assertLessEqual( len( flux_line ), xml_formatter.DEFAULT_MAX_LINE_LENGTH )
+        self.assertIn( box_line, text )
+        self.assertIn( fs_line, text )
+        self.assertIn( flux_line, text )
+        self.assertRegex( text, r'<Geometry>\s*\n\s*<Box' )
+        self.assertRegex( text, r'<FieldSpecifications>\s*\n\s*<FieldSpecification' )
+
+    def test_long_leaf_blocks_stay_wrapped( self: Self ) -> None:
+        """Leaf blocks that exceed 100 columns keep one attribute per line."""
+        with tempfile.TemporaryDirectory() as tmp:
+            fname = os.path.join( tmp, 'long_leaf.xml' )
+            with open( fname, 'w' ) as f:
+                f.write( """<Problem>
+  <FieldSpecification name="permx" component="0" initialCondition="1" setNames="{all}" objectPath="ElementRegions/Region1/block1" fieldName="permeability" scale="2.0e-16"/>
+</Problem>
+""" )
+            xml_formatter.format_file( fname )
+            with open( fname, 'r' ) as f:
+                text = f.read()
+
+        long_line = ( '    <FieldSpecification name="permx" component="0" initialCondition="1" '
+                      'setNames="{ all }" objectPath="ElementRegions/Region1/block1" '
+                      'fieldName="permeability" scale="2.0e-16"/>' )
+        self.assertGreater( len( long_line ), xml_formatter.DEFAULT_MAX_LINE_LENGTH )
+        self.assertNotIn( '<FieldSpecification name="permx"', text )
+        self.assertIn( '\n    name="permx"', text )
+
+    def test_line_length_zero_disables_compact_leaves( self: Self ) -> None:
+        """max_line_length=0 keeps the previous one-attribute-per-line layout."""
+        with tempfile.TemporaryDirectory() as tmp:
+            fname = os.path.join( tmp, 'compact_leaves_disabled.xml' )
+            with open( fname, 'w' ) as f:
+                f.write( '<Problem>\n  <Box name="source" xMin="{0,0,0}" xMax="{1,1,1}"/>\n</Problem>\n' )
+            xml_formatter.format_file( fname, max_line_length=0 )
+            with open( fname, 'r' ) as f:
+                text = f.read()
+        self.assertIn( '\n    name="source"', text )
+        self.assertNotIn( '<Box name="source"', text )
+
+    def test_close_tag_newline_skips_compact_leaves( self: Self ) -> None:
+        """close_style=True keeps the close tag on its own line instead of compacting."""
+        with tempfile.TemporaryDirectory() as tmp:
+            fname = os.path.join( tmp, 'close_tag_newline.xml' )
+            with open( fname, 'w' ) as f:
+                f.write( '<Problem>\n  <Box name="source" xMin="{0,0,0}" xMax="{1,1,1}"/>\n</Problem>\n' )
+            xml_formatter.format_file( fname, close_style=True )
+            with open( fname, 'r' ) as f:
+                text = f.read()
+        self.assertIn( '\n    name="source"', text )
+        self.assertIn( '\n  />', text )
+        self.assertNotIn( '<Box name="source"', text )
+
+    def test_root_attributes_are_preserved( self: Self ) -> None:
+        """Root element attributes are kept, including when the namespace is inserted."""
+        with tempfile.TemporaryDirectory() as tmp:
+            fname = os.path.join( tmp, 'root_attributes.xml' )
+            with open( fname, 'w' ) as f:
+                f.write( '<Problem name="demo"/>\n' )
+            xml_formatter.format_file( fname, namespace=True, max_line_length=0 )
+            with open( fname, 'r' ) as f:
+                text = f.read()
+        self.assertIn( 'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"', text )
+        self.assertIn( 'name="demo"', text )
+
+
 def run_unit_tests( test_dir: str, verbose: int ) -> None:
     """Main entry point for the unit tests.
 
@@ -202,6 +304,10 @@ def run_unit_tests( test_dir: str, verbose: int ) -> None:
 
     # xml processor tests
     suite = unittest.TestLoader().loadTestsFromTestCase( TestXMLProcessor )
+    unittest.TextTestRunner( verbosity=verbose ).run( suite )
+
+    # xml formatter tests
+    suite = unittest.TestLoader().loadTestsFromTestCase( TestXMLFormatter )
     unittest.TextTestRunner( verbosity=verbose ).run( suite )
 
     os.chdir( pwd )
