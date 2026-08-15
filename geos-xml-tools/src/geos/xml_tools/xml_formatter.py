@@ -56,13 +56,12 @@ def collect_attributes( node: ElementTree.Element, level: int, attribute_indent:
         dict: Ordered attribute name/value pairs
     """
     attribute_dict: Dict[ str, str ] = {}
-    if ( ( level == 0 ) & include_namespace ):
+    if ( level == 0 ) and include_namespace:
         # Handle the optional namespace information at the root level
         # Note: preferably, this would point to a schema we host online
         attribute_dict[ 'xmlns:xsi' ] = 'http://www.w3.org/2001/XMLSchema-instance'
         attribute_dict[ 'xsi:noNamespaceSchemaLocation' ] = '/usr/gapps/GEOS/schema/schema.xsd'
-    elif ( level > 0 ):
-        attribute_dict = dict( node.attrib )
+    attribute_dict.update( dict( node.attrib ) )
 
     akeys = list( attribute_dict.keys() )
     if sort_attributes:
@@ -96,8 +95,12 @@ def compact_leaf_line( indent: str, level: int, tag: str, attribute_dict: Dict[ 
     return line + '/>'
 
 
-def should_write_compact_leaf( node: ElementTree.Element, attribute_dict: Dict[ str, str ], indent: str, level: int,
-                               max_line_length: int ) -> bool:
+def should_write_compact_leaf( node: ElementTree.Element,
+                               attribute_dict: Dict[ str, str ],
+                               indent: str,
+                               level: int,
+                               max_line_length: int,
+                               close_tag_newline: bool = False ) -> bool:
     """Return True if a leaf element fits on one line.
 
     Args:
@@ -106,11 +109,12 @@ def should_write_compact_leaf( node: ElementTree.Element, attribute_dict: Dict[ 
         indent (str): the xml indent style
         level (int): the xml depth
         max_line_length (int): maximum columns for a compact leaf; 0 disables
+        close_tag_newline (bool): option to place close tag on a separate line
 
     Returns:
         bool: True if the element has no children and the compact line is short enough
     """
-    if max_line_length <= 0 or len( node ):
+    if close_tag_newline or max_line_length <= 0 or len( node ):
         return False
     if any( '\n' in value for value in attribute_dict.values() ):
         return False
@@ -154,7 +158,7 @@ def format_xml_level( output: TextIO,
     attribute_dict = collect_attributes( node, level, attribute_indent, sort_attributes, include_namespace )
     akeys = list( attribute_dict.keys() )
 
-    if should_write_compact_leaf( node, attribute_dict, indent, level, max_line_length ):
+    if should_write_compact_leaf( node, attribute_dict, indent, level, max_line_length, close_tag_newline ):
         output.write( '\n' + compact_leaf_line( indent, level, node.tag, attribute_dict ) )
         return
 
@@ -162,7 +166,7 @@ def format_xml_level( output: TextIO,
 
     for ii in range( 0, len( akeys ) ):
         k = akeys[ ii ]
-        if ( ( ii == 0 ) & modify_attribute_indent ):
+        if ( ii == 0 ) and modify_attribute_indent:
             output.write( ' %s=\"%s\"' % ( k, attribute_dict[ k ] ) )
         else:
             output.write( '\n%s%s=\"%s\"' % ( attribute_indent, k, attribute_dict[ k ] ) )
@@ -176,7 +180,8 @@ def format_xml_level( output: TextIO,
                               sort_attributes, close_tag_newline, include_namespace, max_line_length )
 
             # Add space between blocks
-            if ( ( level < block_separation_max_depth ) & ( ii < Nc - 1 ) & ( child.tag is not ElementTree.Comment ) ):
+            if ( ( level < block_separation_max_depth ) and ( ii < Nc - 1 )
+                 and ( child.tag is not ElementTree.Comment ) ):
                 output.write( '\n' )
 
         # Write the end tag

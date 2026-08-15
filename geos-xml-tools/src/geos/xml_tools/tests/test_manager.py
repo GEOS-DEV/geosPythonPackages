@@ -248,6 +248,31 @@ class TestXMLFormatter( unittest.TestCase ):
         self.assertIn( '\n    name="source"', text )
         self.assertNotIn( '<Box name="source"', text )
 
+    def test_close_tag_newline_skips_compact_leaves( self: Self ) -> None:
+        """close_style=True keeps the close tag on its own line instead of compacting."""
+        with tempfile.TemporaryDirectory() as tmp:
+            fname = os.path.join( tmp, 'close_tag_newline.xml' )
+            with open( fname, 'w' ) as f:
+                f.write( '<Problem>\n  <Box name="source" xMin="{0,0,0}" xMax="{1,1,1}"/>\n</Problem>\n' )
+            xml_formatter.format_file( fname, close_style=True )
+            with open( fname, 'r' ) as f:
+                text = f.read()
+        self.assertIn( '\n    name="source"', text )
+        self.assertIn( '\n  />', text )
+        self.assertNotIn( '<Box name="source"', text )
+
+    def test_root_attributes_are_preserved( self: Self ) -> None:
+        """Root element attributes are kept, including when the namespace is inserted."""
+        with tempfile.TemporaryDirectory() as tmp:
+            fname = os.path.join( tmp, 'root_attributes.xml' )
+            with open( fname, 'w' ) as f:
+                f.write( '<Problem name="demo"/>\n' )
+            xml_formatter.format_file( fname, namespace=True, max_line_length=0 )
+            with open( fname, 'r' ) as f:
+                text = f.read()
+        self.assertIn( 'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"', text )
+        self.assertIn( 'name="demo"', text )
+
 
 def run_unit_tests( test_dir: str, verbose: int ) -> None:
     """Main entry point for the unit tests.
