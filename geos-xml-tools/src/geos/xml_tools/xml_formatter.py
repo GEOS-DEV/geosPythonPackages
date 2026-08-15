@@ -1,8 +1,10 @@
 import os
 from lxml import etree as ElementTree  # type: ignore[import]
 import re
-from typing import List, Any, TextIO
+from typing import Dict, List, Any, TextIO
 from geos.xml_tools import command_line_parsers
+
+DEFAULT_MAX_LINE_LENGTH = 100
 
 
 def format_attribute( attribute_indent: str, ka: str, attribute_value: str ) -> str:
@@ -39,6 +41,85 @@ def format_attribute( attribute_indent: str, ka: str, attribute_value: str ) -> 
     return attribute_value
 
 
+def collect_attributes( node: ElementTree.Element,
+                        level: int,
+                        attribute_indent: str,
+                        sort_attributes: bool,
+                        include_namespace: bool ) -> Dict[ str, str ]:
+    """Collect and format attributes for an xml element.
+
+    Args:
+        node (lxml.etree.Element): the current xml element
+        level (int): the xml depth
+        attribute_indent (str): Attribute indent string
+        sort_attributes (bool): option to sort attributes alphabetically
+        include_namespace (bool): option to include the xml namespace in the output
+
+    Returns:
+        dict: Ordered attribute name/value pairs
+    """
+    attribute_dict: Dict[ str, str ] = {}
+    if ( ( level == 0 ) & include_namespace ):
+        # Handle the optional namespace information at the root level
+        # Note: preferably, this would point to a schema we host online
+        attribute_dict[ 'xmlns:xsi' ] = 'http://www.w3.org/2001/XMLSchema-instance'
+        attribute_dict[ 'xsi:noNamespaceSchemaLocation' ] = '/usr/gapps/GEOS/schema/schema.xsd'
+    elif ( level > 0 ):
+        attribute_dict = dict( node.attrib )
+
+    akeys = list( attribute_dict.keys() )
+    if sort_attributes:
+        akeys = sorted( akeys )
+
+    formatted: Dict[ str, str ] = {}
+    for ka in akeys:
+        # Avoid formatting mathpresso expressions
+        if not ( node.tag in [ "SymbolicFunction", "CompositeFunction" ] and ka == "expression" ):
+            formatted[ ka ] = format_attribute( attribute_indent, ka, attribute_dict[ ka ] )
+        else:
+            formatted[ ka ] = attribute_dict[ ka ]
+    return formatted
+
+
+def compact_leaf_line( indent: str, level: int, tag: str, attribute_dict: Dict[ str, str ] ) -> str:
+    """Build the one-line representation of a leaf element.
+
+    Args:
+        indent (str): the xml indent style
+        level (int): the xml depth
+        tag (str): element tag
+        attribute_dict (dict): formatted attribute name/value pairs
+
+    Returns:
+        str: Candidate single-line element, without a leading newline
+    """
+    line = '%s<%s' % ( indent * level, tag )
+    for k, v in attribute_dict.items():
+        line += ' %s=\"%s\"' % ( k, v )
+    return line + '/>'
+
+
+def should_write_compact_leaf( node: ElementTree.Element, attribute_dict: Dict[ str, str ], indent: str, level: int,
+                               max_line_length: int ) -> bool:
+    """Return True if a leaf element fits on one line.
+
+    Args:
+        node (lxml.etree.Element): the current xml element
+        attribute_dict (dict): formatted attribute name/value pairs
+        indent (str): the xml indent style
+        level (int): the xml depth
+        max_line_length (int): maximum columns for a compact leaf; 0 disables
+
+    Returns:
+        bool: True if the element has no children and the compact line is short enough
+    """
+    if max_line_length <= 0 or len( node ):
+        return False
+    if any( '\n' in value for value in attribute_dict.values() ):
+        return False
+    return len( compact_leaf_line( indent, level, node.tag, attribute_dict ) ) <= max_line_length
+
+
 def format_xml_level( output: TextIO,
                       node: ElementTree.Element,
                       level: int,
@@ -47,7 +128,8 @@ def format_xml_level( output: TextIO,
                       modify_attribute_indent: bool = False,
                       sort_attributes: bool = False,
                       close_tag_newline: bool = False,
-                      include_namespace: bool = False ) -> None:
+                      include_namespace: bool = False,
+                      max_line_length: int = DEFAULT_MAX_LINE_LENGTH ) -> None:
     """Iteratively format the xml file.
 
     Args:
@@ -60,71 +142,54 @@ def format_xml_level( output: TextIO,
         sort_attributes (bool): option to sort attributes alphabetically
         close_tag_newline (bool): option to place close tag on a separate line
         include_namespace (bool): option to include the xml namespace in the output
+        max_line_length (int): write leaf blocks on one line when they fit in this many columns
     """
     # Handle comments
     if node.tag is ElementTree.Comment:
         output.write( '\n%s<!--%s-->' % ( indent * level, node.text ) )
+        return
 
-    else:
-        # Write opening line
-        opening_line = '\n%s<%s' % ( indent * level, node.tag )
-        output.write( opening_line )
+    opening_line = '\n%s<%s' % ( indent * level, node.tag )
+    attribute_indent = '%s' % ( indent * ( level + 1 ) )
+    if modify_attribute_indent:
+        attribute_indent = ' ' * ( len( opening_line ) )
 
-        # Write attributes
-        if ( len( node.attrib ) > 0 ):
-            # Choose indentation
-            attribute_indent = '%s' % ( indent * ( level + 1 ) )
-            if modify_attribute_indent:
-                attribute_indent = ' ' * ( len( opening_line ) )
+    attribute_dict = collect_attributes( node, level, attribute_indent, sort_attributes, include_namespace )
+    akeys = list( attribute_dict.keys() )
 
-            # Get a copy of the attributes
-            attribute_dict = {}
-            if ( ( level == 0 ) & include_namespace ):
-                # Handle the optional namespace information at the root level
-                # Note: preferably, this would point to a schema we host online
-                attribute_dict[ 'xmlns:xsi' ] = 'http://www.w3.org/2001/XMLSchema-instance'
-                attribute_dict[ 'xsi:noNamespaceSchemaLocation' ] = '/usr/gapps/GEOS/schema/schema.xsd'
-            elif ( level > 0 ):
-                attribute_dict = node.attrib
+    if should_write_compact_leaf( node, attribute_dict, indent, level, max_line_length ):
+        output.write( '\n' + compact_leaf_line( indent, level, node.tag, attribute_dict ) )
+        return
 
-            # Sort attribute names
-            akeys = list( attribute_dict.keys() )
-            if sort_attributes:
-                akeys = sorted( akeys )
+    output.write( opening_line )
 
-            # Format attributes
-            for ka in akeys:
-                # Avoid formatting mathpresso expressions
-                if not ( node.tag in [ "SymbolicFunction", "CompositeFunction" ] and ka == "expression" ):
-                    attribute_dict[ ka ] = format_attribute( attribute_indent, ka, attribute_dict[ ka ] )
-
-            for ii in range( 0, len( akeys ) ):
-                k = akeys[ ii ]
-                if ( ( ii == 0 ) & modify_attribute_indent ):
-                    output.write( ' %s=\"%s\"' % ( k, attribute_dict[ k ] ) )
-                else:
-                    output.write( '\n%s%s=\"%s\"' % ( attribute_indent, k, attribute_dict[ k ] ) )
-
-        # Write children
-        if len( node ):
-            output.write( '>' )
-            Nc = len( node )
-            for ii, child in zip( range( Nc ), node, strict=False ):
-                format_xml_level( output, child, level + 1, indent, block_separation_max_depth, modify_attribute_indent,
-                                  sort_attributes, close_tag_newline, include_namespace )
-
-                # Add space between blocks
-                if ( ( level < block_separation_max_depth ) & ( ii < Nc - 1 ) &
-                     ( child.tag is not ElementTree.Comment ) ):
-                    output.write( '\n' )
-
-            # Write the end tag
-            output.write( '\n%s</%s>' % ( indent * level, node.tag ) )
+    for ii in range( 0, len( akeys ) ):
+        k = akeys[ ii ]
+        if ( ( ii == 0 ) & modify_attribute_indent ):
+            output.write( ' %s=\"%s\"' % ( k, attribute_dict[ k ] ) )
         else:
-            if close_tag_newline:
-                output.write( '\n%s/>' % ( indent * level ) )
-            else:
-                output.write( '/>' )
+            output.write( '\n%s%s=\"%s\"' % ( attribute_indent, k, attribute_dict[ k ] ) )
+
+    # Write children
+    if len( node ):
+        output.write( '>' )
+        Nc = len( node )
+        for ii, child in zip( range( Nc ), node, strict=False ):
+            format_xml_level( output, child, level + 1, indent, block_separation_max_depth, modify_attribute_indent,
+                              sort_attributes, close_tag_newline, include_namespace, max_line_length )
+
+            # Add space between blocks
+            if ( ( level < block_separation_max_depth ) & ( ii < Nc - 1 ) &
+                 ( child.tag is not ElementTree.Comment ) ):
+                output.write( '\n' )
+
+        # Write the end tag
+        output.write( '\n%s</%s>' % ( indent * level, node.tag ) )
+    else:
+        if close_tag_newline:
+            output.write( '\n%s/>' % ( indent * level ) )
+        else:
+            output.write( '/>' )
 
 
 def format_file( input_fname: str,
@@ -133,7 +198,8 @@ def format_file( input_fname: str,
                  block_separation_max_depth: int = 2,
                  alphebitize_attributes: bool = False,
                  close_style: bool = False,
-                 namespace: bool = False ) -> None:
+                 namespace: bool = False,
+                 max_line_length: int = DEFAULT_MAX_LINE_LENGTH ) -> None:
     """Script to format xml files.
 
     Args:
@@ -144,6 +210,7 @@ def format_file( input_fname: str,
         alphebitize_attributes (bool): Alphebitize attributes
         close_style (bool): Style of close tag (0=same line, 1=new line)
         namespace (bool): Insert this namespace in the xml description
+        max_line_length (int): Write leaf blocks on one line when they fit in this many columns
     """
     fname = os.path.expanduser( input_fname )
     try:
@@ -166,7 +233,8 @@ def format_file( input_fname: str,
                               modify_attribute_indent=indent_style,
                               sort_attributes=alphebitize_attributes,
                               close_tag_newline=close_style,
-                              include_namespace=namespace )
+                              include_namespace=namespace,
+                              max_line_length=max_line_length )
 
             for comment in epilog_comments:
                 f.write( '\n<!--%s-->' % ( comment ) )
@@ -189,6 +257,7 @@ def main() -> None:
         -a/--alphebitize (int): Alphebitize attributes
         -c/--close (int): Close tag style
         -n/--namespace (int): Include namespace
+        -l/--line-length (int): Max columns for a one-line leaf block (0 disables)
     """
     parser = command_line_parsers.build_xml_formatter_input_parser()
     args = parser.parse_args()
@@ -198,7 +267,8 @@ def main() -> None:
                  block_separation_max_depth=args.depth,
                  alphebitize_attributes=args.alphebitize,
                  close_style=args.close,
-                 namespace=args.namespace )
+                 namespace=args.namespace,
+                 max_line_length=args.line_length )
 
 
 if __name__ == "__main__":

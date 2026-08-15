@@ -59,6 +59,11 @@ def build_xml_formatter_input_parser() -> argparse.ArgumentParser:
     parser.add_argument( '-a', '--alphebitize', type=int, help='Alphebetize attributes', default=0 )
     parser.add_argument( '-c', '--close', type=int, help='Close tag style', default=0 )
     parser.add_argument( '-n', '--namespace', type=int, help='Include namespace', default=0 )
+    parser.add_argument( '-l',
+                         '--line-length',
+                         type=int,
+                         help='Write leaf blocks on one line when they fit in this many columns (0 disables)',
+                         default=100 )
     return parser
 
 
