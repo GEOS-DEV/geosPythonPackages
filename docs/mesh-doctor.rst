@@ -125,6 +125,23 @@ The ``generateFractures`` module will split the mesh and generate the multi-bloc
 .. command-output:: mesh-doctor generateFractures --help
    :shell:
 
+``cureOneSided``
+""""""""""""""""
+
+Node splitting (``generateFractures``) duplicates the fault nodes so that both sides can move independently,
+but it writes a single surface polygon per fault location, remapped onto whichever 3D neighbour it enumerated first.
+The fault surface is then a patchwork: adjacent faces sit on different collocated node copies.
+Since ``geos`` derives the seal node set from that surface, the open matrix/fracture taps end up on mixed sides
+and fluid crosses the fault even though most faces look sealed.
+
+The ``cureOneSided`` module rewrites every tagged fault face onto the coincident real 3D-cell face of one
+consistent side per fault value. Two cell arrays are added for display and QC:
+ ``faultSide`` (``+1`` reference side, ``-1`` residual degeneracy, ``0`` non-fault)
+and ``onHole`` (``1`` on faces bordering a residual hole). A fully cured fault has ``onHole`` all ``0``.
+
+.. command-output:: mesh-doctor cureOneSided --help
+   :shell:
+
 ``generateGlobalIds``
 """""""""""""""""""""
 

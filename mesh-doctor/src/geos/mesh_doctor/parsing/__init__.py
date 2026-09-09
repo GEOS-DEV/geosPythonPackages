@@ -21,6 +21,7 @@ CHECK_INTERNAL_TAGS = "checkInternalTags"
 EULER = "euler"
 CONVERT_MD2SG = "convertMD2SG"
 REFINE_MESH = "refineMesh"
+CURE_ONE_SIDED = "cureOneSided"
 
 
 @dataclass( frozen=True )
